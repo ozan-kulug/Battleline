@@ -78,11 +78,14 @@ cvs.addEventListener('pointerleave',()=>{state.mouse.in=false});
 mm.addEventListener('pointerdown',e=>{const go=ev=>{const r=mm.getBoundingClientRect();cam.x=(ev.clientX-r.left)/r.width*W-state.VW/cam.z/2;cam.y=(ev.clientY-r.top)/r.height*H-state.VH/cam.z/2;clampCam()};
   if(e.button===2)return;go(e);const mv=ev=>go(ev),up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up)};addEventListener('pointermove',mv);addEventListener('pointerup',up)});
 mm.addEventListener('contextmenu',e=>{e.preventDefault();if(!state.running)return;const r=mm.getBoundingClientRect();orderGroup(sel(),(e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H,e.ctrlKey?'attack':'move')});
-addEventListener('keydown',e=>{const c=e.code;state.keys[c]=true;if(!state.running)return;
+/* W A S D kamerayı kaydırır (doğrudan kontrolde aracı sürer); eski W/A/S/D komutları Shift ile çalışır */
+const CAMK=['KeyW','KeyA','KeyS','KeyD'];
+addEventListener('keydown',e=>{const c=e.code;if(e.target.closest&&e.target.closest('input,textarea'))return;const camK=CAMK.includes(c);
+  if(!(camK&&e.shiftKey))state.keys[c]=true;if(!state.running)return;
   if(c==='Space'){e.preventDefault();if(!state.over){state.paused=!state.paused;$('pause').hidden=!state.paused}return}
   if(e.repeat)return;
   if(c.startsWith('Digit')){const n=+c.slice(5);if(e.shiftKey){const vis=cards.filter(([b,S])=>S.cat===state.deckTab);if(n>=1&&n<=vis.length)deploy(0,SQUADS.indexOf(vis[n-1][1]));return}if(e.ctrlKey||e.metaKey){e.preventDefault();state.groups[n]=sel().map(u=>u.id);if(state.groups[n].length)log(`Grup ${n} atandı (${state.groups[n].length} birlik)`,'');return}selectGroup(n);return}
-  if(state.dc&&['KeyW','KeyA','KeyS','KeyD'].includes(c))return;
+  if(camK&&(state.dc||!e.shiftKey))return;
   const map={KeyA:()=>setArm(!state.attackArm),KeyS:stopSel,KeyH:holdSel,KeyD:()=>setFastArm(!state.fastArm),KeyZ:()=>stanceSel('stand'),KeyX:()=>stanceSel('crouch'),KeyC:()=>stanceSel('prone'),KeyB:()=>stanceSel(null),
     KeyK:digSel,KeyE:exitSel,KeyG:deploySel,KeyF:()=>setMissionArm(!state.missionArm),KeyT:shellSel,KeyN:ACT.salvo,KeyO:autoSel,KeyR:smokeSel,KeyV:dcToggle,KeyJ:()=>setRunArm(!state.runArm),KeyP:()=>setPrecArm(!state.precArm),KeyY:()=>{altSel();radarSel()},KeyI:burnSel,KeyU:()=>{rtbSel();unloadSel()},KeyL:landSel,KeyM:exfilSel,
     KeyQ:()=>state.units.forEach(u=>u.sel=u.side===0&&u.x>0&&!u.d.plane),KeyW:setFormSel,Comma:setInitSel,

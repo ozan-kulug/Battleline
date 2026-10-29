@@ -49,8 +49,8 @@ function selInfo(s){
 const btn=(a,l,k,on)=>`<button class="btn${on?' on':''}" data-a="${a}" type="button">${l}${k?`<kbd>${k}</kbd>`:''}</button>`;
 const grpH=(n,b)=>`<div class="grp"><span>${n}</span><div class="btns">${b.join('')}</div></div>`;
 function selButtons(s){if(!s.length)return'';const any=f=>s.some(f),all=f=>s.every(f);let h='';
-  const em=[btn('atk','Saldırı','A',state.attackArm),btn('fast','Hızlı','D',state.fastArm),btn('stop','Dur','S'),btn('exfil','Cepheden çek','M'),btn('hold',all(u=>u.fm===s[0].fm)?FMN[s[0].fm]:'Atış modu','H',s[0].fm!=='free')];
-  if(s.some(u=>!u.d.air))em.push(btn('form',`Dizilim: ${all(u=>(u.form||'auto')===(s[0].form||'auto'))?FORMN[s[0].form||'auto']:'karışık'}`,'W',(s[0].form||'auto')!=='auto'));
+  const em=[btn('atk','Saldırı','⇧A',state.attackArm),btn('fast','Hızlı','⇧D',state.fastArm),btn('stop','Dur','⇧S'),btn('exfil','Cepheden çek','M'),btn('hold',all(u=>u.fm===s[0].fm)?FMN[s[0].fm]:'Atış modu','H',s[0].fm!=='free')];
+  if(s.some(u=>!u.d.air))em.push(btn('form',`Dizilim: ${all(u=>(u.form||'auto')===(s[0].form||'auto'))?FORMN[s[0].form||'auto']:'karışık'}`,'⇧W',(s[0].form||'auto')!=='auto'));
   if(s.some(u=>!u.d.plane))em.push(btn('init',`İnisiyatif: ${all(u=>(u.init||'on')===(s[0].init||'on'))?INITN[s[0].init||'on']:'karışık'}`,'',(s[0].init||'on')!=='off'));if(s.length===1&&FINE&&!s[0].d.air)em.push(btn('dc','Doğrudan','V',state.dc===s[0]));h+=grpH('EMİR',em);
   const inf=s.filter(u=>u.d.inf);if(inf.length){const st=v=>inf.every(u=>u.stM===v);
     const b=[btn('st-stand','Ayakta','Z',st('stand')),btn('st-crouch','Çömel','X',st('crouch')),btn('st-prone','Yat','C',st('prone')),btn('st-auto','Oto','B',st(null)),btn('dig','Siper kaz','K')];

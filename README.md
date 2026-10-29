@@ -31,6 +31,10 @@ Başlangıç ekranındaki **ORDU KUR** düğmesi savaştan önce ordu seçilen e
 
 Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({armies:[oyuncu, YZ], deploy:true})` → `newGame` birlik listesini sıfırlar ve `systems/army.js spawnArmy` her mangayı takviyelerle aynı `spawnLoaded` fonksiyonuyla kurar. Oyun bitince **YENİDEN SAVAŞ** tekrar ordu ekranına götürür; savaş ortasında yardım ekranından **DEVAM ET** ise savaşa döner.
 
+## Kontroller ve oynanış notları
+
+- **Kamera:** W A S D, oklar, teker ve orta tuş. W/A/S/D'nin eski komutları Shift ile çalışır: ⇧W dizilim, ⇧A saldırı hareketi, ⇧S dur, ⇧D hızlı hareket. Doğrudan kontrolde (V) WASD aracı sürer.
+
 ## Konuşlanma safhası
 
 Ordu ekranındaki **SAVAŞA BAŞLA** savaşı hemen açmaz; önce konuşlanma safhası gelir: `Ordu kurma → Konuşlanma → Savaş`.
