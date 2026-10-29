@@ -21,10 +21,10 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 
 ## Sıradaki öncelikler
 
-1. YZ'nin Devriye Botu satın almaması bulgusunu düzeltmek.
-2. Kıvrımlı nehirde botun yanlış konuşlanma yarısı sayılması bulgusunu düzeltmek.
-3. Botun ateş altında geri çekilmesi ve çoklu bot dizilimi.
-4. Yeni birimlerin uzun maç denge testleri.
+1. İngilizce modda (`?lang=en`) Devriye Botu orduya ekleme/seçme çökmesini (`data-add="bot" → "pb"`) düzeltmek.
+2. YZ'nin Devriye Botu satın almaması (`aiBuy`) ve kıvrımlı nehirde yanlış konuşlanma yarısı (`placeErr`) bulgularını düzeltmek.
+3. Botun ateş altında geri çekilmesi, çoklu bot dizilimi ve Dron Operatörü (`dronop`) denge ayarları.
+4. 375 px seçim paneli (`#selp`) `box-sizing` taşmasını ve dokunmatik konuşlanma pinch-zoom/döndürme eksiklerini gidermek.
 
 ## Görev durumu
 
@@ -47,12 +47,13 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 | Büyük buglar için GitHub Issue iş akışını tanımlama | Done | Codex | AGENTS.md'ye Issue açma ve kayıt/bağlantı kuralları eklendi |
 | Devriye Botu YZ satın alma hatasını GitHub Issue'a aktarma | Planned | Codex | Issue metni hazır; GitHub entegrasyonu oluşturma isteğini 403 ile reddetti (Issues yazma yetkisi gerekli) |
 | Kıvrımlı nehir konuşlanma hatasını GitHub Issue'a aktarma | Planned | Codex | Issue metni hazır; GitHub entegrasyonu oluşturma isteğini 403 ile reddetti (Issues yazma yetkisi gerekli) |
-| Dokunmatik konuşlanma testi | Developing | Antigravity | Test ediliyor |
-| Telefon genişliğinde İngilizce taşma kontrolü | Developing | Antigravity | Test ediliyor |
+| Dokunmatik konuşlanma testi | Done | Antigravity | Chrome `375×667` üzerinde doğrulandı: tek parmak sürükleme/kaydırma ve boş alanda pinch geçti; birlik üstünde başlayan pinch çakışması (`input.js:56`) ve dokunmatik döndürme eksikliği notebook §5–§6'da |
+| Telefon genişliğinde İngilizce taşma kontrolü | Done | Antigravity | Chrome `375×667` (`?lang=en`) tüm ekranlar tarandı: `#selp` kutu modeli (`+12 px`) dışında taşma yok; ancak `tr()` yüzünden `data-add="bot" → "pb"` çökmesi bulundu (notebook §5–§6) |
+| İngilizce modda Devriye Botu orduya ekleme çökmesi | Planned | — | `i18n.js` `'bot'→'pb'` çevirisi `army-builder.js` içinde `data-add`/`data-rem`/`data-k` özniteliklerini bozuyor (notebook §6) |
 | Botun ateş altında geri çekilmesi | Planned | — | Sorumlu atanmadı |
-| Çoklu bot dizilimi (dar nehir) | Planned | — | Sorumlu atanmadı |
-| Yeni birimlerin denge testi (dron operatörü, bot) | Developing | Antigravity | Uzun maçlar test ediliyor |
-| 375 px seçim paneli taşması | Planned | — | Eski sorun |
+| Çoklu bot dizilimi (dar nehir) | Planned | — | Simülasyonda 2 dost botun `0.8 m` mesafeye kadar üst üste bindiği doğrulandı |
+| Yeni birimlerin denge testi (dron operatörü, bot) | Done | Antigravity | 6× 420 sn maç simülasyonu tamamlandı: `dronop` 3,58× KP getirisi ve %89,6 isabet ile aşırı güçlü; `bot` %87,5 batma (ort. 89 sn ömür) ile kırılgan (notebook §5–§6) |
+| 375 px seçim paneli taşması | Planned | — | Kök neden doğrulandı: `#selp` `width:100%` + `22 px` padding/border (`box-sizing:border-box` eksik, sağdan `+12 px` taşıyor) |
 
 ## Yakın vadeli hedefler
 
