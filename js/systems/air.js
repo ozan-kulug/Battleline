@@ -2,7 +2,7 @@
 import {state} from '../state.js';
 import {AW,H,PI,SQUADS,W} from '../config.js';
 import {damage,fireMissile,hurtB,inRange,kill,splashDmg,suppress} from './combat.js';
-import {opDroneTick} from './drones.js';
+import {manualFor,opDroneTick} from './drones.js';
 import {explode} from './effects.js';
 import {flying,giveMove,inBase,mkUnit,unloadHeli} from './units.js';
 import {log} from '../ui/feedback.js';
@@ -26,7 +26,7 @@ function updDrone(u,dt){u.alt='high';if(u.bat==null)u.bat=u.d.bat;
   if(!u.d.fpv)return false;
   if(u.kTgt&&(u.kTgt.hp<=0||u.kTgt.gone||u.kTgt.abandoned))u.kTgt=null;
   /* oyuncunun yönettiği dron boşta beklerken kendiliğinden dalmaz; yalnızca saldırı hareketinde veya hedef verilince */
-  if(!u.kTgt&&!u.hold&&!u.home&&(!u.dest||u.mode==='attack')&&!(u.manual&&u.mode!=='attack')){let best=null,bs=1e9;for(const e of state.units){if(e.side===u.side||flying(e)||e.abandoned||!state.vis[u.side].has(e.id))continue;const d=Math.hypot(e.x-u.x,e.y-u.y);if(d>460)continue;const sc=d*(e.d.inf?3:e.key==='tank'?.6:1);if(sc<bs){bs=sc;best=e}}if(best)u.kTgt=best}
+  if(!u.kTgt&&!u.hold&&!u.home&&(!u.dest||u.mode==='attack')&&!(manualFor(u.side)&&u.mode!=='attack')){let best=null,bs=1e9;for(const e of state.units){if(e.side===u.side||flying(e)||e.abandoned||!state.vis[u.side].has(e.id))continue;const d=Math.hypot(e.x-u.x,e.y-u.y);if(d>460)continue;const sc=d*(e.d.inf?3:e.key==='tank'?.6:1);if(sc<bs){bs=sc;best=e}}if(best)u.kTgt=best}
   if(u.op&&opDroneTick(u))return true;
   if(u.kTgt){const t=u.kTgt,d=Math.hypot(t.x-u.x,t.y-u.y);u.home=false;u.dest={x:t.x,y:t.y};u.mode='move';u.queue=[];
     if(d<14){state.curSrc=u.id;explode(t.x,t.y,.55);if(t.inB)hurtB(t.inB,120,.2);damage(t,AW.fpv,t.x,t.y-40,1);splashDmg(t.x,t.y,AW.fpv,u.side,false,t);suppress(t.x,t.y,40,60,u.side);u.gone=true;u.sel=false;return true}}

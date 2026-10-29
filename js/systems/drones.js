@@ -40,7 +40,7 @@ function opDroneTick(u){const o=u.op;
   if(!o||o.hp<=0||o.gone||o.side!==u.side||o.abandoned){u.hp=0;state.curSrc=null;kill(u);opLog(u,'operatör kayıp, dron bağlantısı koptu','bad');return true}
   const d=Math.hypot(o.x-u.x,o.y-u.y);if(d>o.d.ctrl){u.hp=0;state.curSrc=null;kill(u);opLog(o,'dron kontrol menzilini aştı, bağlantı koptu','bad');return true}
   /* otomatik dron hedefsiz kalır veya bataryası azalırsa operatöre döner; oyuncunun dronu yalnızca "üsse dön" ile döner */
-  if(!u.kTgt&&!u.manual&&(!u.dest||u.bat<u.d.bat*.25))u.home=true;
+  if(!u.kTgt&&!manualFor(u.side)&&(!u.dest||u.bat<u.d.bat*.25))u.home=true;
   if(u.home&&!u.kTgt){u.dest={x:o.x,y:o.y};u.mode='move';if(d<24){o.drones=Math.min(o.d.drones,o.drones+1);u.gone=true;u.sel=false;opLog(o,'dron geri alındı');return true}}
   return false}
 

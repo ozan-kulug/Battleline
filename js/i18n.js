@@ -146,6 +146,7 @@ const PH={
  'Birliğe dokun ve sürükle: yer değiştir · boş alanı sürükle: haritayı kaydır':'Touch and drag a unit: move · drag empty ground: pan the map',
  'Konuşlanma bölgesi dışında':'Outside the deployment zone','Nehir veya sığ geçit üzerine konamaz':'Cannot be placed on the river or a ford','Bina üzerine konamaz':'Cannot be placed on a building','Başka bir birlikle çakışıyor':'Overlaps another unit',
  'Dümen':'Rudder','dümen hasar gördü':'rudder damaged','Nehir devriyesi · makineli tüfek, köprü altından geçer':'River patrol · machine gun, passes under bridges',
+ 'Dronlar: Oyuncu':'Drones: Player','Dronlar: Operatör':'Drones: Operator','Kamikaze dron yönetimi (⇧.)':'Kamikaze drone control (⇧.)',
  'Gemi yalnızca nehre konabilir':'Ships can only be placed on the river','Nehrin düşman yarısında':'In the enemy half of the river',
  // harita
  'TERK':'ABND','OBÜS?':'HOW?','HAVAN?':'MORT?','MENZİL DIŞI':'OUT OF RANGE','GÖZLEMLİ':'OBSERVED','GÖZLEMSİZ — dağılım yüksek':'UNOBSERVED — high spread','sn':'s','dk':'min',

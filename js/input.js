@@ -4,7 +4,7 @@ import {clampCam,toW,zoomAt} from './camera.js';
 import {cvs,mm} from './canvas.js';
 import {H,SQUADS,W} from './config.js';
 import {cam,md} from './state.js';
-import {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,dcToggle,deploySel,digSel,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,squadOf,stanceSel,stopSel,unloadSel} from './systems/orders.js';
+import {addStrike,droneModeToggle,altSel,assignMission,assignRun,autoSel,burnSel,dcToggle,deploySel,digSel,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,squadOf,stanceSel,stopSel,unloadSel} from './systems/orders.js';
 import {deploy} from './systems/units.js';
 import {cards} from './ui/deck.js';
 import {depDown,depMove,depUp} from './ui/deploy.js';
@@ -85,6 +85,7 @@ addEventListener('keydown',e=>{const c=e.code;if(e.target.closest&&e.target.clos
   if(!(camK&&e.shiftKey))state.keys[c]=true;if(!state.running)return;
   if(c==='Space'){e.preventDefault();if(!state.over){state.paused=!state.paused;$('pause').hidden=!state.paused}return}
   if(e.repeat)return;
+  if(c==='Period'&&e.shiftKey){droneModeToggle();updUI();return}
   if(c.startsWith('Digit')){const n=+c.slice(5);if(e.shiftKey){const vis=cards.filter(([b,S])=>S.cat===state.deckTab);const k=n||10;if(k<=vis.length)deploy(0,SQUADS.indexOf(vis[k-1][1]));return}if(e.ctrlKey||e.metaKey){e.preventDefault();state.groups[n]=sel().map(u=>u.id);if(state.groups[n].length)log(`Grup ${n} atandı (${state.groups[n].length} birlik)`,'');return}selectGroup(n);return}
   if(camK&&(state.dc||!e.shiftKey))return;
   const map={KeyA:()=>setArm(!state.attackArm),KeyS:stopSel,KeyH:holdSel,KeyD:()=>setFastArm(!state.fastArm),KeyZ:()=>stanceSel('stand'),KeyX:()=>stanceSel('crouch'),KeyC:()=>stanceSel('prone'),KeyB:()=>stanceSel(null),
