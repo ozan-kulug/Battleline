@@ -1,0 +1,19 @@
+/* responsive.css — Dar ekran ve hareket azaltma uyarlamaları (her zaman en son yüklenir) */
+@media (max-width:820px){
+  #abp{width:176px;max-height:26vh}
+  #bottom{flex-wrap:wrap}
+  #selp{order:-1;width:100%;max-height:34vh}
+  #selp.empty{display:none}
+  #mm{width:150px;height:94px}
+  .tk{min-width:84px;padding:4px 8px}
+  .tk .lbl{font-size:10px}
+  .tk b{font-size:17px}
+  .ob{width:28px;height:28px;font-size:15px}
+  .ob svg{width:30px;height:30px}
+}
+@media (max-width:520px){
+  #mmw{display:none}
+  .card{width:70px} .card canvas{width:62px;height:34px}
+  #ovl li{grid-template-columns:96px 1fr}
+}
+@media (prefers-reduced-motion:reduce){#feed div{animation:none}}

@@ -1,0 +1,44 @@
+/* panels.css — Alt şerit: mini harita, takviye destesi ve sekmeleri, seçim/emir paneli, düğmeler */
+#bottom{position:fixed;left:calc(env(safe-area-inset-left,0px) + 10px);right:calc(env(safe-area-inset-right,0px) + 10px);bottom:calc(env(safe-area-inset-bottom,0px) + 10px);display:flex;gap:10px;align-items:flex-end;pointer-events:none}
+#bottom>*{pointer-events:auto}
+#mmw{padding:6px;flex:none}
+#mm{display:block;width:220px;height:138px;cursor:pointer}
+#deckw{padding:8px 10px;min-width:0;flex:1 1 auto;max-width:760px}
+.dh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px}
+.dh span{font-family:var(--disp);font-weight:700;letter-spacing:.12em;color:var(--mute);font-size:12px}
+.dh b{font-family:var(--disp);font-size:20px;color:var(--amber);font-variant-numeric:tabular-nums}
+.dh small{color:var(--mute);font-size:11px}
+#deck{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
+.card{flex:none;width:82px;background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:inherit;padding:4px 4px 5px;cursor:pointer;position:relative;text-align:left;display:grid;gap:2px;align-content:start}
+.card canvas{width:74px;height:40px;display:block}
+.card .nm{font-family:var(--disp);font-weight:700;font-size:12.5px;line-height:1.05}
+.card .ct{color:var(--amber);font-size:11px;font-variant-numeric:tabular-nums}
+.card .hk{position:absolute;top:3px;right:5px;color:var(--mute);font-size:9.5px}
+.card .av{position:absolute;right:5px;bottom:5px;color:var(--mute);font-size:10px;font-variant-numeric:tabular-nums}
+#eta{color:var(--mute);font-size:10.5px;margin-top:4px;min-height:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#inc{cursor:help}
+.card .fill{position:absolute;left:0;bottom:0;height:2px;background:var(--amber)}
+.card[aria-disabled="true"]{opacity:.5}
+.card:hover:not([aria-disabled="true"]){border-color:var(--amber)}
+.card:focus-visible,.btn:focus-visible,#helpBtn:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+#selp{padding:8px 10px;width:318px;flex:none;min-height:60px;display:grid;gap:6px;max-height:min(60vh,420px);overflow-y:auto}
+#seli h3{margin:0;font-family:var(--disp);font-size:18px;letter-spacing:.03em;line-height:1.1;text-wrap:balance}
+#seli .sub{color:var(--mute);font-size:11px;margin-bottom:4px}
+#seli .row{display:flex;justify-content:space-between;gap:8px;color:var(--mute);font-size:11px;font-variant-numeric:tabular-nums;line-height:1.55}
+#seli .row b{color:var(--fg);font-weight:600;text-align:right}
+#seli .row b.warn{color:var(--red)}
+.mbar{height:5px;background:#0006;margin:3px 0 5px}
+.mbar i{display:block;height:100%;background:var(--blue)}
+.mbar.sup i{background:var(--red)}
+.grp{display:grid;grid-template-columns:52px 1fr;gap:6px;align-items:start}
+.grp>span{font-family:var(--disp);font-weight:700;letter-spacing:.1em;color:var(--mute);font-size:11px;padding-top:4px}
+.btns{display:flex;gap:4px;flex-wrap:wrap}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:inherit;font-size:11px;padding:4px 6px;cursor:pointer;white-space:nowrap}
+.btn kbd{color:var(--mute);font-family:inherit;font-size:10px;margin-left:3px}
+.btn.on{border-color:var(--amber);color:var(--amber)}
+.btn:hover{border-color:var(--mute)}
+.muted{color:var(--mute)}
+#tabs{display:flex;gap:4px;flex-wrap:wrap}
+#tabs button{background:none;border:1px solid var(--line);color:var(--mute);font-family:var(--disp);font-weight:700;letter-spacing:.08em;font-size:11.5px;padding:2px 8px;cursor:pointer}
+#tabs button.on{color:var(--amber);border-color:var(--amber)}
+#tabs button:focus-visible{outline:2px solid var(--amber);outline-offset:1px}

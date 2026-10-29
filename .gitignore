@@ -1,0 +1,35 @@
+# Cephe Hattı — Git'in takip etmeyeceği dosyalar.
+# Oyun kaynakları (index.html, css/, js/, README.md) burada hariç tutulmaz.
+
+# İşletim sistemi dosyaları
+.DS_Store
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editör ve IDE önbellekleri
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-workspace
+
+# Geçici ve yedek dosyalar
+*.tmp
+*.bak
+*.log
+
+# Node araçları kullanılırsa (npx serve vb.)
+node_modules/
+npm-debug.log*
+
+# Python önbelleği (http.server kendi başına dosya üretmez)
+__pycache__/
+*.pyc
+
+# Yerel ortam ayarları
+.env
+.env.*

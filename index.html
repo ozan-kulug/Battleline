@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Cephe Hattı</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/hud.css">
+<link rel="stylesheet" href="css/panels.css">
+<link rel="stylesheet" href="css/menus.css">
+<link rel="stylesheet" href="css/responsive.css">
+<script type="module" src="js/main.js"></script>
+</head>
+<body>
+<canvas id="c"></canvas>
+<button id="helpBtn" type="button" aria-label="Yardım">?</button>
+<div id="top">
+  <div class="tk me panel"><span class="lbl">MAVİ KUVVET</span><b id="tk0">500</b><div class="bar"><i id="tb0"></i></div></div>
+  <div id="objs" class="panel"></div>
+  <div class="tk en panel"><span class="lbl">KIZIL KUVVET</span><b id="tk1">500</b><div class="bar"><i id="tb1"></i></div></div>
+</div>
+<div id="feed"></div>
+<div id="abp" class="panel" hidden><div class="abh">HAVA ÜSSÜ</div><div id="abl"></div></div>
+<div id="pause" hidden>DURAKLATILDI</div>
+<div id="modeTip" hidden></div>
+
+<div id="bottom">
+  <div id="mmw" class="panel"><canvas id="mm" width="220" height="138"></canvas></div>
+  <div id="deckw" class="panel">
+    <div class="dh"><div id="tabs"><button type="button" data-tab="kara" class="on">KARA</button><button type="button" data-tab="hsv">HAVA SAVUNMA</button><button type="button" data-tab="hava">HAVA</button></div><small id="inc">+4/sn</small><b id="kp">300 KP</b></div>
+    <div id="deck"></div>
+    <div id="eta"></div>
+  </div>
+  <div id="selp" class="panel"><div id="seli"></div><div id="selb"></div></div>
+</div>
+
+<div id="ov">
+  <div id="ovb" class="panel">
+    <h1 id="ovt">CEPHE HATTI</h1>
+    <p id="ovp">Her asker ve araç ayrı bir birliktir. Siperler yönlüdür: kum torbası veya duvar sadece karşı taraftan gelen ateşe karşı korur, kanattan vurulan asker açıktadır. Yoğun ateş altındaki birlik baskılanır; dayanamazsa paniğe kapılıp geri kaçar. Tecrübe kazanan birlik terfi eder. Tank mermileri yakından daha çok deler, roket ve füzeleri ise reaktif zırh ve aktif koruma sistemi durdurabilir. Ağır hasar alan aracın mürettebatı aracı terk edebilir; terk edilmiş araç herkes tarafından ele geçirilebilir. Obüs ve havan mevzilenmeden ateş edemez; hedefi bir gözcü görüyorsa ve atışlar aynı noktaya devam ettikçe isabet artar. Düşman topçusu ateş ettiğinde konumu kırmızı işaretle belirir. Uçaklar haritanın dışındaki hava üssünden kalkar, yakıtları sınırlıdır ve mühimmat ile fişek almak için üsse dönmeleri gerekir. Kendi başlarına yerdeki hedefleri göremezler. Radarlı hava savunması uçağı uzaktan görür ama radarı açıkken anti-radyasyon füzelerine hedef olur. Helikopterler alçakta ağaç ve bina arkasına saklanabilir. Harita bir nehirle ikiye bölünür; kara birlikleri yalnızca köprülerden ve sığ geçitlerden karşıya geçer. Tepeler görüşü ve isabeti artırır, bataklık araçları yavaşlatır. Fabrika, havaalanı, ikmal deposu, radar tepesi ve şehir merkezi gibi stratejik bölgeler ele geçirene gelir ve özel avantaj sağlar; noktaların üzerine gelince ne verdiği görünür. Takviyeler cepheye birkaç saniyede ulaşır, her karttan sınırlı sayıda vardır, cephedeki birlik sayısı arttıkça bakım gideri geliri düşürür. Daha fazla puanı tutan taraf rakibin direncini eritir.</p>
+    <ul id="ovl">
+      <li><kbd>Sol tık / sürükle</kbd><span>Asker veya araç seç. Shift ekler, çift tık tüm mangayı seçer</span></li>
+      <li><kbd>Sağ tık</kbd><span>Git. Siper, duvar, çit yakınına tıklarsan arkasına dizilirler; binaya tıklarsan içine girerler</span></li>
+      <li><kbd>Ctrl+sağ tık · A</kbd><span>Saldırı hareketi: düşman görünce durup çatışır</span></li>
+      <li><kbd>Düşmana sağ tık</kbd><span>Hedefi zorla (topçuda o noktaya 3 atım)</span></li>
+      <li><kbd>Z · X · C · B</kbd><span>Ayakta · çömel · yat · otomatik duruş</span></li>
+      <li><kbd>K · E</kbd><span>Tüfekçi çukuru kaz · binadan çık</span></li>
+      <li><kbd>G · F</kbd><span>Mevzilen / toparlan · ateş görevi (sonra hedefe tıkla)</span></li>
+      <li><kbd>T · N · O</kbd><span>Mermi: tahrip / sis · atım sayısı · serbest atış</span></li>
+      <li><kbd>R</kbd><span>Sis perdesi (tank ve ZMA)</span></li>
+      <li><kbd>V</kbd><span>Doğrudan kontrol: WASD sür, fareyle nişan al, sol tık ana silah, sağ tık ikincil</span></li>
+      <li><kbd>M</kbd><span>Cepheden çek: birlik kendi kenarına gider, değerinin bir kısmı geri ödenir, kart geri gelir</span></li>
+      <li><kbd>S · H · Q</kbd><span>Dur · atış modu (serbest / sadece karşılık / ateş kes) · hepsini seç</span></li>
+      <li><kbd>D</kbd><span>Hızlı hareket: birlikler ateş etmeden koşar</span></li>
+      <li><kbd>W</kbd><span>Dizilim: Otomatik · Hat · Kama · Kol · Dağınık · Çevre savunması. Otomatikte birlik duruma göre kendisi seçer</span></li>
+      <li><kbd>Virgül (,)</kbd><span>İnisiyatif: Temkinli · Aktif · Kapalı. Boştaki birlik emir verdiğin noktanın yakınında siper alır, ateş hattı arar, hasar alınca geri çekilir; asla düşmana doğru ilerlemez</span></li>
+      <li><kbd>Shift+sağ tık</kbd><span>Rota noktası ekle</span></li>
+      <li><kbd>Terk edilmiş araca sağ tık</kbd><span>Seçili piyadeden biri aracı ele geçirir (düşmanınkini de)</span></li>
+      <li><kbd>ZMA'ya sağ tık · U</kbd><span>Piyade araca biner · araçtan indir</span></li>
+      <li><kbd>Ctrl+1–9 · 1–9</kbd><span>Grup ata · grubu seç (iki kez basınca kamera gider)</span></li>
+      <li><kbd>Shift+1–8</kbd><span>Takviye çağır</span></li>
+      <li><kbd>Oklar · teker</kbd><span>Kamera kaydır · yakınlaştır, orta tuşla sürükle</span></li>
+      <li><kbd>Hava üssü paneli</kbd><span>Hazır uçağı kalkışa gönder, havadaki uçağa tıklayınca seçilir</span></li>
+      <li><kbd>J</kbd><span>Saldırı koşusu: haritada başlangıçtan bitişe sürükle (top, roket veya halı bombardımanı)</span></li>
+      <li><kbd>P</kbd><span>Hassas vuruş: lazer güdümlü bomba hedefleri, Shift ile birden fazla</span></li>
+      <li><kbd>Y · I · U</kbd><span>İrtifa (uçak, helikopter) veya radar aç/kapat · art yakıcı · üsse dön / askerleri indir</span></li>
+      <li><kbd>Dronlar</kbd><span>Keşif dronu ağaçların üstünden geniş alan görür ve topçuya gözcülük yapar. Kamikaze dronlar 460 m içindeki hedefe kendiliğinden dalar; düşmana sağ tıklayarak hedef verebilirsin. Bataryaları biter, U ile üsse dönüp şarj olurlar</span></li>
+      <li><kbd>Keşif uçağı · SİHA</kbd><span>Diğer uçaklar yerdeki hedefleri göremez; bu ikisi görür. Silahlı İHA gördüğü hedefe akıllı mühimmat atar. Görülüp kaybolan düşmanların son konumu 30 sn soluk işaretle kalır</span></li>
+      <li><kbd>L</kbd><span>Helikopter iniş / kalkış. Üste veya ikmal kamyonu yanına inen helikopter ikmal alır</span></li>
+      <li><kbd>Helikoptere sağ tık</kbd><span>Seçili piyade nakliye helikopterine biner</span></li>
+      <li><kbd>Boşluk</kbd><span>Duraklat</span></li>
+      <li><kbd>Dokunmatik</kbd><span>Dokun: seç / git · iki kez dokun: manga · sürükle: kaydır · iki parmak: yakınlaştır</span></li>
+    </ul>
+    <div id="diffRow"><span>DÜŞMAN KOMUTANI</span><button class="btn" type="button" data-d="easy">Kolay</button><button class="btn on" type="button" data-d="normal">Normal</button><button class="btn" type="button" data-d="hard">Zor</button></div>
+    <button class="go" id="goBtn" type="button">SAVAŞA BAŞLA</button>
+  </div>
+</div>
+</body>
+</html>
