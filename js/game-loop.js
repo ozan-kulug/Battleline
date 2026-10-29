@@ -31,7 +31,7 @@ function simStep(dt){state.time+=dt;state.visT-=dt;if(state.visT<=0){computeVis(
     state.secT+=dt;if(state.secT>=1){state.secT-=1;perSecond()}
     state.aiT-=dt;if(state.aiT<=0){aiTick();state.aiT=1.5}}
 let uiT=0;
-function frame(now){const dt=Math.min(.05,(now-state.last)/1000);state.last=now;
+function frame(now){const dt=clamp((now-state.last)/1000,0,.05);state.last=now;
   if(state.dc){const tx=state.dc.x-state.VW/cam.z/2,ty=state.dc.y-state.VH/cam.z/2;cam.x+=(tx-cam.x)*Math.min(1,dt*5);cam.y+=(ty-cam.y)*Math.min(1,dt*5)}
   else{const ps=600/cam.z*dt;if(state.keys.ArrowLeft)cam.x-=ps;if(state.keys.ArrowRight)cam.x+=ps;if(state.keys.ArrowUp)cam.y-=ps;if(state.keys.ArrowDown)cam.y+=ps;
     if(state.mouse.in&&!state.drag&&state.running&&FINE){const m=8;if(state.mouse.x<m)cam.x-=ps;if(state.mouse.x>state.VW-m)cam.x+=ps;if(state.mouse.y<m)cam.y-=ps;if(state.mouse.y>state.VH-m)cam.y+=ps}}

@@ -14,7 +14,22 @@ python -m http.server 8000
 Ardından tarayıcıda **http://localhost:8000** adresini açın. Sunucuyu durdurmak için terminalde `Ctrl+C`'ye basın.
 Windows'ta komut genellikle `python`, macOS/Linux'ta `python3` olabilir; ikisi de aynı işi yapar.
 
-Alternatifler: `npx serve .`, `npx http-server .` ya da VS Code "Live Server" eklentisi.
+Alternatifler: `npx serve .`, `npx http-server .` ya da VS Code "Live Server" eklentisi. Python kurulu değilse bunlardan biri kullanılabilir.
+
+**Geliştirici kısayolu:** `http://localhost:8000/?hizli` adresi ordu kurma ekranını atlar; iki taraf eski varsayılan kuvvetle (3 piyade, keşif, ZMA) hemen başlar. Normal oyuncu akışı bundan etkilenmez.
+
+## Ordu kurma ekranı
+
+Başlangıç ekranındaki **ORDU KUR** düğmesi savaştan önce ordu seçilen ekranı açar.
+
+- **Ordu puanı (OP)** yalnızca başlangıç kuvvetini belirler. Bütçe Öncü 600, Tabur 1000 veya Tugay 1500 seçilir. Savaş içindeki KP ekonomisi, takviye destesi ve kart sayıları bundan etkilenmez.
+- Birlikler mevcut `SQUADS` tanımlarından kategorilere ayrılır: Piyade, Keşif, Tanklar, Zırhlı Araçlar, Topçu, Hava Savunma, Hava Kuvvetleri, Destek. Bir türden en fazla 6 adet (ve kart sayısı kadar) alınabilir.
+- Ordu en az bir muharebe birliği (piyade, tanksavar, ZMA, mekanize piyade veya tank) içermeli ve bütçeyi aşmamalıdır; aksi hâlde **SAVAŞA BAŞLA** kilitlenir.
+- Kara birlikleri kendi kenarında dizilir (piyade önde, araçlar ortada, topçu ve ikmal üs içinde); uçaklar hava üssüne kalkışa hazır girer.
+- Kızıl Kuvvet (yapay zekâ) aynı bütçeyle `autoArmy` ile kendi ordusunu kurar.
+- Son kurulan ordu tarayıcıda hatırlanır (`localStorage`); okunamazsa önerilen orduyla açılır.
+
+Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({armies:[oyuncu, YZ]})` → `newGame` birlik listesini sıfırlar ve `systems/army.js spawnArmy` her mangayı takviyelerle aynı `spawnLoaded` fonksiyonuyla kurar. Oyun bitince **YENİDEN SAVAŞ** tekrar ordu ekranına götürür; savaş ortasında yardım ekranından **DEVAM ET** ise savaşa döner.
 Derleme adımı ve bağımlılık yoktur. Yazı tipleri Google Fonts'tan yüklenir; internet yoksa sistem yazı tipine düşer.
 
 ## Dosya yapısı
@@ -26,6 +41,7 @@ css/
   hud.css               Üst şerit, yardım düğmesi, olay akışı, mod ipucu, hava üssü paneli
   panels.css            Alt şerit: mini harita, takviye destesi, seçim/emir paneli, düğmeler
   menus.css             Başlangıç/yardım ekranı, zorluk seçimi, duraklatma yazısı
+  army.css              Savaş öncesi ordu kurma ekranı (kendi dar ekran kuralları dahil)
   responsive.css        Dar ekran ve hareket azaltma uyarlamaları (en son yüklenir)
 js/
   main.js               Giriş noktası: olay dinleyicilerini sırayla kurar, oyunu başlatır
@@ -33,7 +49,7 @@ js/
   state.js              Paylaşılan değişebilir durum (state nesnesi) + cam, md, recentImp
   canvas.js             Tuval öğeleri ve 2D bağlamlar
   camera.js             Kamera dönüşümü, sınırlama, yakınlaştırma
-  game.js               Yeni oyun kurulumu
+  game.js               Yeni oyun kurulumu (newGame) ve savaşı başlatma (startMatch)
   game-loop.js          Simülasyon adımı (simStep), çizim döngüsü (frame), yeniden boyutlandırma
   input.js              Fare, dokunmatik, klavye
   renderer.js           Sahne, birlik, savaş sisi, arayüz katmanı ve mini harita çizimi
@@ -41,7 +57,8 @@ js/
   world/terrain.js      Harita üretimi, arazi tamponu, bina/siper sorguları
   world/buildings.js    Binaya giriş/çıkış, bina içi yerleşim
   world/cover.js        Siper bulma, yönlü siper koruması, duruşlar, tüfekçi çukuru
-  systems/units.js      Birlik/manga oluşturma, takviye, nakliyeden indirme
+  systems/units.js      Birlik/manga oluşturma (spawnSquad, spawnLoaded), takviye, nakliyeden indirme
+  systems/army.js       Savaş öncesi ordu: OP hesabı, doğrulama, YZ ordusu, başlangıç dizilişi
   systems/spatial.js    Uzamsal ızgara
   systems/vision.js     Görüş hattı, gizlenme, tespit, son görülen konumlar
   systems/effects.js    Parçacıklar, patlama, krater, yangın, yıkım efektleri
@@ -60,7 +77,8 @@ js/
   ui/deck.js            Takviye destesi kartları ve sekmeler
   ui/panels.js          Seçim paneli: bilgi ve emir düğmeleri
   ui/hud.js             Üst şerit, hava üssü paneli, arayüz güncellemesi
-  ui/menus.js           Başlangıç/yardım ekranı, zorluk seçimi
+  ui/menus.js           Başlangıç/yardım ekranı, zorluk seçimi, ?hizli kısayolu
+  ui/army-builder.js    Ordu kurma ekranı: kategoriler, birlik kartları, ayrıntı, seçili ordu
 ```
 
 ## Paylaşılan durum nerede?
@@ -80,7 +98,7 @@ config → utils → canvas/state → world/* → systems/(units, vision, effect
        → (initiative, ai) → unit-update/renderer → ui/* → game, game-loop, input → main
 ```
 
-Olay dinleyicileri `initDeck`, `initHud`, `initInput` ve `initMenus` içindedir. `main.js` bunları tek dosyalı sürümdeki kayıt sırasıyla çağırır.
+Olay dinleyicileri `initDeck`, `initHud`, `initInput`, `initMenus` ve `initArmy` içindedir. `main.js` bunları tek dosyalı sürümdeki kayıt sırasıyla çağırır.
 
 ## Yeni kod eklerken
 

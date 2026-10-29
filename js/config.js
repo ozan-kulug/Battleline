@@ -116,5 +116,24 @@ const COMBAT=new Set(['inf','at','ifv','tank','mech']);
    Hiçbir otomatik hareket düşmana yaklaştıramaz ve çapanın ötesine, düşman tarafına geçemez. */
 const INITN={off:'Kapalı',on:'Temkinli',free:'Aktif'};
 const FORMN={auto:'Otomatik',line:'Hat',wedge:'Kama',column:'Kol',spread:'Dağınık',circle:'Çevre savunması'};
+/* ---------- savaş öncesi ordu ----------
+   Ordu puanı (OP) yalnızca başlangıç kuvvetini belirler; savaş içindeki KP ekonomisinden ve takviye destesinden ayrıdır.
+   İki taraf da aynı bütçeyle başlar. cap: bir birlik türünden en fazla kaç adet (kart sayısıyla da sınırlı). */
+const ARMY={budgets:[600,1000,1500],bn:{600:'Öncü',1000:'Tabur',1500:'Tugay'},def:1000,cap:6,name:'1. Tabur'};
+const ARMYCAT=[
+ {k:'inf',n:'Piyade',m:['inf','at']},
+ {k:'recon',n:'Keşif',m:['recon','uav']},
+ {k:'tank',n:'Tanklar',m:['tank']},
+ {k:'arm',n:'Zırhlı Araçlar',m:['ifv','mech']},
+ {k:'arty',n:'Topçu',m:['mortar','arty']},
+ {k:'aa',n:'Hava Savunma',m:['manpads','shorad','sam']},
+ {k:'air',n:'Hava Kuvvetleri',m:['heliA','heliT','fpv','cas','mr','sead','ftr','bmb','rec','tb2']},
+ {k:'sup',n:'Destek',m:['supply']},
+];
+const ROLE={inf:'Hat piyadesi · nokta tutar, el bombası atar',at:'Zırh avcısı · güdümlü tanksavar füzesi',recon:'Gözcü · geniş görüş, gizlenme, keskin nişancı',uav:'Hava gözcüsü · topçuya hedef gösterir',
+ tank:'Ağır zırh · cephenin ana vurucu gücü',ifv:'Piyade desteği · 25 mm top, sis perdesi',mech:'ZMA ve içinde tam piyade mangası',mortar:'Hafif dolaylı ateş · çabuk mevzilenir',arty:'Ağır dolaylı ateş · çok uzun menzil',
+ manpads:'Omuzdan füze · alçak uçan hedefler',shorad:'Uçaksavar topu ve kızılötesi füze',sam:'Radarlı uzun menzil · ARM hedefi olur',heliA:'Tanksavar füzesi, roket ve top',heliT:'Nakliye helikopteri ve içinde piyade mangası',
+ fpv:'Üç kamikaze dron · hedefe dalar',cas:'30 mm top veya roket koşusu',mr:'Lazer güdümlü bomba ve hava-hava füzesi',sead:'Radar avcısı · anti-radyasyon füzesi',ftr:'Hava üstünlüğü · düşman uçağı avlar',
+ bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre'};
 
-export {AIDIF,AIRMUL,AW,COL,COMBAT,COVN,CROSS,CS,DEF,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,OBJL,PAYN,PI,RANKN,RIV,RL,SQUADS,STATEN,STN,T,TAU,W,ZK,riverX};
+export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CS,DEF,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,OBJL,PAYN,PI,RANKN,RIV,ROLE,RL,SQUADS,STATEN,STN,T,TAU,W,ZK,riverX};

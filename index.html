@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="css/hud.css">
 <link rel="stylesheet" href="css/panels.css">
 <link rel="stylesheet" href="css/menus.css">
+<link rel="stylesheet" href="css/army.css">
 <link rel="stylesheet" href="css/responsive.css">
 <script type="module" src="js/main.js"></script>
 </head>
@@ -74,7 +75,46 @@
       <li><kbd>Dokunmatik</kbd><span>Dokun: seç / git · iki kez dokun: manga · sürükle: kaydır · iki parmak: yakınlaştır</span></li>
     </ul>
     <div id="diffRow"><span>DÜŞMAN KOMUTANI</span><button class="btn" type="button" data-d="easy">Kolay</button><button class="btn on" type="button" data-d="normal">Normal</button><button class="btn" type="button" data-d="hard">Zor</button></div>
-    <button class="go" id="goBtn" type="button">SAVAŞA BAŞLA</button>
+    <button class="go" id="goBtn" type="button">ORDU KUR</button>
+  </div>
+</div>
+
+<!-- Savaş öncesi ordu kurma ekranı: içerik ui/army-builder.js tarafından doldurulur -->
+<div id="army" hidden>
+  <header id="armyTop">
+    <div class="ab-nav">
+      <button id="armyBack" class="ab-back" type="button">‹ Geri</button>
+      <div class="ab-crumb"><b>ORDU KUR</b><span>Savaş öncesi kuvvet seçimi</span></div>
+    </div>
+    <div class="ab-fac" aria-label="Taraflar">
+      <div class="ab-f me"><i></i><span>MAVİ KUVVET<small>Sen · komutan</small></span></div>
+      <span class="ab-vs">VS</span>
+      <div class="ab-f en" title="Rakip yapay zekâdır ve ordusunu aynı bütçeyle kendisi kurar"><i></i><span>KIZIL KUVVET<small>Yapay zekâ</small></span></div>
+    </div>
+    <label class="ab-name"><span>BİRLİK ADI</span><input id="armyName" type="text" maxlength="24" autocomplete="off" spellcheck="false"></label>
+    <div class="ab-bud"><span>BÜTÇE</span><div id="armyBudget"></div></div>
+    <div id="armyTot" class="ab-total panel"><span class="lbl">ORDU PUANI</span><b><span id="armyPts">0 / 0</span> <small>OP</small></b><div class="bar"><i id="armyBar"></i></div></div>
+  </header>
+  <div id="armyMain">
+    <nav id="armyCats" class="panel" aria-label="Birlik kategorileri"></nav>
+    <section id="armyGrid" class="panel">
+      <div class="ab-gh"><h2 id="armyCatT"></h2><small id="armyCatS"></small></div>
+      <div id="armyCards"></div>
+    </section>
+    <div id="armySide">
+      <aside id="armyInfo" class="panel" aria-live="polite"></aside>
+      <aside id="armyList" class="panel">
+        <div class="ab-lt"><span>SEÇİLİ ORDU</span><small id="armyN"></small></div>
+        <div id="armyRows"></div>
+        <div class="ab-foot">
+          <div class="ab-sum"><span>Harcanan</span><b id="armyUsed"></b><span>Kalan</span><b id="armyLeft"></b></div>
+          <p id="armyMsg" role="status"></p>
+          <div class="ab-acts"><button id="armyAuto" class="btn" type="button">Otomatik doldur</button><button id="armyClr" class="btn" type="button">Temizle</button></div>
+          <button id="armyGo" class="go" type="button">SAVAŞA BAŞLA</button>
+          <small class="ab-note">Kızıl Kuvvet aynı bütçeyle yapay zekâ tarafından kurulur. OP yalnızca başlangıç kuvvetini belirler; savaşta takviyeler KP ile çağrılır.</small>
+        </div>
+      </aside>
+    </div>
   </div>
 </div>
 </body>

@@ -1,0 +1,131 @@
+/* army.css — Savaş öncesi ordu kurma ekranı: savaş HUD'unun üstünde tam ekran katman (dar ekran uyarlamaları dosyanın sonunda) */
+#army{position:fixed;inset:0;z-index:6;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;
+  padding:calc(env(safe-area-inset-top,0px) + 12px) calc(env(safe-area-inset-right,0px) + 14px) calc(env(safe-area-inset-bottom,0px) + 14px) calc(env(safe-area-inset-left,0px) + 14px);
+  background:linear-gradient(180deg,rgba(8,10,7,.94),rgba(10,13,9,.8) 30%,rgba(10,13,9,.8) 70%,rgba(8,10,7,.94));-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#army .btn:disabled,#army .go:disabled{opacity:.4;cursor:not-allowed}
+#army .go:disabled{background:var(--panel2);color:var(--mute)}
+/* üst şerit */
+#armyTop{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap}
+.ab-nav{display:flex;align-items:center;gap:10px;margin-right:auto}
+.ab-back{background:none;border:0;color:var(--mute);font-family:var(--disp);font-weight:700;font-size:17px;letter-spacing:.06em;cursor:pointer;padding:4px 6px}
+.ab-back:hover{color:var(--fg)}
+.ab-crumb b{display:block;font-family:var(--disp);font-weight:800;font-size:32px;letter-spacing:.06em;line-height:.95;color:var(--fg)}
+.ab-crumb span{color:var(--mute);font-size:11px;letter-spacing:.06em}
+.ab-fac{display:flex;align-items:center;gap:6px}
+.ab-f{display:flex;align-items:center;gap:8px;padding:5px 10px;border:1px solid var(--line);background:var(--panel2);font-family:var(--disp);font-weight:700;letter-spacing:.08em;font-size:13px;line-height:1.05}
+.ab-f small{display:block;font-family:var(--mono);font-weight:400;letter-spacing:0;font-size:10px;color:var(--mute)}
+.ab-f i{width:20px;height:14px;display:block;border:1px solid #0008}
+.ab-f.me{border-color:var(--blue);color:var(--blue)} .ab-f.me i{background:linear-gradient(180deg,var(--blue) 0 50%,#3a6386 50%)}
+.ab-f.en{color:var(--red);opacity:.75;cursor:help} .ab-f.en i{background:linear-gradient(180deg,var(--red) 0 50%,#8c3a31 50%)}
+.ab-vs{font-family:var(--disp);font-weight:800;color:var(--mute);font-size:13px}
+.ab-name,.ab-bud{display:grid;gap:3px}
+.ab-name span,.ab-bud>span,.ab-total .lbl{font-family:var(--disp);font-weight:700;letter-spacing:.12em;color:var(--mute);font-size:11px}
+.ab-name input{width:150px;background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:inherit;font-size:12px;padding:5px 8px}
+.ab-name input:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+#armyBudget{display:flex;gap:4px}
+#armyBudget .btn b{color:var(--amber);font-weight:600;margin-left:2px}
+.ab-total{padding:6px 12px;min-width:170px;display:grid;gap:3px;color:var(--amber)}
+.ab-total b{font-family:var(--disp);font-size:24px;line-height:1;font-variant-numeric:tabular-nums;color:var(--fg)}
+.ab-total b small{font-size:13px;color:var(--mute)}
+.ab-total.over{color:var(--red)} .ab-total.over b{color:var(--red)}
+/* ana yerleşim: kategoriler | birlikler | ayrıntı + seçili ordu */
+#armyMain{display:grid;grid-template-columns:170px minmax(0,1fr) 330px;gap:10px;min-height:0}
+#armySide{display:grid;grid-template-rows:minmax(0,1.05fr) minmax(0,1fr);gap:10px;min-height:0}
+#armyCats,#armyGrid,#armyInfo,#armyList{min-height:0}
+/* kategoriler */
+#armyCats{padding:8px;display:flex;flex-direction:column;gap:4px;overflow:auto}
+.ab-cat{display:flex;justify-content:space-between;align-items:center;gap:6px;background:none;border:1px solid transparent;border-left:3px solid var(--line);color:var(--mute);
+  font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.04em;text-align:left;padding:8px 10px;cursor:pointer;white-space:nowrap}
+.ab-cat:hover{color:var(--fg);background:#ffffff08}
+.ab-cat.on{color:var(--amber);border-left-color:var(--amber);background:#e8a83812}
+.ab-cat small{font-family:var(--mono);font-weight:600;font-size:11px;color:var(--amber)}
+.ab-cat:focus-visible,.ab-card:focus-visible{outline:2px solid var(--amber);outline-offset:1px}
+/* birlik kartları */
+#armyGrid{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.ab-gh{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.ab-gh h2{margin:0;font-family:var(--disp);font-weight:800;font-size:22px;letter-spacing:.06em;text-transform:uppercase}
+.ab-gh small{color:var(--mute);font-size:11px}
+#armyCards{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;overflow:auto;align-content:start;min-height:0;padding:2px}
+.ab-card{position:relative;display:grid;gap:3px;align-content:start;padding:8px 8px 7px;background:var(--panel2);border:1px solid var(--line);cursor:pointer;transition:border-color .12s,background .12s}
+.ab-card:hover{border-color:var(--mute)}
+.ab-card.in{background:#2a3121}
+.ab-card.sel{border-color:var(--amber);box-shadow:inset 0 0 0 1px var(--amber)}
+.ab-card.na .ab-art,.ab-card.na .ab-nm{opacity:.45}
+.ab-art{height:66px;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 60%,#ffffff0d,transparent 70%)}
+.ab-art canvas{width:118px;height:64px;display:block}
+.ab-nm{font-family:var(--disp);font-weight:700;font-size:15px;line-height:1.05}
+.ab-role{color:var(--mute);font-size:10.5px;line-height:1.3;min-height:2.6em}
+.ab-cost{position:absolute;top:6px;right:8px;color:var(--amber);font-family:var(--disp);font-weight:800;font-size:16px;font-variant-numeric:tabular-nums}
+.ab-cnt{position:absolute;top:6px;left:8px;background:var(--amber);color:#1a1405;font-weight:600;font-size:11px;padding:0 5px;z-index:1}
+.ab-cnt:empty{display:none}
+.ab-ctl{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:3px}
+.ab-ctl .btn{font-family:var(--disp);font-weight:800;font-size:16px;padding:1px 0;line-height:1.2}
+.ab-ctl [data-add]:not(:disabled){border-color:#e8a83866;color:var(--amber)}
+/* ayrıntı paneli */
+#armyInfo{padding:10px 12px;overflow:auto;display:grid;gap:7px;align-content:start}
+.ab-ih{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.ab-ih small{color:var(--mute);font-family:var(--disp);font-weight:700;letter-spacing:.12em;font-size:11px}
+.ab-ih h2{margin:0;font-family:var(--disp);font-weight:800;font-size:23px;line-height:1.05;text-wrap:balance}
+.ab-ih>b{font-family:var(--disp);font-weight:800;font-size:26px;color:var(--amber);white-space:nowrap;line-height:1}
+.ab-ih>b small{font-size:13px}
+.ab-rl,.ab-comp{margin:0;font-size:11px;line-height:1.45}
+.ab-rl{color:var(--fg)} .ab-comp{color:var(--mute)}
+.ab-prev{display:grid;place-items:center;height:132px;border:1px solid var(--line);background:radial-gradient(ellipse at 50% 55%,#3b4535aa,#141810 75%)}
+.ab-prev canvas{width:222px;height:120px;display:block}
+.ab-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+.ab-stats div{background:#0004;border:1px solid #3b453566;padding:4px 6px;display:grid;gap:1px;min-width:0}
+.ab-stats small{color:var(--mute);font-size:9.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ab-stats b{font-weight:600;font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ab-wt{width:100%;border-collapse:collapse;font-size:10.5px;font-variant-numeric:tabular-nums}
+.ab-wt th,.ab-wt td{padding:3px 4px;border-bottom:1px solid #3b453588;text-align:right;white-space:nowrap}
+.ab-wt thead th{color:var(--mute);font-weight:400;font-size:9.5px}
+.ab-wt th:first-child{text-align:left;white-space:normal;font-weight:600;color:var(--fg)}
+.ab-wt thead th:first-child{color:var(--mute);font-weight:400}
+.ab-now{margin:0;font-size:11px}
+.ab-iadd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-top:2px}
+.ab-iadd span{margin-right:auto;color:var(--mute);font-size:11px}
+.ab-iadd span b{color:var(--amber)}
+.ab-blk{margin:0;color:var(--red);font-size:10.5px;text-align:right}
+/* seçili ordu paneli */
+#armyList{padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.ab-lt{display:flex;justify-content:space-between;align-items:baseline}
+.ab-lt span{font-family:var(--disp);font-weight:800;letter-spacing:.12em;font-size:14px}
+.ab-lt small{color:var(--mute);font-size:11px}
+#armyRows{overflow:auto;min-height:40px;flex:1 1 auto;display:grid;gap:2px;align-content:start}
+.ab-lh{color:var(--mute);font-family:var(--disp);font-weight:700;letter-spacing:.1em;font-size:10.5px;text-transform:uppercase;padding:4px 0 1px}
+.ab-row{display:grid;grid-template-columns:minmax(0,1fr) auto 38px 24px 24px;gap:5px;align-items:center;padding:3px 4px;background:#0003;border-left:2px solid transparent;cursor:pointer}
+.ab-row.sel{border-left-color:var(--amber);background:#e8a8380f}
+.ab-row .nm{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ab-row .q{color:var(--amber);font-weight:600;font-size:11.5px}
+.ab-row .c{text-align:right;color:var(--mute);font-size:11px;font-variant-numeric:tabular-nums}
+.ab-row .btn{padding:0;height:20px;font-family:var(--disp);font-weight:800;font-size:14px;line-height:1}
+.ab-empty{margin:auto 0;color:var(--mute);font-size:11px;line-height:1.5;text-align:center;padding:10px 0}
+.ab-foot{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:7px}
+.ab-sum{display:grid;grid-template-columns:auto 1fr auto 1fr;gap:4px 8px;font-size:11px;color:var(--mute);align-items:baseline}
+.ab-sum b{color:var(--fg);font-variant-numeric:tabular-nums;font-weight:600}
+.ab-sum b.warn{color:var(--red)}
+#armyMsg{margin:0;font-size:11px;line-height:1.4;min-height:1.4em;padding-left:7px;border-left:3px solid var(--blue)}
+#armyMsg.warn{color:var(--red);border-left-color:var(--red)}
+.ab-acts{display:flex;gap:4px}
+.ab-acts .btn{flex:1}
+#armyGo{justify-self:stretch;font-size:20px}
+.ab-note{color:var(--mute);font-size:10px;line-height:1.4}
+/* geniş ekran: ayrıntı ve seçili ordu yan yana sütunlar */
+@media (min-width:1400px){#armyMain{grid-template-columns:180px minmax(0,1fr) 340px 300px}#armySide{display:contents}}
+/* kısa ekran: önizleme küçülür, açıklama notu gizlenir, seçili ordu listesine yer kalır */
+@media (max-height:860px) and (min-width:821px){#armySide{grid-template-rows:minmax(0,.9fr) minmax(0,1.1fr)}.ab-prev{height:92px}.ab-prev canvas{width:166px;height:90px}.ab-note{display:none}.ab-crumb b{font-size:26px}}
+@media (max-width:1100px){#armyMain{grid-template-columns:150px minmax(0,1fr) 300px}.ab-crumb b{font-size:26px}#armyCards{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+/* dar ekran: tek sütun, sayfa kayar */
+@media (max-width:820px){
+  #army{display:block;overflow-y:auto;padding-left:calc(env(safe-area-inset-left,0px) + 10px);padding-right:calc(env(safe-area-inset-right,0px) + 10px)}
+  #armyTop{margin-bottom:10px}
+  #armyMain,#armySide{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+  #armyMain,#armySide,#armyCats,#armyGrid,#armyCards,#armyInfo,#armyList{min-height:auto}
+  #armyCats{flex-direction:row;overflow-x:auto}
+  .ab-cat{border-left:1px solid transparent;border-bottom:3px solid var(--line);font-size:13px;padding:6px 9px}
+  .ab-cat.on{border-bottom-color:var(--amber)}
+  #armyCards{overflow:visible;grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+  #armyInfo,#armyRows{overflow:visible}
+  .ab-name input{width:120px}
+}
+@media (max-width:520px){.ab-crumb b{font-size:22px}.ab-fac .ab-vs{display:none}.ab-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
