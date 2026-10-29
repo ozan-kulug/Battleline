@@ -53,8 +53,11 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 | Botun ateş altında geri çekilmesi | Planned | — | Sorumlu atanmadı |
 | Çoklu bot dizilimi (dar nehir) | Planned | — | Simülasyonda 2 dost botun `0.8 m` mesafeye kadar üst üste bindiği doğrulandı |
 | Yeni birimlerin denge testi (dron operatörü, bot) | Done | Antigravity | 6× 420 sn maç simülasyonu tamamlandı: `dronop` 3,58× KP getirisi ve %89,6 isabet ile aşırı güçlü; `bot` %87,5 batma (ort. 89 sn ömür) ile kırılgan (notebook §5–§6) |
+| Kamikaze dron kontrolünü maç sırasında değiştirebilme | Done | Kod: Claude · Test: Antigravity | `c0428e5`; `#dmBtn`, `⇧.` kısayolu, `#selb [data-a="dmode"]`, TR/EN metinler ve havadaki dronların anlık mod geçişi Chrome'da doğrulandı (`u.home` dönüşünde yer emri uç durumu notebook §5–§6'da) |
+| Köprülerin yıkılması ve geçişin yeniden sağlanması | Done | Kod: Claude · Test: Antigravity | 6 ilk senaryo + Claude düzeltmeleri sonrası 4 yeniden doğrulama senaryosu Chrome'da %100 geçti: topçu/LGB yıkımı, yıkık köprü sonrası araçların (`tank` 21,5 sn, `ifv` 16,3 sn, `supply` 17,4 sn) sığ geçitten takılmadan geçişi, 1–3 kamyonla kesintisiz onarım (`!u.repB`), YZ kamyon pususunda `90 sn` bekleme + `450 m` tehdit iptali (`brT`), bot/normal geçişler ve TR/EN metinler (notebook §5) |
+| Oyun temposunu yavaşlatma ve kontrolleri kolaylaştırma | Planned | — | Harita ölçeği büyütülecek, kara/deniz/hava araçlarının hareket hızları düşürülecek ve oyuncu emirleri daha kolay uygulanır hale getirilecek. Tam ölçek ve hız değerleri oyun içi denge/doğrulama sırasında belirlenecek; hedef, çatışmaya tepki ve emir vermek için daha fazla zaman sağlamak. |
 | 375 px seçim paneli taşması | Planned | — | Kök neden doğrulandı: `#selp` `width:100%` + `22 px` padding/border (`box-sizing:border-box` eksik, sağdan `+12 px` taşıyor) |
-| Oyun adını Battleline yapma (iki dilde) | Developed | Claude | Başlık, menü başlığı, i18n ve README; görsel kontrol Antigravity'de |
+| Oyun adını Battleline yapma (iki dilde) | Done | Kod: Claude · Test: Antigravity | `a97ec15`; `<title>` (`Battleline`) ve `#ovt` (`BATTLELINE`) açılış ile `?` yardım ekranında TR/EN Chrome testinde doğrulandı |
 
 ## Yakın vadeli hedefler
 
