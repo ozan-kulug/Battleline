@@ -63,7 +63,8 @@ function selInfo(s){
     if(u.d.cap)h+=`<div class="row"><span>Yük</span><b>${u.cargo.length} / ${u.d.cap} asker</b></div>`;
     const dm=[];if(u.trk>0)dm.push(`${u.d.naval?'Dümen':'Palet'} ${Math.ceil(u.trk)} sn`);if(u.tur>0)dm.push(`Taret ${Math.ceil(u.tur)} sn`);if(u.opt>0)dm.push('Optik');if(u.eng)dm.push('Motor');if(u.fire>0)dm.push('Yangın');h+=`<div class="row"><span>Hasar</span><b class="${dm.length?'warn':''}">${dm.join(' · ')||'Yok'}</b></div>`;
     if(u.d.smokeL)h+=`<div class="row"><span>Sis perdesi</span><b>${Math.floor(u.smokeL)}</b></div>`;
-    if(u.d.supply)h+=`<div class="row"><span>İkmal</span><b>130 m içindeki dostlara</b></div>`}
+    if(u.d.supply)h+=`<div class="row"><span>İkmal</span><b>130 m içindeki dostlara</b></div>`;
+    if(u.repB)h+=`<div class="row"><span>Köprü onarımı</span><b>${u.repB.dead?`%${Math.round(u.repB.rep*100)}`:'Tamam'}</b></div>`}
   if(u.d.indirect){h+=`<div class="row"><span>Durum</span><b>${STATEN[u.st]}</b></div><div class="row"><span>Seçili mermi</span><b>${u.shell==='he'?'Tahrip':'Sis'}</b></div>`;
     h+=`<div class="row"><span>Görev</span><b>${u.mission?`${u.mission.n} atım kaldı`:u.auto?'Serbest atış':'Bekliyor'}</b></div>`}
   u.d.w.forEach((w,i)=>{h+=`<div class="row"><span>${w.n} · ${w.r||(w.rLow+(w.rHigh?' / '+w.rHigh:''))} m</span><b>${fmtA(w,u.ammo[i])}</b></div>`});

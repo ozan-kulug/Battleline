@@ -6,6 +6,7 @@ import {DEF,FINE} from './config.js';
 import {drawMini,render} from './renderer.js';
 import {cam} from './state.js';
 import {aiTick} from './systems/ai.js';
+import {updBridges} from './systems/bridges.js';
 import {updFires} from './systems/combat.js';
 import {perSecond,updObjs} from './systems/economy.js';
 import {updCells,updParts,wind} from './systems/effects.js';
@@ -20,7 +21,7 @@ import {clamp,gauss} from './utils/helpers.js';
 
 /* tek simülasyon adımı (çizimden bağımsız) */
 function simStep(dt){state.time+=dt;state.visT-=dt;if(state.visT<=0){computeVis();state.visT=.15}
-    for(const u of state.units)updUnit(u,dt);separate();updProj(dt);updObjs(dt);
+    for(const u of state.units)updUnit(u,dt);separate();updProj(dt);updObjs(dt);updBridges(dt);
     state.units=state.units.filter(u=>u.hp>0&&!u.gone&&!u.inHeli);
     for(const s of [0,1])for(let i=state.pending[s].length-1;i>=0;i--){const q=state.pending[s][i];if((q.t-=dt)<=0){state.pending[s].splice(i,1);arrive(s,q.idx)}}
     for(const s of [0,1]){const af=1+.4*state.objs.filter(o=>o.k==='airfield'&&o.owner===s).length;for(const e of state.airbase[s])if((e.st==='prep'||e.st==='rearm')&&(e.t-=dt*af)<=0){e.st='ready';if(s===0)log(`${DEF[e.key].n} kalkışa hazır`,'good')}}

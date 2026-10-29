@@ -87,6 +87,9 @@ function genTerrain(){
   for(const pl of STREETS)markLine(pl,11,T.ROAD,true);
   for(const pl of ROADS)markLine(pl,13,T.ROAD,false);
   for(let cy=0;cy<GH;cy++)for(let cx=0;cx<GW;cx++){const x=cx*CS;if((x<200||x>W-216)&&grid[cy*GW+cx]===T.FOREST)grid[cy*GW+cx]=T.GRASS}
+  /* köprü kayıtları: yol hücrelerinin altında kalan su hücreleri yıkımda suya döner */
+  state.bridges=CROSS.filter(c=>c.t==='bridge').map(c=>{const cells=[];for(let cy=Math.max(0,(c.y-16)/CS|0);cy<=Math.min(GH-1,(c.y+16)/CS|0);cy++)for(let cx=0;cx<GW;cx++){const px=cx*CS+8,py=cy*CS+8;if(Math.abs(px-riverX(py))<=RIV.hw+2)cells.push(cy*GW+cx)}
+    return{n:c.y<1000?'Kuzey köprüsü':c.y<2000?'Orta köprü':'Güney köprüsü',y:c.y,hp:1200,max:1200,dead:false,rep:0,cells}});
   // tahkimat
   const add=(t,a,b)=>{state.covers.push({t,x1:a[0],y1:a[1],x2:b[0],y2:b[1]});state.covers.push({t,x1:W-a[0],y1:H-a[1],x2:W-b[0],y2:H-b[1]})};
   const poly=(t,p)=>{for(let i=0;i<p.length-1;i++)add(t,p[i],p[i+1])};
@@ -178,9 +181,7 @@ function drawTerrain(r){
   // yollar
   for(const [w,c] of [[26,'rgba(40,32,18,.45)'],[19,'#93845f'],[5,'rgba(70,58,36,.25)']]){tctx.strokeStyle=c;tctx.lineWidth=w;for(const pl of ROADS){tctx.beginPath();pl.forEach(([x,y],i)=>i?tctx.lineTo(x,y):tctx.moveTo(x,y));tctx.stroke()}}
   // köprüler
-  for(const c of CROSS)if(c.t==='bridge'){const x0=riverX(c.y),x1=x0-RIV.hw-24,x2=x0+RIV.hw+24;tctx.fillStyle='rgba(0,0,0,.35)';tctx.fillRect(x1+4,c.y-14,x2-x1,30);
-    tctx.fillStyle='#7a7262';tctx.fillRect(x1,c.y-15,x2-x1,30);tctx.strokeStyle='#3f3a30';tctx.lineWidth=3;tctx.beginPath();tctx.moveTo(x1,c.y-15);tctx.lineTo(x2,c.y-15);tctx.moveTo(x1,c.y+15);tctx.lineTo(x2,c.y+15);tctx.stroke();
-    tctx.strokeStyle='rgba(0,0,0,.18)';tctx.lineWidth=1;tctx.beginPath();for(let x=x1+6;x<x2;x+=8){tctx.moveTo(x,c.y-13);tctx.lineTo(x,c.y+13)}tctx.stroke()}
+  for(const c of CROSS)if(c.t==='bridge')drawBridge(c.y);
   // havaalanı pisti
   for(const o of OBJ0)if(o.k==='airfield'){tctx.fillStyle='#4a4a46';tctx.fillRect(o.x-410,o.y-32,820,64);tctx.strokeStyle='rgba(235,235,225,.75)';tctx.lineWidth=3;tctx.setLineDash([26,18]);tctx.beginPath();tctx.moveTo(o.x-370,o.y);tctx.lineTo(o.x+370,o.y);tctx.stroke();tctx.setLineDash([]);
     tctx.fillStyle='rgba(235,235,225,.7)';for(const e of [-1,1])for(let k=-3;k<=3;k++)tctx.fillRect(o.x+e*395-4,o.y+k*8-2,10,4)}
@@ -197,6 +198,13 @@ function contour(lv,seg){for(let cy=0;cy<GH-1;cy++)for(let cx=0;cx<GW-1;cx++){co
   const m=(a>lv)|(b>lv)<<1|(c>lv)<<2|(d>lv)<<3;if(m===0||m===15)continue;const x=cx*CS+8,y=cy*CS+8,f=(p,q)=>p===q?.5:(lv-p)/(q-p);
   const P=[];if((m&1)!==(m>>1&1))P.push([x+CS*f(a,b),y]);if((m>>1&1)!==(m>>2&1))P.push([x+CS,y+CS*f(b,c)]);if((m>>2&1)!==(m>>3&1))P.push([x+CS*f(d,c),y+CS]);if((m>>3&1)!==(m&1))P.push([x,y+CS*f(a,d)]);
   if(P.length===2)seg(P[0][0],P[0][1],P[1][0],P[1][1]);else if(P.length===4){if(m===5){seg(P[3][0],P[3][1],P[0][0],P[0][1]);seg(P[1][0],P[1][1],P[2][0],P[2][1])}else{seg(P[0][0],P[0][1],P[1][0],P[1][1]);seg(P[2][0],P[2][1],P[3][0],P[3][1])}}}}
+/* köprü çizimi (açılışta ve onarımda); yıkık köprü: su, kopuk uçlar, enkaz */
+function drawBridge(y){const x0=riverX(y),x1=x0-RIV.hw-24,x2=x0+RIV.hw+24;tctx.fillStyle='rgba(0,0,0,.35)';tctx.fillRect(x1+4,y-14,x2-x1,30);
+    tctx.fillStyle='#7a7262';tctx.fillRect(x1,y-15,x2-x1,30);tctx.strokeStyle='#3f3a30';tctx.lineWidth=3;tctx.beginPath();tctx.moveTo(x1,y-15);tctx.lineTo(x2,y-15);tctx.moveTo(x1,y+15);tctx.lineTo(x2,y+15);tctx.stroke();
+    tctx.strokeStyle='rgba(0,0,0,.18)';tctx.lineWidth=1;tctx.beginPath();for(let x=x1+6;x<x2;x+=8){tctx.moveTo(x,y-13);tctx.lineTo(x,y+13)}tctx.stroke()}
+function drawBridgeRuin(y){const x0=riverX(y),x1=x0-RIV.hw-24,x2=x0+RIV.hw+24,g=tctx;g.fillStyle='#3a5560';g.beginPath();
+  for(let yy=y-17;yy<=y+17;yy+=2)g.lineTo(riverX(yy)-RIV.hw,yy);for(let yy=y+17;yy>=y-17;yy-=2)g.lineTo(riverX(yy)+RIV.hw,yy);g.closePath();g.fill();
+  for(let i=0;i<26;i++){g.fillStyle=R()<.5?'#5f584b':'#3d382f';g.fillRect(x0+(R()-.5)*RIV.hw*1.8,y+(R()-.5)*26,2+R()*5,2+R()*4)}scorch(x1+14,y,22);scorch(x2-14,y,22)}
 function refreshMini(){mbctx.imageSmoothingQuality='high';mbctx.drawImage(tc,0,0,220,138)}
 function scorch(x,y,rad){const g=tctx.createRadialGradient(x,y,0,x,y,rad);g.addColorStop(0,'rgba(20,16,10,.55)');g.addColorStop(.6,'rgba(30,24,14,.3)');g.addColorStop(1,'rgba(30,24,14,0)');tctx.fillStyle=g;tctx.beginPath();tctx.arc(x,y,rad,0,TAU);tctx.fill()}
 const bcell=new Map();
@@ -206,4 +214,4 @@ const isWater=(x,y)=>cellAt(x,y)===T.WATER;
 /* m: kıyıdan pay. Hareket gerçek su kenarına kadar (2), yol bulma ortaya yakın (14) kullanır, viraj dönüşünde gemi kıyıya takılmasın */
 const riverAt=(x,y,m=6)=>x>=0&&y>=0&&x<W&&y<H&&Math.abs(x-riverX(y))<RIV.hw-m;
 
-export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,refreshMini,riverAt,scorch};
+export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawBridge,drawBridgeRuin,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,refreshMini,riverAt,scorch};

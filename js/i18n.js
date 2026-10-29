@@ -147,6 +147,8 @@ const PH={
  'Konuşlanma bölgesi dışında':'Outside the deployment zone','Nehir veya sığ geçit üzerine konamaz':'Cannot be placed on the river or a ford','Bina üzerine konamaz':'Cannot be placed on a building','Başka bir birlikle çakışıyor':'Overlaps another unit',
  'Dümen':'Rudder','dümen hasar gördü':'rudder damaged','Nehir devriyesi · makineli tüfek, köprü altından geçer':'River patrol · machine gun, passes under bridges',
  'Dronlar: Oyuncu':'Drones: Player','Dronlar: Operatör':'Drones: Operator','Kamikaze dron yönetimi (⇧.)':'Kamikaze drone control (⇧.)',
+ 'Kuzey köprüsü':'North bridge','Orta köprü':'Center bridge','Güney köprüsü':'South bridge','yıkıldı':'destroyed','onarıldı':'repaired','Köprü onarımı':'Bridge repair','Tamam':'Done','YIKIK':'DESTROYED','ONARILIYOR':'REPAIRING','Yıkık köprüye sağ tık':'Right-click destroyed bridge',
+ 'Seçili ikmal kamyonları köprü başına gidip köprüyü onarır (tek kamyonla 45 sn, en fazla 3 kamyon hızlandırır). Köprüler topçu, havan, bomba ve ağır silahlarla yıkılabilir; yıkılırken üstündekiler düşer':'Selected supply trucks drive to the bridgehead and repair it (45 s with one truck, up to 3 trucks speed it up). Bridges can be destroyed by artillery, mortars, bombs and heavy weapons; units on them fall in',
  'Gemi yalnızca nehre konabilir':'Ships can only be placed on the river','Nehrin düşman yarısında':'In the enemy half of the river',
  // harita
  'TERK':'ABND','OBÜS?':'HOW?','HAVAN?':'MORT?','MENZİL DIŞI':'OUT OF RANGE','GÖZLEMLİ':'OBSERVED','GÖZLEMSİZ — dağılım yüksek':'UNOBSERVED — high spread','sn':'s','dk':'min',

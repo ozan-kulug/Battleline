@@ -27,7 +27,7 @@ function initiative(u,dt){
   if(u.init==='off'||u.d.plane||u.abandoned||u.panicT>0||u.inHeli||u.gone||u.hp<=0)return;
   u.iT=(u.iT||0)-dt;if(u.iT>0)return;u.iT=.6+R()*.5;
   if(!u.anchor)u.anchor={x:(u.dest||u).x,y:(u.dest||u).y};
-  const idle=!u.dest&&!u.moving&&!u.board&&!u.crewTo&&!u.exfil&&!u.enterB&&u.dig<0&&state.time-(u.ordT||-9)>2.5&&!u.hold;
+  const idle=!u.dest&&!u.moving&&!u.board&&!u.crewTo&&!u.exfil&&!u.enterB&&u.dig<0&&state.time-(u.ordT||-9)>2.5&&!u.hold&&!u.repB;
   const th=threat(u),fw=u.side?-1:1;
   // helikopter: füze geliyorsa veya ağır hasarlıysa alçalıp geri kaç
   if(u.d.heli&&!u.d.drone){if(flying(u)&&!(u.altT>0)&&(state.time>(u.evT||0))&&(state.proj.some(p=>p.k==='msl'&&p.tgt===u&&!p.lost)||(u.hp<u.d.hp*.4&&state.time-u.shotAtT<3))){

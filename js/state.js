@@ -10,6 +10,7 @@ export const state={
   fields:[],
   buildings:[],
   covers:[],
+  bridges:[],
   chains:[],
   units:[],
   squads:new Map(),

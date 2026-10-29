@@ -2,6 +2,7 @@
 import {state} from '../state.js';
 import {AIDIF,COMBAT,H,PI,SQUADS,T,TAU,W,ZK,riverX} from '../config.js';
 import {assignRunFor,launch} from './air.js';
+import {ends,nearEnd,orderRepair} from './bridges.js';
 import {orderGroup} from './orders.js';
 import {deploy,flying,giveMove,unloadHeli} from './units.js';
 import {log} from '../ui/feedback.js';
@@ -133,7 +134,10 @@ function aiPlan(sd){const A=AIS[sd],en=1-sd;evalObjs(sd);
 function aiSupport(sd,sqs,main){const f=AIS[sd].focus;if(!f)return;const st=main&&main.stage?main.stage:{x:behind(sd,f.x,f.r+200),y:f.y};
   for(const q of sqs){if(!q.m.length)continue;const lead=q.m[0];
     if(q.k==='arty'||q.k==='mortar'){for(const u of q.m)placeIndirect(sd,u,f);continue}
-    if(q.k==='supply'){const need=state.units.find(u=>u.side===sd&&!u.abandoned&&!u.d.supply&&!u.sees.length&&dist2(u,lead)<1100&&((u.d.veh&&u.hp<u.d.hp*.6)||(u.d.indirect&&u.ammo[0].he<5)));
+    if(q.k==='supply'){const brT=b=>{const e=ends(b)[sd];return enemyNear(sd,e.x,e.y,450)>40},cd=b=>{(b.aiNext=b.aiNext||[0,0])[sd]=state.time+90};
+      if(lead.repB){const b=lead.repB;if(!b.dead)lead.repB=null;else if(brT(b)){lead.repB=null;cd(b)}else{if(!lead.dest&&!nearEnd(lead,b))orderRepair(lead,b);continue}}
+      const need=state.units.find(u=>u.side===sd&&!u.abandoned&&!u.d.supply&&!u.sees.length&&dist2(u,lead)<1100&&((u.d.veh&&u.hp<u.d.hp*.6)||(u.d.indirect&&u.ammo[0].he<5)));
+      if(!need){const db=state.bridges.find(b=>b.dead&&state.time>=((b.aiNext||[])[sd]||0)&&!brT(b)&&!state.units.some(u=>u.side===sd&&u.repB===b));if(db){orderRepair(lead,db);cd(db);continue}}
       if(need)sqGo(q,need.x-fwd(sd)*40,need.y,'move','n'+need.id);else if(state.time-(q.goT||0)>25)sqGo(q,behind(sd,st.x,180),st.y+gauss()*60,'move','s'+Math.round(st.x/120)+'_'+Math.round(st.y/120));continue}
     if(q.k==='recon'){const L=dist2(st,f)||1;sqGo(q,f.x+(st.x-f.x)/L*(f.r+240),f.y+(st.y-f.y)/L*(f.r+240)+gauss()*60,'move','r'+f.n);continue}
     if(q.k==='manpads'||q.k==='shorad'){sqGo(q,behind(sd,st.x,110),st.y+gauss()*90,'move','aa'+f.n+(main?main.id:''));continue}

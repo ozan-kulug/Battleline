@@ -24,7 +24,7 @@ function sqLag(sq){if(sq.lagT===state.time)return sq.lag;sq.lagT=state.time;let 
 function slopeMul(u,a){if(u.d.naval)return 1;const de=elevAt(u.x+Math.cos(a)*16,u.y+Math.sin(a)*16)-elevAt(u.x,u.y);return de>0?1-Math.min(u.d.inf?.25:.4,de*(u.d.inf?1.5:2.5)):1}
 /* nehri geçmek gerekiyorsa en uygun köprüyü veya sığ geçidi seç */
 function routeFor(u,dx,dy){if(u.d.air||u.d.naval)return[];const off=u.x-riverX(u.y);if(Math.abs(off)<RIV.hw+10)return[];const s1=Math.sign(off),s2=Math.sign(dx-riverX(dy))||s1;if(s1===s2)return[];
-  let best=[],bc=1e9;for(const c of CROSS){const cx=riverX(c.y),A={x:cx+s1*(RIV.hw+55),y:c.y},B={x:cx-s1*(RIV.hw+55),y:c.y};
+  let best=[],bc=1e9;for(const c of CROSS){if(c.t==='bridge'&&state.bridges.some(b=>b.dead&&b.y===c.y))continue;const cx=riverX(c.y),A={x:cx+s1*(RIV.hw+55),y:c.y},B={x:cx-s1*(RIV.hw+55),y:c.y};
     const cost=Math.hypot(A.x-u.x,A.y-u.y)+Math.hypot(B.x-dx,B.y-dy)+(c.t==='ford'?(u.d.inf?80:320):0);if(cost<bc){bc=cost;best=[A,B]}}return best}
 /* bina veya suya sıkışan birliği en yakın serbest noktaya çıkar */
 function unstick(u){if(u.d.air||u.inB||u.inHeli)return;if(u.d.naval){if(!riverAt(u.x,u.y))u.x=riverX(u.y);return}if(u.d.inf){const b=buildingAt(u.x,u.y);if(b&&b!==u.enterB){const l=u.x-b.x,r=b.x+b.w-u.x,t=b.y+b.h-u.y,tp=u.y-b.y,m=Math.min(l,r,t,tp);if(m===l)u.x=b.x-4;else if(m===r)u.x=b.x+b.w+4;else if(m===tp)u.y=b.y-4;else u.y=b.y+b.h+4}}
@@ -34,9 +34,9 @@ function blockedAt(x,y,u){const b=buildingAt(x,y);if(b&&b!==u.enterB)return true
 function moveUnit(u,dt){u.moving=false;if(u.inB||!u.dest)return;
   if(u.d.indirect&&u.st!=='travel'){if(u.st==='deployed'||u.st==='deploying'){u.st='packing';u.stT=u.d.packT}return}
   if(u.trk>0)return;
-  if(u.pathFor!==u.dest){u.pathFor=u.dest;u.path=u.d.naval?(findPath(u,u.dest.x,u.dest.y)||[]):routeFor(u,u.dest.x,u.dest.y);u.prog=null;
+  if(u.pathFor!==u.dest){u.pathFor=u.dest;u.path=u.d.naval?(findPath(u,u.dest.x,u.dest.y)||[]):routeFor(u,u.dest.x,u.dest.y);u.prog=null;u.wbTry=0;
     if(u.d.inf&&!u.enterB&&buildingAt(u.dest.x,u.dest.y)){const b=buildingAt(u.dest.x,u.dest.y),cx=b.x+b.w/2,cy=b.y+b.h/2,dx=u.x-cx,dy=u.y-cy,sc=Math.min((b.w/2+8)/Math.max(Math.abs(dx),1e-3),(b.h/2+8)/Math.max(Math.abs(dy),1e-3));u.dest={x:cx+dx*sc,y:cy+dy*sc};u.pathFor=u.dest}}
-  {const dd=Math.hypot(u.dest.x-u.x,u.dest.y-u.y);if(dd<18&&u.prog&&state.time-u.prog.t>1.2&&!u.enterB&&!u.board&&!u.crewTo){u.dest=null;u.prog=null;return}if(!u.prog||dd<u.prog.d-10){u.prog={d:dd,t:state.time}}else if(state.time-u.prog.t>2&&!(u.sup>65)&&!(u.mode==='attack'&&u.sees.length)){u.prog={d:dd,t:state.time};if(state.time-(u.pfT||-9)>4){u.pfT=state.time;const pth=findPath(u,u.dest.x,u.dest.y);if(pth&&pth.length)u.path=pth;else if(u.d.inf){u.x+=gauss()*6;u.y+=gauss()*6}}}}
+  {const dd=Math.hypot(u.dest.x-u.x,u.dest.y-u.y);if(dd<18&&u.prog&&state.time-u.prog.t>1.2&&!u.enterB&&!u.board&&!u.crewTo){u.dest=null;u.prog=null;return}const tq=u.path&&u.path.length?u.path[0]:u.dest,dq=Math.hypot(tq.x-u.x,tq.y-u.y);if(!u.prog||u.prog.q!==tq||dq<u.prog.d-10){u.prog={d:dq,t:state.time,q:tq}}else if(state.time-u.prog.t>2&&!(u.sup>65)&&!(u.mode==='attack'&&u.sees.length)){u.prog={d:dq,t:state.time,q:tq};if(state.time-(u.pfT||-9)>4){u.pfT=state.time;const pth=findPath(u,u.dest.x,u.dest.y);if(pth&&pth.length)u.path=pth;else if(u.d.inf){u.x+=gauss()*6;u.y+=gauss()*6}}}}
   let tg=u.dest;if(u.path&&u.path.length){if(Math.hypot(u.path[0].x-u.x,u.path[0].y-u.y)<18)u.path.shift();if(u.path.length)tg=u.path[0]}
   const dx=tg.x-u.x,dy=tg.y-u.y,d=Math.hypot(dx,dy);
   if(tg===u.dest&&d<5){if(u.d.inf&&!blockedAt(u.dest.x,u.dest.y,u)){u.x=u.dest.x;u.y=u.dest.y}u.dest=null;return}
@@ -54,7 +54,7 @@ function moveUnit(u,dt){u.moving=false;if(u.inB||!u.dest)return;
   u.a+=clamp(angDiff(wa,u.a),-u.d.turn*dt,u.d.turn*dt);const al=Math.abs(angDiff(wa,u.a));
   if(u.crush)sp*=.35;
   if(al<.7){const s=Math.min(d,sp*(back?.45:1)*(1-al/.7*.6)*dt)*(back?-1:1),ox=u.x,oy=u.y;u.x+=Math.cos(u.a)*s;u.y+=Math.sin(u.a)*s;
-    if(u.d.naval?!riverAt(u.x,u.y,2):isWater(u.x,u.y)&&(!isWater(ox,oy)||Math.abs(u.x-riverX(u.y))<=Math.abs(ox-riverX(oy)))){u.x=ox;u.y=oy;u.wb=(u.wb||0)+dt;if(u.wb>2.5){u.wb=0;u.dest=null}}else u.wb=0}
+    if(u.d.naval?!riverAt(u.x,u.y,2):isWater(u.x,u.y)&&(!isWater(ox,oy)||Math.abs(u.x-riverX(u.y))<=Math.abs(ox-riverX(oy)))){u.x=ox;u.y=oy;u.wb=(u.wb||0)+dt;if(u.wb>2.5){u.wb=0;const p=!u.wbTry&&findPath(u,u.dest.x,u.dest.y);if(p&&p.length){u.path=p;u.wbTry=1}else{u.dest=null;u.wbTry=0}}}else u.wb=0}
   u.moving=true;if(!u.d.naval)crushCheck(u,dt)}
 function crushCheck(u,dt){const b=buildingAt(u.x,u.y);u.crush=!!b;if(b){hurtB(b,(u.key==='tank'?90:40)*dt);if(R()<dt*6)P({k:'dust',x:u.x,y:u.y,vx:gauss()*10,vy:gauss()*10,r:6,g:22,max:1.5,a:.5})}
   for(const c of coversNear(u.x,u.y)){if(c.r!=null||!isFinite(c.hp))continue;if(segInfo(c,u.x,u.y).d<11){c.hp-=(u.key==='tank'?320:180)*dt;if(c.hp<=0){breakCover(c);break}}}

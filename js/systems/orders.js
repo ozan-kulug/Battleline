@@ -3,6 +3,7 @@ import {state} from '../state.js';
 import {FORMN,H,PI,SQUADS,TAU,W,riverX} from '../config.js';
 import {cam,recentImp} from '../state.js';
 import {assignRunFor,strikeKey} from './air.js';
+import {bridgeAt,orderRepair} from './bridges.js';
 import {launchDrone} from './drones.js';
 import {popSmoke} from './effects.js';
 import {flying,giveMove,setFM,unloadHeli} from './units.js';
@@ -88,6 +89,7 @@ function orderGroup(list,wx,wy,mode){list=list.filter(u=>!u.d.air);if(!list.leng
   else if(inf.length)squadForm(inf,wx,wy,mode,type,face);
   else formationEx(list,wx,wy,mode,type,face)}
 function rightOrder(wx,wy,atk,shift){const all=sel();if(!all.length)return;
+  {const trk=all.filter(u=>u.d.supply),db=trk.length?bridgeAt(wx,wy,40):null;if(db&&db.dead){trk.forEach(u=>orderRepair(u,db));state.marks.push({ping:1,x:wx,y:wy,t:0,c:'#7fd48a'});return}}
   if(shift){const snap=new Map(all.map(u=>[u,{dest:u.dest,q:u.queue.slice(),mode:u.mode}]));rightOrder(wx,wy,atk,false);
     for(const [u,o] of snap){if(!o.dest||!u.dest||u.d.plane)continue;const nd=u.dest;u.dest=o.dest;u.queue=[...o.q,nd];u.mode=o.mode}return}
   const ab=hitAbandoned(wx,wy),infS=all.filter(u=>u.d.inf&&!u.d.indirect);

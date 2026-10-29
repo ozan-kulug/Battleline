@@ -2,6 +2,7 @@
 import {state} from '../state.js';
 import {T} from '../config.js';
 import {recentImp} from '../state.js';
+import {hitBridge} from './bridges.js';
 import {damage,hurtB,splashDmg,suppress} from './combat.js';
 import {P,crater,damageCovers,explode,flareFx,igniteAt,mkSmoke,puff} from './effects.js';
 import {flying} from './units.js';
@@ -27,7 +28,7 @@ function updProj(dt){for(let i=state.proj.length-1;i>=0;i--){const p=state.proj[
   if(f>=1){state.proj.splice(i,1);impact(p)}}}
 function bldSplash(x,y,w,side){for(const b of state.buildings){if(b.dead)continue;const cx=clamp(x,b.x,b.x+b.w),cy=clamp(y,b.y,b.y+b.h),d=Math.hypot(cx-x,cy-y);
   if(d<w.splash){hurtB(b,w.dmg*1.3*(1-d/w.splash),w.k==='bomb'||w.k==='lgb'?.4:.22);for(const o of [...b.occ])if(o.side!==side&&R()<.5)damage(o,w,x,y,.25)}}}
-function impact(p){const w=p.w,x=p.tx,y=p.ty;state.curSrc=p.from;
+function impact(p){const w=p.w,x=p.tx,y=p.ty;state.curSrc=p.from;if(p.shell!=='smoke')hitBridge(x,y,w,p.k);
   if(p.hit&&p.tgt&&p.tgt.hp>0&&p.tgt.aps>=1&&p.tgt.apsCd<=0&&!p.tgt.abandoned&&(p.k==='rpg'||p.k==='atgm'||p.k==='rocket'||p.k==='gun')&&R()<(w.pen==='heat'?.8:.3)){
     const t=p.tgt,a=Math.atan2(p.oy-t.y,p.ox-t.x);t.aps--;t.apsCd=4;explode(t.x+Math.cos(a)*18,t.y+Math.sin(a)*18,.3);return}
   if(p.k==='arty'||p.k==='mortar'){if(p.shell==='smoke'){state.smokes.push(mkSmoke(x,y,p.k==='arty'?80:55,p.k==='arty'?45:30));puff(x,y,8,'rgba(235,235,230,.6)',24);return}

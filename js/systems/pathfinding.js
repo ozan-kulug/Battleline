@@ -11,7 +11,7 @@ const navStamp=new Int32Array(GW*GH);
 let navGen=1;
 const navMode=u=>u.d.naval?'sea':u.d.inf?'inf':'veh';
 function navFree(cx,cy,mode){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;if(mode==='sea')return riverAt(cx*CS+8,cy*CS+8,14);const i=cy*GW+cx;if(grid[i]===T.WATER)return false;if(mode==='inf'){const b=buildingAt(cx*CS+8,cy*CS+8);if(b)return false}return true}
-function lineFree(ax,ay,bx,by,mode){const L=Math.hypot(bx-ax,by-ay),n=Math.ceil(L/8);for(let k=1;k<n;k++){const x=ax+(bx-ax)*k/n,y=ay+(by-ay)*k/n;if(mode==='sea'){if(!riverAt(x,y,14))return false;continue}if(cellAt(x,y)===T.WATER)return false;if(mode==='inf'&&buildingAt(x,y))return false}return true}
+function lineFree(ax,ay,bx,by,mode){const L=Math.hypot(bx-ax,by-ay),n=Math.ceil(L/8),px=L?-(by-ay)/L:0,py=L?(bx-ax)/L:0;for(let k=1;k<n;k++){const x=ax+(bx-ax)*k/n,y=ay+(by-ay)*k/n;if(mode==='sea'){if(!riverAt(x,y,14))return false;continue}if(cellAt(x,y)===T.WATER)return false;if(mode==='veh'&&(cellAt(x+px*10,y+py*10)===T.WATER||cellAt(x-px*10,y-py*10)===T.WATER))return false;if(mode==='inf'&&buildingAt(x,y))return false}return true}
 function findPath(u,tx,ty){const mode=navMode(u),veh=mode==='veh',sx=u.x/CS|0,sy=u.y/CS|0;let gx=tx/CS|0,gy=ty/CS|0;gx=clamp(gx,0,GW-1);gy=clamp(gy,0,GH-1);
   if(!navFree(gx,gy,mode)){let found=false;for(let r=1;r<6&&!found;r++)for(let dy=-r;dy<=r&&!found;dy++)for(let dx=-r;dx<=r;dx++)if(navFree(gx+dx,gy+dy,mode)){gx+=dx;gy+=dy;found=true;break}if(!found)return null}
   navGen++;const heap=[],push=(i,f)=>{heap.push([f,i]);let k=heap.length-1;while(k>0){const p=(k-1)>>1;if(heap[p][0]<=heap[k][0])break;[heap[p],heap[k]]=[heap[k],heap[p]];k=p}},
