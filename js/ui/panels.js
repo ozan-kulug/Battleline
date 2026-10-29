@@ -8,11 +8,26 @@ import {effStance} from '../world/cover.js';
 import {elevAt} from '../world/terrain.js';
 
 const fmtA=(w,a)=>typeof a==='object'?`TAH ${Math.floor(a.he)} · SİS ${Math.floor(a.smoke)}`:a===Infinity?'∞':`${Math.floor(a)} / ${w.ammo}`;
+const moraleN=(sup,panic)=>panic?'Panik, geri çekiliyor':sup>=90?'Kırılma eşiğinde':sup>65?'Yere yapıştı':sup>30?'Baskı altında':'Sakin';
 const terrN=u=>{const e=elevAt(u.x,u.y);return e>.5?'Tepe · görüş ve isabet artar':e<-.25?'Vadi · gizli, görüş kısa':'Düz'};
+/* manga görünümü: piyade manga olarak seçildiğinde toplu durum */
+function squadInfo(sq,s){const ms=sq.m.filter(m=>m.hp>0&&!m.gone),n=ms.length,hp=ms.reduce((a,m)=>a+m.hp,0),mx=ms.reduce((a,m)=>a+m.d.hp,0),sup=ms.reduce((a,m)=>a+m.sup,0)/Math.max(1,n);
+  const panic=ms.filter(m=>m.panicT>0).length,cov=ms.filter(m=>m.cov||m.inB).length,c={};for(const m of ms)c[m.d.n]=(c[m.d.n]||0)+1;const L=ms.find(m=>!m.inB)||ms[0];
+  const th=ms.map(m=>m.th).filter(t=>t&&state.time-t.t<12).sort((a,b)=>b.t-a.t)[0];
+  let h=`<h3>${sq.n}</h3><div class="sub">${n}/${sq.m.length} ayakta${s.length<n?` · ${s.length} seçili`:''} · manga olarak yönetilir</div>`;
+  h+=`<div class="row"><span>Sağlamlık</span><b>${Math.ceil(hp)} / ${mx}</b></div><div class="mbar"><i style="width:${hp/Math.max(1,mx)*100}%"></i></div>`;
+  h+=`<div class="row"><span>Moral (ortalama)</span><b class="${sup>65||panic?'warn':''}">${moraleN(sup,0)}${panic?` · ${panic} panik`:''}</b></div><div class="mbar sup"><i style="width:${sup}%"></i></div>`;
+  h+=`<div class="row"><span>Siperde</span><b>${cov} / ${n}</b></div><div class="row"><span>Duruş</span><b>${STN[effStance(L)]}${L.stM?'':' (oto)'}</b></div>`;
+  h+=`<div class="row"><span>İnisiyatif</span><b>${INITN[L.init||'on']}</b></div><div class="row"><span>Atış modu</span><b>${FMN[L.fm]}</b></div><div class="row"><span>Arazi</span><b>${terrN(L)}</b></div>`;
+  if(th)h+=`<div class="row"><span>Son karar</span><b>${th.s}</b></div>`;
+  h+=Object.entries(c).map(([k,q])=>`<div class="row"><span>${k}</span><b>×${q}</b></div>`).join('');
+  for(const m of ms)m.d.w.forEach((w,i)=>{if(w.anti&&typeof w.ammo==='number')h+=`<div class="row"><span>${w.n} (${m.d.n})</span><b>${fmtA(w,m.ammo[i])}</b></div>`});
+  return h}
 function selInfo(s){
-  if(!s.length)return'<h3 class="muted">Seçili birlik yok</h3><div class="row"><span>Sol tık, sürükle veya çift tık (manga)</span></div>';
-  if(s.length>1){const c={};for(const u of s)c[u.d.n]=(c[u.d.n]||0)+1;const sup=s.filter(u=>u.d.inf&&u.sup>65).length;
-    return `<h3>${s.length} birlik seçili</h3>`+Object.entries(c).map(([n,k])=>`<div class="row"><span>${n}</span><b>×${k}</b></div>`).join('')+(sup?`<div class="row"><span>Baskı altında</span><b class="warn">${sup}</b></div>`:'')}
+  if(!s.length)return'<h3 class="muted">Seçili birlik yok</h3><div class="row"><span>Sol tık: manga seçer · Alt+tık: tek asker</span></div>';
+  if(s.length>1&&s[0].sq&&s[0].d.inf&&s.every(u=>u.sq===s[0].sq))return squadInfo(s[0].sq,s);
+  if(s.length>1){const nq=new Set(s.map(u=>u.sq||u)).size,c={};for(const u of s)c[u.d.n]=(c[u.d.n]||0)+1;const sup=s.filter(u=>u.d.inf&&u.sup>65).length;
+    return `<h3>${nq>1?`${nq} manga · `:''}${s.length} birlik seçili</h3>`+Object.entries(c).map(([n,k])=>`<div class="row"><span>${n}</span><b>×${k}</b></div>`).join('')+(sup?`<div class="row"><span>Baskı altında</span><b class="warn">${sup}</b></div>`:'')}
   const u=s[0];let h=`<h3>${u.d.n}</h3>`;
   if(u.sq&&u.sq.m.length>1)h+=`<div class="sub">${u.sq.n} · ${u.sq.m.filter(x=>x.hp>0).length}/${u.sq.m.length} ayakta</div>`;
   h+=`<div class="row"><span>Sağlamlık</span><b>${Math.ceil(u.hp)} / ${u.d.hp}</b></div><div class="mbar"><i style="width:${u.hp/u.d.hp*100}%"></i></div>`;

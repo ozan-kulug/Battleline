@@ -101,10 +101,15 @@ function render(){
   if(state.phase==='deploy')drawDeployZones(z);
   const S=sel();ctx.lineWidth=1/z;
   if(S.length&&S.length<=6)for(const u of S){if(!u.anchor||(u.init||'on')==='off'||u.d.air)continue;ctx.strokeStyle='rgba(127,212,138,.28)';ctx.setLineDash([2/z,5/z]);ctx.beginPath();ctx.arc(u.anchor.x,u.anchor.y,leash(u),0,TAU);ctx.stroke();ctx.setLineDash([])}
-  for(const u of S){const w=u.d.w[0];if(w&&(S.length<8||!u.d.inf)){ctx.strokeStyle='rgba(232,168,56,.3)';ctx.setLineDash([4/z,6/z]);ctx.beginPath();ctx.arc(u.x,u.y,w.r,0,TAU);ctx.stroke();
+  const rngSeen=new Set();
+  for(const u of S){const w=u.d.w[0],rk=u.d.inf&&u.sq?u.sq.id+u.key:null;if(w&&(S.length<8||!u.d.inf)&&!(rk&&rngSeen.has(rk))){if(rk)rngSeen.add(rk);ctx.strokeStyle='rgba(232,168,56,.3)';ctx.setLineDash([4/z,6/z]);ctx.beginPath();ctx.arc(u.x,u.y,w.r,0,TAU);ctx.stroke();
       if(w.min){ctx.beginPath();ctx.arc(u.x,u.y,w.min,0,TAU);ctx.stroke()}ctx.setLineDash([])}
     if(u.dest){ctx.strokeStyle=u.mode==='attack'?'rgba(232,168,56,.55)':u.mode==='fast'?'rgba(127,212,138,.6)':'rgba(98,166,230,.5)';ctx.beginPath();ctx.moveTo(u.x,u.y);ctx.lineTo(u.dest.x,u.dest.y);for(const q of u.queue)ctx.lineTo(q.x,q.y);ctx.stroke();
       ctx.fillStyle=ctx.strokeStyle;for(const q of u.queue){ctx.beginPath();ctx.arc(q.x,q.y,3/z,0,TAU);ctx.fill()}}}
+  /* seçili piyade mangalarının çevresi: manga tek birim gibi görünür */
+  {const done=new Set();for(const u of S){if(!u.d.inf||!u.sq||done.has(u.sq))continue;done.add(u.sq);const ms=u.sq.m.filter(m=>m.sel&&m.hp>0&&!m.gone&&!m.inHeli&&!m.inB);if(ms.length<2)continue;
+    const cx=ms.reduce((a,m)=>a+m.x,0)/ms.length,cy=ms.reduce((a,m)=>a+m.y,0)/ms.length,r=Math.max(...ms.map(m=>Math.hypot(m.x-cx,m.y-cy)))+11;
+    ctx.strokeStyle='rgba(232,168,56,.55)';ctx.lineWidth=1.3/z;ctx.setLineDash([5/z,4/z]);ctx.beginPath();ctx.arc(cx,cy,r,0,TAU);ctx.stroke();ctx.setLineDash([])}}
   for(const u of state.units){if(u.d.air||(u.side===1&&!state.vis[0].has(u.id)))continue;
     if(u.sel){ctx.strokeStyle='#e8a838';ctx.lineWidth=1.4/z;ctx.beginPath();ctx.arc(u.x,u.y,u.d.inf?7:24,0,TAU);ctx.stroke()}
     drawUnit(ctx,u,u.x,u.y,u.inB?.85:1)}

@@ -24,15 +24,27 @@ function chooseForm(list,wx,wy,face){const side=list[0].side,ks=knownEnemies(sid
   if(recentImp.some(q=>state.time-q.t<40&&Math.hypot(q.x-wx,q.y-wy)<240))return'spread';
   if(state.objs.some(o=>Math.hypot(o.x-wx,o.y-wy)<o.r))return'circle';
   const n=list.length,cx=list.reduce((a,u)=>a+u.x,0)/n,cy=list.reduce((a,u)=>a+u.y,0)/n;return Math.hypot(wx-cx,wy-cy)>500?'wedge':'line'}
-function formationEx(list,wx,wy,mode,type,face){if(!list.length)return;const n=list.length,inf=list[0].d.inf,sp=inf?14:52,fx=Math.cos(face),fy=Math.sin(face),px=-fy,py=fx,pts=[];
+/* dizilim noktaları: o={sp: aralık, row: sıra arası, minR: çember en küçük yarıçapı, cols: en fazla sütun} */
+function formPts(n,wx,wy,type,face,o){const sp=o.sp,fx=Math.cos(face),fy=Math.sin(face),px=-fy,py=fx,pts=[];
   for(let i=0;i<n;i++){let x,y,f=face;
     if(type==='wedge'){const k=Math.ceil(i/2),sg=i%2?1:-1;x=wx-fx*k*sp*.9+px*sg*k*sp;y=wy-fy*k*sp*.9+py*sg*k*sp}
     else if(type==='column'){x=wx-fx*i*sp;y=wy-fy*i*sp}
-    else if(type==='circle'){const Rr=Math.max(inf?26:72,n*sp*1.15/TAU),a=face+i/n*TAU;x=wx+Math.cos(a)*Rr;y=wy+Math.sin(a)*Rr;f=a}
-    else{const ss=type==='spread'?sp*2.6:sp,cols=Math.min(n,inf?8:5),r=i/cols|0,c=i%cols-(Math.min(cols,n-r*cols)-1)/2;x=wx+px*c*ss-fx*r*(inf?18:55);y=wy+py*c*ss-fy*r*(inf?18:55);if(type==='spread'&&c%2){x-=fx*sp;y-=fy*sp}}
+    else if(type==='circle'){const Rr=Math.max(o.minR,n*sp*1.15/TAU),a=face+i/n*TAU;x=wx+Math.cos(a)*Rr;y=wy+Math.sin(a)*Rr;f=a}
+    else{const ss=type==='spread'?sp*2.6:sp,cols=Math.min(n,o.cols),r=i/cols|0,c=i%cols-(Math.min(cols,n-r*cols)-1)/2;x=wx+px*c*ss-fx*r*o.row;y=wy+py*c*ss-fy*r*o.row;if(type==='spread'&&c%2){x-=fx*sp;y-=fy*sp}}
     for(let k=0;k<4&&(isWater(x,y)||buildingAt(x,y));k++){x=wx+(x-wx)*.7+gauss()*4;y=wy+(y-wy)*.7+gauss()*4}
     pts.push({x,y,f})}
+  return pts}
+function formationEx(list,wx,wy,mode,type,face){if(!list.length)return;const inf=list[0].d.inf,pts=formPts(list.length,wx,wy,type,face,inf?{sp:14,row:18,minR:26,cols:8}:{sp:52,row:55,minR:72,cols:5});
   const left=[...list];for(const q of pts){let bi=0,bd=1e9;left.forEach((u,i)=>{const d=Math.hypot(u.x-q.x,u.y-q.y);if(d<bd){bd=d;bi=i}});const u=left.splice(bi,1)[0];giveMove(u,q.x,q.y,mode);u.faceA=q.f}}
+/* ---------- manga ---------- */
+/* bir birliğin mangadaki sağ ve sahada olan üyeleri (seçim ve emirlerin birimi) */
+function squadOf(u){if(!u.sq)return[u];const m=u.sq.m.filter(x=>x.hp>0&&!x.gone&&!x.inHeli&&x.side===u.side);return m.includes(u)?m:[u]}
+function groupSq(list){const g=new Map();for(const u of list){const k=u.sq||u;if(!g.has(k))g.set(k,[]);g.get(k).push(u)}return[...g.values()]}
+const cen=l=>({x:l.reduce((a,u)=>a+u.x,0)/l.length,y:l.reduce((a,u)=>a+u.y,0)/l.length});
+/* piyade mangaları blok olarak dizilir: önce manga merkezleri, sonra her manga kendi içinde */
+function squadForm(list,wx,wy,mode,type,face){const gs=groupSq(list);if(gs.length<2){formationEx(list,wx,wy,mode,type,face);return}
+  const ctr=formPts(gs.length,wx,wy,type,face,{sp:64,row:62,minR:70,cols:5}),inner=type==='column'?'column':type==='spread'?'spread':'line',left=[...gs];
+  for(const p of ctr){let bi=0,bd=1e9;left.forEach((g,i)=>{const c=cen(g),d=Math.hypot(c.x-p.x,c.y-p.y);if(d<bd){bd=d;bi=i}});formationEx(left.splice(bi,1)[0],p.x,p.y,mode,inner,type==='circle'?p.f:face)}}
 function formation(list,wx,wy,mode,sp){if(!list.length)return;const n=list.length,cx=list.reduce((a,u)=>a+u.x,0)/n,cy=list.reduce((a,u)=>a+u.y,0)/n,ang=Math.atan2(wy-cy,wx-cx);
   const cols=Math.ceil(Math.sqrt(n*2)),px=-Math.sin(ang),py=Math.cos(ang),fx=Math.cos(ang),fy=Math.sin(ang);
   [...list].sort((a,b)=>(a.x*px+a.y*py)-(b.x*px+b.y*py)).forEach((u,i)=>{const c=i%cols-(Math.min(cols,n)-1)/2,r=-(i/cols|0);let x=wx+px*c*sp+fx*r*sp,y=wy+py*c*sp+fy*r*sp;
@@ -49,22 +61,30 @@ function coverSlots(wx,wy,ref,side,skip,prim){const slots=[];
     if(c.t==='fox')pts=[[c.x,c.y]];else if(c.t==='wreck')pts=[[c.x-7,c.y+9],[c.x+7,c.y-9]];else{const k=Math.max(2,Math.floor(c.r/6));pts=[];for(let i=0;i<k;i++){const a=i/k*TAU;pts.push([c.x+Math.cos(a)*c.r*.5,c.y+Math.sin(a)*c.r*.5])}}
     for(const [x,y] of pts)if(!occ(x,y)&&!buildingAt(x,y))slots.push({x,y,pr:(prim?1000:0)+Math.hypot(x-wx,y-wy)})}
   return slots.sort((a,b)=>a.pr-b.pr)}
-function placeInCover(list,wx,wy,prim){const n=list.length,ref={x:list.reduce((a,u)=>a+u.x,0)/n,y:list.reduce((a,u)=>a+u.y,0)/n};
-  const slots=coverSlots(wx,wy,ref,list[0].side,new Set(list),prim).slice(0,n),left=[...list];
-  for(const s of slots){let bi=0,bd=1e9;left.forEach((u,i)=>{const d=Math.hypot(u.x-s.x,u.y-s.y);if(d<bd){bd=d;bi=i}});const u=left.splice(bi,1)[0];giveMove(u,s.x,s.y,'move')}
+/* yuvaları en yakın birliklere dağıtır */
+function assignSlots(us,slots,mode){const left=[...us];for(const s of slots){if(!left.length)break;let bi=0,bd=1e9;left.forEach((u,i)=>{const d=Math.hypot(u.x-s.x,u.y-s.y);if(d<bd){bd=d;bi=i}});giveMove(left.splice(bi,1)[0],s.x,s.y,mode)}return left}
+/* manga mangaya: her manga en iyi boş yuvanın çevresindeki bitişik yuvaları alır, mangalar siperde birbirine karışmaz */
+function placeInCover(list,wx,wy,prim){const n=list.length,ref=cen(list);
+  const avail=coverSlots(wx,wy,ref,list[0].side,new Set(list),prim),gs=groupSq(list).sort((a,b)=>{const p=cen(a),q=cen(b);return Math.hypot(p.x-wx,p.y-wy)-Math.hypot(q.x-wx,q.y-wy)}),left=[];
+  for(const g of gs){if(!avail.length){left.push(...g);continue}const an=avail[0],pick=avail.slice().sort((a,b)=>Math.hypot(a.x-an.x,a.y-an.y)-Math.hypot(b.x-an.x,b.y-an.y)).slice(0,g.length);
+    for(const p of pick)avail.splice(avail.indexOf(p),1);left.push(...assignSlots(g,pick,'move'))}
   if(left.length){let dx=ref.x-wx,dy=ref.y-wy;const L=Math.hypot(dx,dy)||1;dx/=L;dy/=L;
     left.forEach((u,i)=>{const c=i-(left.length-1)/2;giveMove(u,wx+dx*28-dy*c*13,wy+dy*28+dx*c*13,'move')});
     if(list[0].side===0)log(`Siperde yer kalmadı: ${left.length} asker arkada bekliyor`,'')}}
 function orderGroup(list,wx,wy,mode){list=list.filter(u=>!u.d.air);if(!list.length)return;const inf=list.filter(u=>u.d.inf),veh=list.filter(u=>!u.d.inf);
   const b=buildingAt(wx,wy);
-  if(b&&inf.length){inf.forEach(u=>{giveMove(u,b.x+b.w/2,b.y+b.h/2,mode);u.enterB=b});formation(veh,wx,wy,mode,48);return}
+  /* binaya tıklanınca mangalar bütün olarak yerleşir: sığmayan manga en yakın boş binaya, o da yoksa önüne dizilir */
+  if(b&&inf.length){const free=state.buildings.filter(o=>!o.dead&&o.cap>0&&!(o.burn>0)&&!(o.occ[0]&&o.occ[0].side!==inf[0].side)&&Math.hypot(o.x+o.w/2-wx,o.y+o.h/2-wy)<170).sort((p,q)=>(p===b?-1:q===b?1:Math.hypot(p.x+p.w/2-wx,p.y+p.h/2-wy)-Math.hypot(q.x+q.w/2-wx,q.y+q.h/2-wy))),room=new Map(free.map(o=>[o,o.cap-o.occ.length]));
+    const out=[];for(const g of groupSq(inf)){const o=free.find(o=>room.get(o)>=g.length);if(!o){out.push(...g);continue}room.set(o,room.get(o)-g.length);g.forEach(u=>{giveMove(u,o.x+o.w/2,o.y+o.h/2,mode);u.enterB=o})}
+    if(out.length)squadForm(out,wx,wy+b.h/2+30,mode,'line',faceAt(out,wx,wy));formation(veh,wx,wy,mode,48);return}
   let prim=null,bd=34;for(const ch of state.chains){const pj=chainProj(ch,wx,wy);if(pj.d<bd){bd=pj.d;prim={ch,s:pj.s}}}
   const nearC=state.covers.some(c=>c.r!=null&&Math.hypot(c.x-wx,c.y-wy)<c.r+22);
   const fms=new Set(list.map(u=>u.form||'auto')),fm=fms.size===1?[...fms][0]:'auto',face=faceAt(list,wx,wy),bx=-Math.cos(face)*55,by=-Math.sin(face)*55;
   if(fm==='auto'&&inf.length&&(prim||nearC)){placeInCover(inf,wx,wy,prim);inf.forEach(u=>u.faceA=face);formationEx(veh,wx+bx,wy+by,mode,'line',face);return}
   const type=fm==='auto'?chooseForm(list,wx,wy,face):fm;
   if(fm==='auto'&&list[0].side===0&&list.length>2&&mode!=='fast')log(`Otomatik dizilim: ${FORMN[type]}`,'');
-  if(inf.length&&veh.length){formationEx(inf,wx,wy,mode,type,face);formationEx(veh,wx+bx,wy+by,mode,type==='circle'?'circle':type==='column'?'column':'line',face)}
+  if(inf.length&&veh.length){squadForm(inf,wx,wy,mode,type,face);formationEx(veh,wx+bx,wy+by,mode,type==='circle'?'circle':type==='column'?'column':'line',face)}
+  else if(inf.length)squadForm(inf,wx,wy,mode,type,face);
   else formationEx(list,wx,wy,mode,type,face)}
 function rightOrder(wx,wy,atk,shift){const all=sel();if(!all.length)return;
   if(shift){const snap=new Map(all.map(u=>[u,{dest:u.dest,q:u.queue.slice(),mode:u.mode}]));rightOrder(wx,wy,atk,false);
@@ -75,7 +95,9 @@ function rightOrder(wx,wy,atk,shift){const all=sel();if(!all.length)return;
   const pl=all.filter(u=>u.d.plane),he=all.filter(u=>u.d.heli),s=all.filter(u=>!u.d.air);
   const own=hitUnit(wx,wy,0);
   const drn=he.filter(u=>u.d.fpv);if(enemy&&!flying(enemy)&&drn.length){for(const u of drn){u.kTgt=enemy;u.home=false}state.marks.push({ping:1,x:enemy.x,y:enemy.y,t:0,c:'#e2584b'});if(drn.length===all.length)return}
-  if(own&&own.d.cap&&s.some(u=>u.d.inf)){const inf=s.filter(u=>u.d.inf&&!u.d.indirect).slice(0,own.d.cap-own.cargo.length);inf.forEach(u=>{giveMove(u,own.x,own.y,'move');u.board=own});
+  /* araca/helikoptere manga bütün olarak biner; sığmayan manga yerinde kalır */
+  if(own&&own.d.cap&&s.some(u=>u.d.inf)){let room=own.d.cap-own.cargo.length;const inf=[];for(const g of groupSq(s.filter(u=>u.d.inf&&!u.d.indirect)))if(g.length<=room){inf.push(...g);room-=g.length}
+    if(!inf.length&&own.side===0)log('Seçili manga araca sığmıyor','bad');inf.forEach(u=>{giveMove(u,own.x,own.y,'move');u.board=own});
     if(inf.length){own.dest=null;if(own.d.heli&&own.alt!=='landed')own.landReq=true}state.marks.push({ping:1,x:own.x,y:own.y,t:0,c:'#62a6e6'});return}
   for(const u of pl){u.rtb=false;
     if(enemy){if(flying(enemy)){u.chase=enemy;u.run=null;u.strikes=[]}else if(u.pay.lgb>=1||u.pay.mam>=1){u.strikes=[{t:enemy,x:enemy.x,y:enemy.y}];u.alt='high';u.run=null;u.chase=null}else if(!u.runType){u.loiter={x:enemy.x,y:enemy.y}}
@@ -120,4 +142,4 @@ function dcToggle(){if(state.dc){state.dc=null}else{const s=sel();if(s.length===
 function setArm(v){state.attackArm=v&&sel().length>0;if(state.attackArm)state.missionArm=state.runArm=state.precArm=state.fastArm=false;updTip()}
 function setMissionArm(v){state.missionArm=v&&sel().some(u=>u.d.indirect);if(state.missionArm)state.attackArm=state.runArm=state.precArm=false;updTip()}
 
-export {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,coverSlots,dcToggle,deploySel,digSel,exfilOut,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel,wpnSel};
+export {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,cen,coverSlots,groupSq,squadOf,dcToggle,deploySel,digSel,exfilOut,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel,wpnSel};

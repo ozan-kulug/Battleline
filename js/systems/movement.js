@@ -17,6 +17,9 @@ import {buildingAt,cellAt,coversNear,elevAt,isWater} from '../world/terrain.js';
 /* ---------- güncelleme ---------- */
 function terrSpeed(u){const c=cellAt(u.x,u.y);if(u.d.inf)return c===T.ROAD?1.1:c===T.CONC?1.05:c===T.FOREST?.75:c===T.TOWN?.9:c===T.FORD?.45:c===T.SWAMP?.6:c===T.WATER?.3:1;
   return c===T.ROAD?1.35:c===T.CONC?1.3:c===T.FOREST?.45:c===T.TOWN?.75:c===T.FIELD?.85:c===T.FORD?.4:c===T.SWAMP?.3:c===T.WATER?.2:1}
+/* manga birlikte yürür: hedefine en uzak (en geride kalan) üyenin kalan yolu; ondan çok önde olan asker yavaşlayıp bekler */
+function sqLag(sq){if(sq.lagT===state.time)return sq.lag;sq.lagT=state.time;let mx=0;
+  for(const m of sq.m)if(m.d.inf&&m.hp>0&&!m.gone&&!m.inHeli&&!m.inB&&m.dest&&!m.amv&&!(m.panicT>0)){const d=Math.hypot(m.dest.x-m.x,m.dest.y-m.y);if(d>mx)mx=d}return sq.lag=mx}
 /* yokuş yukarı yavaşlar (araçlar piyadeden çok); iniş ve düzlük etkilenmez */
 function slopeMul(u,a){const de=elevAt(u.x+Math.cos(a)*16,u.y+Math.sin(a)*16)-elevAt(u.x,u.y);return de>0?1-Math.min(u.d.inf?.25:.4,de*(u.d.inf?1.5:2.5)):1}
 /* nehri geçmek gerekiyorsa en uygun köprüyü veya sığ geçidi seç */
@@ -41,6 +44,7 @@ function moveUnit(u,dt){u.moving=false;if(u.inB||!u.dest)return;
   let wa=Math.atan2(dy,dx),sp=u.d.sp*terrSpeed(u)*slopeMul(u,wa);
   if(u.mode==='fast')sp*=u.d.inf?1.35:1.2;if(u.eng)sp*=.5;
   if(u.d.inf){const st=effStance(u);sp*=st==='prone'?.22:st==='crouch'?.55:1;if(u.sup>65&&!(u.panicT>0))sp*=.35;
+    if(u.sq&&u.mode!=='fast'&&!u.amv&&!(u.panicT>0)&&!u.enterB&&!u.board){const rem=Math.hypot(u.dest.x-u.x,u.dest.y-u.y);if(sqLag(u.sq)-rem>45)sp*=.5}
     u.a+=clamp(angDiff(wa,u.a),-7*dt,7*dt);const s=Math.min(d,sp*dt),nx=u.x+Math.cos(wa)*s,ny=u.y+Math.sin(wa)*s;
     if(!blockedAt(nx,ny,u)){u.x=nx;u.y=ny;u.avs=0}
     else{if(!u.avs)u.avs=R()<.5?1:-1;let moved=false;

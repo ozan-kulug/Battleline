@@ -4,7 +4,7 @@ import {clampCam,toW,zoomAt} from './camera.js';
 import {cvs,mm} from './canvas.js';
 import {H,SQUADS,W} from './config.js';
 import {cam,md} from './state.js';
-import {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,dcToggle,deploySel,digSel,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel} from './systems/orders.js';
+import {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,dcToggle,deploySel,digSel,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,squadOf,stanceSel,stopSel,unloadSel} from './systems/orders.js';
 import {deploy} from './systems/units.js';
 import {cards} from './ui/deck.js';
 import {depDown,depMove,depUp} from './ui/deploy.js';
@@ -17,12 +17,13 @@ import {buildingAt} from './world/terrain.js';
 let lastClick={id:0,t:0};
 const touches=new Map();
 let pinch=null;
-function selectSquadOf(u){state.units.forEach(x=>x.sel=x.side===0&&x.sq===u.sq)}
-function clickSelect(wx,wy,shift){const u=hitUnit(wx,wy,0);const now=performance.now();
+function selectSquadOf(u){const g=new Set(squadOf(u));state.units.forEach(x=>x.sel=g.has(x))}
+/* seçim birimi mangadır: bir askere tıklamak tüm mangayı seçer; Alt ile tek asker seçilir */
+function clickSelect(wx,wy,shift,alt){const u=hitUnit(wx,wy,0);const now=performance.now();
   if(u&&lastClick.id===u.id&&now-lastClick.t<350){selectSquadOf(u);lastClick={id:0,t:0};return}
   lastClick={id:u?u.id:0,t:now};
   if(!u){const b=buildingAt(wx,wy);if(b&&b.occ.length&&b.occ[0].side===0){if(!shift)state.units.forEach(x=>x.sel=false);b.occ.forEach(o=>o.sel=true);return}}
-  if(!shift)state.units.forEach(x=>x.sel=false);if(u)u.sel=shift?!u.sel:true}
+  if(!shift)state.units.forEach(x=>x.sel=false);if(u){const on=shift?!u.sel:true;for(const m of alt?[u]:squadOf(u))m.sel=on}}
 function endPointer(e){
   if(state.phase==='deploy'&&depUp(e)){md[e.button]=false;return}
   if(e.pointerType==='touch'){touches.delete(e.pointerId);if(touches.size<2)pinch=null;
@@ -31,16 +32,16 @@ function endPointer(e){
   if(!state.drag)return;const d=state.drag;state.drag=null;if(d.pan||!state.running)return;
   if(d.run){const a=toW(d.sx,d.sy),b=toW(d.cx,d.cy);assignRun(a.x,a.y,b.x,b.y);setRunArm(false);return}
   if(d.box){const a=toW(Math.min(d.sx,d.cx),Math.min(d.sy,d.cy)),b=toW(Math.max(d.sx,d.cx),Math.max(d.sy,d.cy));if(!d.shift)state.units.forEach(u=>u.sel=false);
-    for(const u of state.units)if(u.side===0&&u.x>=a.x&&u.x<=b.x&&u.y>=a.y&&u.y<=b.y)u.sel=true;return}
+    for(const u of state.units)if(u.side===0&&u.x>=a.x&&u.x<=b.x&&u.y>=a.y&&u.y<=b.y)for(const m of d.alt?[u]:squadOf(u))m.sel=true;return}
   const w=toW(d.sx,d.sy);
   if(state.attackArm||state.fastArm){rightOrder(w.x,w.y,state.attackArm,d.shift);setArm(false);setFastArm(false);return}
-  clickSelect(w.x,w.y,d.shift)}
+  clickSelect(w.x,w.y,d.shift,d.alt)}
 function tapAt(sx,sy){const w=toW(sx,sy);
   if(state.missionArm){assignMission(w.x,w.y);setMissionArm(false);return}
   if(state.runArm){assignRun(w.x,w.y,w.x,w.y);setRunArm(false);return}
   if(state.precArm){addStrike(w.x,w.y);setPrecArm(false);return}
   const u=hitUnit(w.x,w.y,0);const now=performance.now();
-  if(u){if(lastClick.id===u.id&&now-lastClick.t<400){selectSquadOf(u);lastClick={id:0,t:0};return}lastClick={id:u.id,t:now};u.sel=!u.sel;return}
+  if(u){if(lastClick.id===u.id&&now-lastClick.t<400){selectSquadOf(u);lastClick={id:0,t:0};return}lastClick={id:u.id,t:now};const on=!u.sel;for(const m of squadOf(u))m.sel=on;return}
   const b=buildingAt(w.x,w.y);if(b&&b.occ.length&&b.occ[0].side===0&&!sel().some(x=>x.d.inf&&!x.inB)){b.occ.forEach(o=>o.sel=true);return}
   if(sel().length){rightOrder(w.x,w.y,state.attackArm);setArm(false);setFastArm(false)}}
 function selectGroup(n){const ids=state.groups[n];if(!ids)return;state.units.forEach(u=>u.sel=u.side===0&&ids.includes(u.id));const s=sel();const now=performance.now();
@@ -64,7 +65,7 @@ cvs.addEventListener('pointerdown',e=>{cvs.setPointerCapture(e.pointerId);state.
   if(e.button===0){if(state.missionArm){assignMission(w.x,w.y);setMissionArm(false);return}
     if(state.runArm){state.drag={run:1,sx:e.offsetX,sy:e.offsetY,cx:e.offsetX,cy:e.offsetY};return}
     if(state.precArm){addStrike(w.x,w.y);if(!e.shiftKey)setPrecArm(false);return}
-    state.drag={sx:e.offsetX,sy:e.offsetY,cx:e.offsetX,cy:e.offsetY,shift:e.shiftKey,box:false}}});
+    state.drag={sx:e.offsetX,sy:e.offsetY,cx:e.offsetX,cy:e.offsetY,shift:e.shiftKey,alt:e.altKey,box:false}}});
 cvs.addEventListener('pointermove',e=>{state.mouse={x:e.offsetX,y:e.offsetY,in:true};
   if(state.phase==='deploy'&&depMove(e))return;
   if(e.pointerType==='touch'){if(!touches.has(e.pointerId))return;touches.set(e.pointerId,{x:e.offsetX,y:e.offsetY});

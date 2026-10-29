@@ -34,6 +34,7 @@ Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({a
 ## Kontroller ve oynanış notları
 
 - **Kamera:** W A S D, oklar, teker ve orta tuş. W/A/S/D'nin eski komutları Shift ile çalışır: ⇧W dizilim, ⇧A saldırı hareketi, ⇧S dur, ⇧D hızlı hareket. Doğrudan kontrolde (V) WASD aracı sürer.
+- **Manga kontrolü:** Bir askere tıklamak veya kutu seçimi tüm mangayı seçer; Alt+tık tek asker seçer. Emirlerde mangalar blok olarak dizilir (`orders.js squadForm`), siperde ve binada her manga bitişik yer alır, araca bütün olarak biner. Yürürken öndeki asker geride kalanı bekler (`movement.js sqLag`). İnisiyatif kararlarını manga lideri tüm manga için verir: birlikte siper alma, binaya girme, geri çekilme, atış pozisyonu değiştirme (`initiative.js`). Panel manga görünümü gösterir.
 - **Arazi:** Tepeler, uzun sırtlar, vadiler ve nehir vadisi (`terrain.js` `hills`, `ridges`). Görüş hattı yer şekillerini hesaba katar: iki göz yüksekliği arasındaki çizgiyi aşan sırt görüşü keser (`vision.js los`, yüksek irtifadaki helikopter hariç). Vadide görüş kısalır, tepede artar. Yokuş yukarı hareket yavaşlar. Harita eş yükselti çizgileri ve gölgelendirmeyle çizilir.
 
 ## Konuşlanma safhası
