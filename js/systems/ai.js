@@ -1,6 +1,6 @@
 /* systems/ai.js — Düşman yapay zekâsı: hafıza, nokta değerlendirmesi, görevler, saldırı aşamaları, destek birlikleri, satın alma, hava. */
 import {state} from '../state.js';
-import {AIDIF,COMBAT,H,PI,SQUADS,T,TAU,W,ZK} from '../config.js';
+import {AIDIF,COMBAT,H,PI,SQUADS,T,TAU,W,ZK,riverX} from '../config.js';
 import {assignRunFor,launch} from './air.js';
 import {orderGroup} from './orders.js';
 import {deploy,flying,giveMove,unloadHeli} from './units.js';
@@ -140,6 +140,8 @@ function aiSupport(sd,sqs,main){const f=AIS[sd].focus;if(!f)return;const st=main
     if(q.k==='sam'){sqGo(q,behind(sd,f.x,650),clamp(f.y+gauss()*120,60,H-60),'move','sam'+f.n);continue}
     if(q.k==='uav'){const L=dist2(st,f)||1;if(!q.m.some(u=>u.home))sqGo(q,f.x+(st.x-f.x)/L*150,f.y+(st.y-f.y)/L*150,'move','u'+f.n);continue}
     /* dron operatörü cephenin gerisinde, kontrol menzili içinde durur; hedefleri kendisi seçer (systems/drones.js) */
+    /* gemi (hazırlık): odak noktasının hizasında nehirde devriye */
+    if(lead.d.naval){const y=clamp(f.y+gauss()*160,80,H-80);sqGo(q,riverX(y),y,'attack','nv'+f.n);continue}
     if(q.k==='dronop'){sqGo(q,behind(sd,st.x,220),clamp(st.y+gauss()*90,60,H-60),'move','do'+f.n);continue}
     if(q.k==='fpv'){if(main&&main.type==='attack'&&main.ph==='assault')sqGo(q,main.o.x,main.o.y,'attack','fa'+main.id);else sqGo(q,st.x,st.y,'move','fs'+f.n);continue}}}
 function aiMicro(sd){const A=AIS[sd];

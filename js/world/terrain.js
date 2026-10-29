@@ -202,5 +202,8 @@ function scorch(x,y,rad){const g=tctx.createRadialGradient(x,y,0,x,y,rad);g.addC
 const bcell=new Map();
 function buildingAt(x,y){const cx=x/CS|0,cy=y/CS|0;if(cx<0||cy<0||cx>=GW||cy>=GH)return null;const l=bcell.get(cy*GW+cx);if(!l)return null;for(const b of l)if(!b.dead&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return b;return null}
 const isWater=(x,y)=>cellAt(x,y)===T.WATER;
+/* gemiler için: nehir yatağı (köprü ve sığ geçit hücreleri dahil, köprünün altından geçilir) */
+/* m: kıyıdan pay. Hareket gerçek su kenarına kadar (2), yol bulma ortaya yakın (14) kullanır, viraj dönüşünde gemi kıyıya takılmasın */
+const riverAt=(x,y,m=6)=>x>=0&&y>=0&&x<W&&y<H&&Math.abs(x-riverX(y))<RIV.hw-m;
 
-export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,refreshMini,scorch};
+export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,refreshMini,riverAt,scorch};

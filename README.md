@@ -38,6 +38,16 @@ Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({a
 - **Dron Operatör Timi** (`systems/drones.js`): 2 operatör, kişi başı 3 kamikaze dron, 1400 m kontrol menzili. Başlangıç ekranındaki **KAMİKAZE DRONLAR** seçeneği (savaşta panelden de değişir): *Operatör yönetir*: operatör hedefi kendisi seçer (zor durumdaki dostların yanındaki ve ele geçirilmekte olan noktalardaki düşmanlar önce, sonra topçu, tank, zırhlı ve toplu piyade; uçaksavar yakınındaki hedefler düşük öncelikli), aynı anda en fazla 2 dron. *Ben yönetirim*: nokta (.) ile dron kaldırılır, dron boşta kendiliğinden dalmaz, düşmana sağ tık veya saldırı hareketiyle dalar. Operatör ölürse veya dron menzili aşarsa bağlantı kopar. Kullanılmayan dron operatöre dönünce stoka eklenir, stok ikmalle dolar. Yapay zekâ da bu birimi satın alır, cephenin gerisine yerleştirir ve dronlarını otomatik yönetir.
 - **Arazi:** Tepeler, uzun sırtlar, vadiler ve nehir vadisi (`terrain.js` `hills`, `ridges`). Görüş hattı yer şekillerini hesaba katar: iki göz yüksekliği arasındaki çizgiyi aşan sırt görüşü keser (`vision.js los`, yüksek irtifadaki helikopter hariç). Vadide görüş kısalır, tepede artar. Yokuş yukarı hareket yavaşlar. Harita eş yükselti çizgileri ve gölgelendirmeyle çizilir.
 
+## Gemiler için hazırlık
+
+Henüz satın alınabilir gemi yok; altyapı hazır ve örnek bir **Devriye Botu** (`DEF.boat`) tanımlı.
+
+- `naval:1` olan birlik yalnızca nehir yatağında hareket eder ve köprülerin altından geçer (`terrain.js riverAt`, `pathfinding.js` `sea` modu, `movement.js`).
+- Panik, nokta ele geçirme, enkaz ve hedef gösterme gemiye göre ayarlıdır: geri çekilme nehir boyuncadır, gemi nokta ele geçirmez, batan gemi enkaz bırakmaz.
+- Konuşlanmada gemi nehrin kendi yarısına konur. Başlangıçta nehrin kendi ucuna dizilir, takviye olarak nehrin kendi ucundan gelir.
+- Çizim `renderer.js drawShip`, kart görseli `deck.js` içindedir. Deste ve ordu ekranındaki **Deniz** sekmesi yalnızca satın alınabilir gemi varsa görünür. YZ gemileri odak noktası hizasında nehirde devriye gezdirir.
+- Gemiyi oyuna açmak için `SQUADS` dizisinin **sonuna** `{k:'bot',n:'Devriye Botu',cost:…,m:['boat'],cat:'deniz'}` ve `AVE` içine bir satır eklemek yeterlidir.
+
 ## Konuşlanma safhası
 
 Ordu ekranındaki **SAVAŞA BAŞLA** savaşı hemen açmaz; önce konuşlanma safhası gelir: `Ordu kurma → Konuşlanma → Savaş`.

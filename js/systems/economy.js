@@ -9,7 +9,7 @@ import {$,R,clamp} from '../utils/helpers.js';
 
 function nearSupply(u){for(const s of state.units)if(s.d.supply&&s.side===u.side&&s!==u&&(s.x-u.x)**2+(s.y-u.y)**2<130*130)return true;return inBase(u)}
 let objAcc=0;
-function updObjs(dt0){objAcc+=dt0;if(objAcc<.25)return;const dt=objAcc;objAcc=0;for(const o of state.objs){const c=[0,0];for(const u of state.units){if(u.d.indirect&&u.key==='arty'||u.d.supply||u.d.air||u.abandoned||u.panicT>0||u.x<0||u.x>W)continue;if((u.x-o.x)**2+(u.y-o.y)**2<o.r*o.r)c[u.side]++}
+function updObjs(dt0){objAcc+=dt0;if(objAcc<.25)return;const dt=objAcc;objAcc=0;for(const o of state.objs){const c=[0,0];for(const u of state.units){if(u.d.indirect&&u.key==='arty'||u.d.supply||u.d.air||u.d.naval||u.abandoned||u.panicT>0||u.x<0||u.x>W)continue;if((u.x-o.x)**2+(u.y-o.y)**2<o.r*o.r)c[u.side]++}
   o.c=c;let rate=0;if(c[0]&&!c[1])rate=Math.min(c[0],4)*6;else if(c[1]&&!c[0])rate=-Math.min(c[1],4)*6;
   const prev=o.owner;o.own=clamp(o.own+rate*dt,-100,100);
   if(o.own>=100)o.owner=0;else if(o.own<=-100)o.owner=1;else if((o.owner===0&&o.own<=0)||(o.owner===1&&o.own>=0))o.owner=-1;

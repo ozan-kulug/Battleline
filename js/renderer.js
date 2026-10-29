@@ -84,7 +84,14 @@ function drawDrone(c,u,x,y,s,sh){const col=COL[u.side],f=u.d.fpv;c.save();c.tran
   if(!sh){c.fillStyle=col.hull;c.fillRect(-3,-2.5,6,5);if(f){c.fillStyle='#e2584b';c.fillRect(2,-1.5,3,3)}else{c.fillStyle=col.lt;c.beginPath();c.arc(2.5,0,1.4,0,TAU);c.fill()}
     c.strokeStyle='rgba(30,30,30,.45)';c.lineWidth=.8;const ra=state.time*40;for(const [px,py] of [[-L,-L],[L,L],[-L,L],[L,-L]]){c.beginPath();c.arc(px,py,f?3:3.8,0,TAU);c.stroke();c.beginPath();c.moveTo(px+Math.cos(ra)*3.5,py+Math.sin(ra)*3.5);c.lineTo(px-Math.cos(ra)*3.5,py-Math.sin(ra)*3.5);c.stroke()}}
   c.restore()}
-function drawUnit(c,u,x,y,s){if(u.d.plane)drawPlane(c,u,x,y,s);else if(u.d.drone)drawDrone(c,u,x,y,s);else if(u.d.heli)drawHeli(c,u,x,y,s);else if(u.d.inf)drawSoldier(c,u,x,y,s);else drawVeh(c,u,x,y,s)}
+/* gemi (hazırlık): sivri burunlu gövde, taret, kıç dalgası */
+function drawShip(c,u,x,y,s){const col=COL[u.abandoned?2:u.side],L=34,Wd=12;c.save();c.translate(x,y);c.scale(s,s);c.rotate(u.a);
+  if(u.moving){c.strokeStyle='rgba(225,235,235,.45)';c.lineWidth=1.4;c.beginPath();c.moveTo(-L/2-2,-Wd/2);c.lineTo(-L/2-14,-Wd/2-6);c.moveTo(-L/2-2,Wd/2);c.lineTo(-L/2-14,Wd/2+6);c.stroke()}
+  c.fillStyle='rgba(0,0,0,.3)';c.beginPath();c.ellipse(2,3,L/2,Wd/2,0,0,TAU);c.fill();
+  c.fillStyle=col.hull;c.strokeStyle=col.dark;c.lineWidth=1.1;c.beginPath();c.moveTo(L/2+4,0);c.lineTo(L/2-8,-Wd/2);c.lineTo(-L/2,-Wd/2+1);c.lineTo(-L/2,Wd/2-1);c.lineTo(L/2-8,Wd/2);c.closePath();c.fill();c.stroke();
+  c.fillStyle=col.tur;c.fillRect(-8,-3.5,10,7);if(!u.noTur){c.save();c.translate(8,0);c.rotate(u.ta-u.a);c.fillStyle=col.dark;c.fillRect(0,-1,11,2);c.fillStyle=col.tur;c.beginPath();c.arc(0,0,3.2,0,TAU);c.fill();c.restore()}
+  if(u.flash>0){c.fillStyle='#ffd27a';c.beginPath();c.arc(21,0,2.5,0,TAU);c.fill()}c.restore()}
+function drawUnit(c,u,x,y,s){if(u.d.naval){drawShip(c,u,x,y,s);return}if(u.d.plane)drawPlane(c,u,x,y,s);else if(u.d.drone)drawDrone(c,u,x,y,s);else if(u.d.heli)drawHeli(c,u,x,y,s);else if(u.d.inf)drawSoldier(c,u,x,y,s);else drawVeh(c,u,x,y,s)}
 function render(){
   ctx.setTransform(state.DPR,0,0,state.DPR,0,0);ctx.fillStyle='#10130e';ctx.fillRect(0,0,state.VW,state.VH);
   const z=cam.z,shx=state.shake?gauss()*state.shake:0,shy=state.shake?gauss()*state.shake:0,WT=()=>ctx.setTransform(state.DPR*z,0,0,state.DPR*z,(-cam.x*z+shx)*state.DPR,(-cam.y*z+shy)*state.DPR);WT();
@@ -223,4 +230,4 @@ function drawMini(){if(state.mmDirty){refreshMini();state.mmDirty=false}mctx.dra
   for(const cb of state.cbs)if(cb.det===0&&cb.t>0){mctx.strokeStyle='#e2584b';mctx.lineWidth=1;mctx.beginPath();mctx.arc(cb.x*sx,cb.y*sy,4,0,TAU);mctx.stroke()}
   mctx.strokeStyle='#e8a838';mctx.lineWidth=1;mctx.strokeRect(cam.x*sx+.5,cam.y*sy+.5,state.VW/cam.z*sx,state.VH/cam.z*sy)}
 
-export {drawDrone,drawHeli,drawMini,drawPlane,drawSoldier,drawVeh,render};
+export {drawDrone,drawHeli,drawMini,drawPlane,drawShip,drawSoldier,drawVeh,render};

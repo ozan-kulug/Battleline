@@ -38,6 +38,9 @@ const DEF={
  fpv:{n:'Kamikaze Dron',tag:'KMK',hp:15,sp:115,vis:300,aF:0,aS:0,aR:0,ts:6,air:1,heli:1,drone:1,uav:1,fpv:1,bat:110,flares:0,w:[]},
  /* dron operatörü: kamikaze dron fırlatır ve yönetir; drones: başlangıç stoku (kişi başı), ctrl: kontrol menzili (aşılırsa bağlantı kopar) */
  dop:{n:'Dron Operatörü',tag:'DOP',hp:20,sp:32,vis:420,inf:1,dronOp:1,drones:3,ctrl:1400,w:[{n:'Karabina',r:240,dmg:8,ap:0,rl:1.1,acc:.4,k:'rifle',sup:4}]},
+ /* gemiler için hazırlık: naval:1 olan birlik yalnızca nehirde yüzer (köprü altından geçer), karaya çıkamaz.
+    Henüz SQUADS'ta yok; satın alınabilir yapmak için SQUADS'a {k,n,cost,m:['boat'],cat:'deniz'} ve AVE'ye bir satır eklemek yeterli. */
+ boat:{n:'Devriye Botu',tag:'BOT',hp:160,sp:64,vis:480,aF:2,aS:2,aR:1,turn:1.6,ts:2.5,veh:1,naval:1,w:[{n:'12,7 mm makineli',r:360,dmg:8,ap:1,rl:.18,acc:.3,k:'mg',sup:10}]},
  bmb:{n:'Stratejik Bombardıman',tag:'BMB',hp:280,sp:165,turn:.55,vis:0,air:1,plane:1,highOnly:1,fuel:170,flares:10,rearm:90,pay:{carpet:1},w:[]},
 };
 const SQUADS=[
@@ -133,7 +136,8 @@ const ARMYCAT=[
  {k:'aa',n:'Hava Savunma',m:['manpads','shorad','sam']},
  {k:'air',n:'Hava Kuvvetleri',m:['heliA','heliT','fpv','cas','mr','sead','ftr','bmb','rec','tb2']},
  {k:'sup',n:'Destek',m:['supply']},
-];
+ {k:'naval',n:'Deniz Kuvvetleri',m:SQUADS.filter(S=>S.cat==='deniz').map(S=>S.k)},
+].filter(c=>c.m.length);
 const ROLE={inf:'Hat piyadesi · nokta tutar, el bombası atar',at:'Zırh avcısı · güdümlü tanksavar füzesi',recon:'Gözcü · geniş görüş, gizlenme, keskin nişancı',uav:'Hava gözcüsü · topçuya hedef gösterir',
  tank:'Ağır zırh · cephenin ana vurucu gücü',ifv:'Piyade desteği · 25 mm top, sis perdesi',mech:'ZMA ve içinde tam piyade mangası',mortar:'Hafif dolaylı ateş · çabuk mevzilenir',arty:'Ağır dolaylı ateş · çok uzun menzil',
  manpads:'Omuzdan füze · alçak uçan hedefler',shorad:'Uçaksavar topu ve kızılötesi füze',sam:'Radarlı uzun menzil · ARM hedefi olur',heliA:'Tanksavar füzesi, roket ve top',heliT:'Nakliye helikopteri ve içinde piyade mangası',

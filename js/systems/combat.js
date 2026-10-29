@@ -1,7 +1,7 @@
 /* systems/combat.js — Savaş: hedef seçimi, atış, isabet, zırh ve delme, hasar, baskı ve moral, kritik hasar, mürettebat terki, ölüm, bina hasarı. */
 import {state} from '../state.js';
 import {tctx} from '../canvas.js';
-import {AIRMUL,GREN,H,PI,RANKN,SQUADS,TAU,W} from '../config.js';
+import {AIRMUL,GREN,H,PI,RANKN,SQUADS,TAU,W,riverX} from '../config.js';
 import {P,addFire,bldDamage,charB,chute,crater,explode,igniteB,puff,ricochet,wind} from './effects.js';
 import {flying,mkUnit,rank,unloadHeli} from './units.js';
 import {observed} from './vision.js';
@@ -17,7 +17,7 @@ const apAt=(w,d)=>w.pen==='ke'?w.ap*(1.15-.3*Math.min(1,d/(w.r||400))):w.ap;
 function stress(u,amt){if(!amt||flying(u)||u.abandoned)return;if(!u.d.inf)amt*=Math.max(.1,1-.08*(u.d.aF||0));amt*=1-.1*rank(u);
   u.sup=Math.min(100,u.sup+amt);u.supT=state.time;if(amt>=45&&!(u.stunT>0))u.stunT=u.d.inf?2:3}
 function panic(u){if(u.panicT>0||u.d.air||u.abandoned)return;u.panicT=u.d.inf?10:7;if(u.inB)exitBld(u,u.x+(u.side?60:-60),u.y);
-  u.dest={x:clamp(u.x+(u.side?1:-1)*280,10,W-10),y:clamp(u.y+gauss()*70,10,H-10)};u.mode='move';u.focus=null;u.dig=-1;u.queue=[];u.board=null;u.crewTo=null;u.enterB=null;u.mission=null;
+  if(u.d.naval){const y=clamp(u.y+(u.side?-1:1)*280,20,H-20);u.dest={x:riverX(y),y}}else u.dest={x:clamp(u.x+(u.side?1:-1)*280,10,W-10),y:clamp(u.y+gauss()*70,10,H-10)};u.mode='move';u.focus=null;u.dig=-1;u.queue=[];u.board=null;u.crewTo=null;u.enterB=null;u.mission=null;
   if(u.side===0)log(`${u.d.n} paniğe kapıldı, geri çekiliyor`,'bad')}
 function crit(t){if(R()>.35)return;const r=R();let m;
   if(r<.25){t.trk=25;m='paletler koptu'}else if(r<.42){t.tur=12;m='taret sıkıştı'}else if(r<.57){t.opt=20;m='optik hasar gördü'}else if(r<.7){t.eng=true;m='motor hasar gördü'}else if(r<.85){t.fire=8;m='yangın çıktı'}else{t.stunT=4;m='mürettebat sersemledi'}
@@ -110,7 +110,7 @@ function kill(t){if(t.dead)return;t.dead=1;t.hp=0;
     explode(t.x,t.y,cat?2:1.3,{dcol:'#26241f'});scorch(t.x,t.y,cat?44:34);
     if(cat&&(t.key==='tank'||t.key==='ifv'||t.key==='shorad')){mk.noTur=true;P({k:'turret',x:t.x,y:t.y,z:6,vx:gauss()*70,vy:gauss()*70,vz:260+R()*130,rot:t.ta,vr:gauss()*6,r:0,g:0,max:8})}
     for(let i=0;i<(cat?7:2);i++)state.timers.push({t:state.time+.3+R()*(cat?3.5:2),f:()=>{explode(t.x+gauss()*8,t.y+gauss()*8,.32);if(R()<.5)P({k:'spark',x:t.x,y:t.y,z:8,vx:gauss()*160,vy:gauss()*160,vz:200+R()*200,max:.7})}});
-    if(t.d.veh||t.d.heli){state.marks.push(mk);addFire(t.x,t.y,12,(cat?45:25)+R()*20,cat?1.3:.9)}state.covers.push({t:'wreck',x:t.x,y:t.y,r:15});
+    if(t.d.naval){puff(t.x,t.y,8,'rgba(225,235,235,.6)',26)}else{if(t.d.veh||t.d.heli){state.marks.push(mk);addFire(t.x,t.y,12,(cat?45:25)+R()*20,cat?1.3:.9)}state.covers.push({t:'wreck',x:t.x,y:t.y,r:15})}
     log(t.side===0?`${t.d.n} kaybedildi`:`Düşman ${t.d.n.toLocaleLowerCase('tr')} imha edildi`,t.side===0?'bad':'good')}
   if(t.sq&&t.d.inf&&!t.sq.m.some(u=>u!==t&&u.hp>0))log(t.side===0?`${t.sq.n} yok edildi`:`Düşman ${t.sq.n.toLocaleLowerCase('tr')} yok edildi`,t.side===0?'bad':'good');
   if(state.dc===t){state.dc=null;updTip()}}

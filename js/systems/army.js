@@ -1,6 +1,6 @@
 /* systems/army.js — Savaş öncesi ordu: ordu puanı (OP) hesabı, doğrulama, YZ ordusu ve başlangıç birliklerinin mevcut oluşturma fonksiyonlarıyla sahaya konması. */
 import {state} from '../state.js';
-import {ARMY,COMBAT,H,SQUADS,W} from '../config.js';
+import {ARMY,COMBAT,DEF,H,SQUADS,W,riverX} from '../config.js';
 import {spawnLoaded} from './units.js';
 import {buildingAt,isWater} from '../world/terrain.js';
 
@@ -28,10 +28,14 @@ const LANE={inf:'f',at:'f',recon:'f',manpads:'f',mortar:'r',arty:'r',supply:'r',
 const LANEX={f:360,m:270,r:170};
 function freeX(x,y){for(const dx of [0,30,-30,60,-60])if(!buildingAt(x+dx,y)&&!isWater(x+dx,y))return x+dx;return x}
 /* seçilen orduyu kurar: kara birlikleri spawnLoaded (takviyelerle aynı yol), uçaklar hava üssüne kalkışa hazır olarak girer */
-function spawnArmy(side,list){const lanes={f:[],m:[],r:[]};
+function spawnArmy(side,list){const lanes={f:[],m:[],r:[]},sea=[];
   for(const k of list){const i=sqIdx(k);if(i<0)continue;const S=SQUADS[i];
     if(S.plane){state.airbase[side].push({id:state.abid++,key:S.plane,side,st:'ready',t:0,u:null});continue}
+    if(S.m.length&&DEF[S.m[0]].naval){sea.push(i);continue}
     lanes[LANE[k]||'m'].push(i)}
+  /* gemiler nehrin kendi yarısında kalan kesimlerine, kendi ucundan başlayarak dizilir */
+  const ys=[];for(let y=H-120;y>120&&ys.length<sea.length;y-=110)if(riverX(y)<W/2-40)ys.push(y);
+  sea.forEach((idx,j)=>{const y=ys[j]??H-120,x=riverX(y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)});
   for(const [ln,ids] of Object.entries(lanes))ids.forEach((idx,j)=>{const y=Math.round(320+(j+.5)*(H-640)/ids.length),x=freeX(LANEX[ln],y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)})}
 
 export {DEFAULT_ARMY,addBlock,armyCap,armyCost,autoArmy,checkArmy,countOf,spawnArmy,sqOf};
