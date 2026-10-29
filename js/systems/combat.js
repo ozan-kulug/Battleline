@@ -20,7 +20,7 @@ function panic(u){if(u.panicT>0||u.d.air||u.abandoned)return;u.panicT=u.d.inf?10
   if(u.d.naval){const y=clamp(u.y+(u.side?-1:1)*280,20,H-20);u.dest={x:riverX(y),y}}else u.dest={x:clamp(u.x+(u.side?1:-1)*280,10,W-10),y:clamp(u.y+gauss()*70,10,H-10)};u.mode='move';u.focus=null;u.dig=-1;u.queue=[];u.board=null;u.crewTo=null;u.enterB=null;u.mission=null;
   if(u.side===0)log(`${u.d.n} paniğe kapıldı, geri çekiliyor`,'bad')}
 function crit(t){if(R()>.35)return;const r=R();let m;
-  if(r<.25){t.trk=25;m='paletler koptu'}else if(r<.42){t.tur=12;m='taret sıkıştı'}else if(r<.57){t.opt=20;m='optik hasar gördü'}else if(r<.7){t.eng=true;m='motor hasar gördü'}else if(r<.85){t.fire=8;m='yangın çıktı'}else{t.stunT=4;m='mürettebat sersemledi'}
+  if(r<.25){t.trk=25;m=t.d.naval?'dümen hasar gördü':'paletler koptu'}else if(r<.42){t.tur=12;m='taret sıkıştı'}else if(r<.57){t.opt=20;m='optik hasar gördü'}else if(r<.7){t.eng=true;m='motor hasar gördü'}else if(r<.85){t.fire=8;m='yangın çıktı'}else{t.stunT=4;m='mürettebat sersemledi'}
   if(t.side===0)log(`${t.d.n}: ${m}`,'bad')}
 /* mürettebat aracı terk eder; terk edilmiş araç herhangi bir piyade tarafından yeniden ele geçirilebilir */
 function bail(t){t.abandoned=true;t.dest=null;t.focus=null;t.queue=[];t.sel=false;t.mission=null;t.fire=0;if(t.sq){t.sq.m=t.sq.m.filter(x=>x!==t);t.sq=null}if(state.dc===t){state.dc=null;updTip()}

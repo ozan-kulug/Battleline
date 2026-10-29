@@ -61,7 +61,7 @@ function selInfo(s){
     if(u.era)h+=`<div class="row"><span>Reaktif zırh ön / yan</span><b>${Math.floor(u.era.F)} / ${Math.floor(u.era.S)}</b></div>`;
     if(u.vcov)h+=`<div class="row"><span>Gövde siperi</span><b>${COVN[u.vcov.t]} arkasında</b></div>`;
     if(u.d.cap)h+=`<div class="row"><span>Yük</span><b>${u.cargo.length} / ${u.d.cap} asker</b></div>`;
-    const dm=[];if(u.trk>0)dm.push(`Palet ${Math.ceil(u.trk)} sn`);if(u.tur>0)dm.push(`Taret ${Math.ceil(u.tur)} sn`);if(u.opt>0)dm.push('Optik');if(u.eng)dm.push('Motor');if(u.fire>0)dm.push('Yangın');h+=`<div class="row"><span>Hasar</span><b class="${dm.length?'warn':''}">${dm.join(' · ')||'Yok'}</b></div>`;
+    const dm=[];if(u.trk>0)dm.push(`${u.d.naval?'Dümen':'Palet'} ${Math.ceil(u.trk)} sn`);if(u.tur>0)dm.push(`Taret ${Math.ceil(u.tur)} sn`);if(u.opt>0)dm.push('Optik');if(u.eng)dm.push('Motor');if(u.fire>0)dm.push('Yangın');h+=`<div class="row"><span>Hasar</span><b class="${dm.length?'warn':''}">${dm.join(' · ')||'Yok'}</b></div>`;
     if(u.d.smokeL)h+=`<div class="row"><span>Sis perdesi</span><b>${Math.floor(u.smokeL)}</b></div>`;
     if(u.d.supply)h+=`<div class="row"><span>İkmal</span><b>130 m içindeki dostlara</b></div>`}
   if(u.d.indirect){h+=`<div class="row"><span>Durum</span><b>${STATEN[u.st]}</b></div><div class="row"><span>Seçili mermi</span><b>${u.shell==='he'?'Tahrip':'Sis'}</b></div>`;

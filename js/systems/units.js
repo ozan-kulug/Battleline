@@ -33,7 +33,7 @@ function arrive(side,idx){const S=SQUADS[idx];
   if(S.m.length&&DEF[S.m[0]].naval){const y0=side?20:H-20,y1=side?240:H-240;spawnLoaded(side,idx,riverX(y0),y0,riverX(y1),y1)}
   else{const lane=[700,1500,2300][R()*3|0]+gauss()*80;spawnLoaded(side,idx,side?W+30:-30,lane,side?W-200-R()*40:200+R()*40,lane)}
   if(side===0)log(`${S.n} cepheye ulaştı`,'good');return true}
-const inBase=u=>u.side?u.x>W-230:u.x<230;
+const inBase=u=>u.d.naval?(u.side?u.y<260:u.y>H-260):u.side?u.x>W-230:u.x<230;
 function unloadHeli(h){const n=h.cargo.length;h.cargo.forEach((c,i)=>{const a=i/n*TAU;c.x=h.x+Math.cos(a)*24;c.y=h.y+Math.sin(a)*24;c.inHeli=null;c.dest=null;c.a=c.ta=a;state.units.push(c)});
   if(n&&h.side===0)log(`${h.d.n}: ${n} asker indirildi`,'good');h.cargo=[];h.unloadReq=false}
 function turnTurret(u,want,dt){if(u.d.inf){u.ta+=clamp(angDiff(want,u.ta),-8*dt,8*dt);return}if(u.tur>0)return;const ts=(u.d.ts||u.d.trav||1)*dt;u.ta+=clamp(angDiff(want,u.ta),-ts,ts)}

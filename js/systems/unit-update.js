@@ -1,6 +1,6 @@
 /* systems/unit-update.js — Tek bir birliğin her karedeki güncellemesi (tüm sistemleri sırayla çağırır). */
 import {state} from '../state.js';
-import {W} from '../config.js';
+import {H,W} from '../config.js';
 import {moveHeli,updDrone,updPlane} from './air.js';
 import {updIndirect} from './artillery.js';
 import {canUse,fire,kill,launchAA,pickTarget,throwGren} from './combat.js';
@@ -20,7 +20,7 @@ function updUnit(u,dt){
   if(((u.id+((state.time*4)|0))&3)===0&&!u.d.air)unstick(u);
   if(u.d.plane){updPlane(u,dt);return}
   if(u.d.drone&&updDrone(u,dt))return;
-  if(u.exfil&&(u.side?u.x>W-30:u.x<30)){exfilOut(u);return}
+  if(u.exfil&&(u.d.naval?(u.side?u.y<40:u.y>H-40):(u.side?u.x>W-30:u.x<30))){exfilOut(u);return}
   if(u.d.radar){if(u.radarT>0){u.radarT-=dt;if(u.radarT<=0){u.radarT=0;u.radarOn=true}}if(u.radarOffT>0){u.radarOffT-=dt;if(u.radarOffT<=0&&!u.radarOn)u.radarT=5}}
   if(u.fire>0){u.fire-=dt;state.curSrc=null;u.hp-=3*dt;if(R()<dt*8)state.parts.push({x:u.x+gauss()*6,y:u.y+gauss()*6,vx:gauss()*6,vy:-6+gauss()*4,life:0,max:.8,r:3,g:7,col:'rgba(255,150,60,.85)',fire:1});if(u.hp<=0){kill(u);return}}
   if(u.abandoned){u.moving=false;u.dest=null;return}

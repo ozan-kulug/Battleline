@@ -40,13 +40,13 @@ Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({a
 
 ## Gemiler için hazırlık
 
-Henüz satın alınabilir gemi yok; altyapı hazır ve örnek bir **Devriye Botu** (`DEF.boat`) tanımlı.
+**Devriye Botu** (`DEF.boat`, kart `bot`, 120 KP/OP) satın alınabilir: Deniz sekmesinde ve ordu ekranındaki Deniz Kuvvetleri kategorisinde. Üssü nehrin kendi ucudur (ikmal, onarım, cepheden çekilme). Köprüden geçen kara birlikleriyle itişmez. YZ en fazla iki bot alır ve nehirde devriye gezdirir.
 
 - `naval:1` olan birlik yalnızca nehir yatağında hareket eder ve köprülerin altından geçer (`terrain.js riverAt`, `pathfinding.js` `sea` modu, `movement.js`).
 - Panik, nokta ele geçirme, enkaz ve hedef gösterme gemiye göre ayarlıdır: geri çekilme nehir boyuncadır, gemi nokta ele geçirmez, batan gemi enkaz bırakmaz.
 - Konuşlanmada gemi nehrin kendi yarısına konur. Başlangıçta nehrin kendi ucuna dizilir, takviye olarak nehrin kendi ucundan gelir.
 - Çizim `renderer.js drawShip`, kart görseli `deck.js` içindedir. Deste ve ordu ekranındaki **Deniz** sekmesi yalnızca satın alınabilir gemi varsa görünür. YZ gemileri odak noktası hizasında nehirde devriye gezdirir.
-- Gemiyi oyuna açmak için `SQUADS` dizisinin **sonuna** `{k:'bot',n:'Devriye Botu',cost:…,m:['boat'],cat:'deniz'}` ve `AVE` içine bir satır eklemek yeterlidir.
+- Yeni gemi sınıfı eklemek için: `DEF` içine `naval:1` birlik, `SQUADS` dizisinin **sonuna** `cat:'deniz'` kartı, `AVE` ve `ROLE` içine birer satır.
 
 ## Konuşlanma safhası
 

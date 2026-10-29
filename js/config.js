@@ -39,7 +39,7 @@ const DEF={
  /* dron operatörü: kamikaze dron fırlatır ve yönetir; drones: başlangıç stoku (kişi başı), ctrl: kontrol menzili (aşılırsa bağlantı kopar) */
  dop:{n:'Dron Operatörü',tag:'DOP',hp:20,sp:32,vis:420,inf:1,dronOp:1,drones:3,ctrl:1400,w:[{n:'Karabina',r:240,dmg:8,ap:0,rl:1.1,acc:.4,k:'rifle',sup:4}]},
  /* gemiler için hazırlık: naval:1 olan birlik yalnızca nehirde yüzer (köprü altından geçer), karaya çıkamaz.
-    Henüz SQUADS'ta yok; satın alınabilir yapmak için SQUADS'a {k,n,cost,m:['boat'],cat:'deniz'} ve AVE'ye bir satır eklemek yeterli. */
+    Yeni gemi sınıfı: DEF'e naval:1 birlik, SQUADS sonuna {k,n,cost,m:[...],cat:'deniz'}, AVE ve ROLE'a birer satır. */
  boat:{n:'Devriye Botu',tag:'BOT',hp:160,sp:64,vis:480,aF:2,aS:2,aR:1,turn:1.6,ts:2.5,veh:1,naval:1,w:[{n:'12,7 mm makineli',r:360,dmg:8,ap:1,rl:.18,acc:.3,k:'mg',sup:10}]},
  bmb:{n:'Stratejik Bombardıman',tag:'BMB',hp:280,sp:165,turn:.55,vis:0,air:1,plane:1,highOnly:1,fuel:170,flares:10,rearm:90,pay:{carpet:1},w:[]},
 };
@@ -69,6 +69,8 @@ const SQUADS=[
  {k:'fpv',n:'Kamikaze Dron Timi',cost:110,m:['fpv','fpv','fpv'],cat:'hava'},
  /* sona eklendi: önceki dizinler (deste, varsayılan başlangıç) değişmesin */
  {k:'dronop',n:'Dron Operatör Timi',cost:130,m:['dop','dop'],cat:'kara'},
+ /* gemiler (cat:'deniz'): deste ve ordu ekranında Deniz sekmesi/kategorisi otomatik görünür */
+ {k:'bot',n:'Devriye Botu',cost:120,m:['boat'],cat:'deniz'},
 ];
 /* uçak mühimmatı */
 const AW={
@@ -86,7 +88,7 @@ const PAYN={gun:'30 mm top (geçiş)',rockets:'Roket salvosu',lgb:'Lazer güdüm
 const AIRMUL={rifle:.15,mg:.45,snipe:.2,auto:.9,flak:1,gun:.6,rpg:.8,atgm:.9,rocket:.5};
 const RANKN=['Acemi','Tecrübeli','Kıdemli','Elit'];
 const FMN={free:'Serbest ateş',ret:'Sadece karşılık',hold:'Ateş kes'};
-const AVE={inf:[14,5],mech:[8,10],at:[8,6],recon:[6,5],mortar:[5,7],supply:[5,8],ifv:[8,10],tank:[8,14],arty:[4,16],manpads:[8,6],shorad:[5,12],sam:[3,14],heliA:[5,10],heliT:[5,10],cas:[4,0],mr:[3,0],sead:[3,0],ftr:[4,0],bmb:[2,0],rec:[3,0],tb2:[3,0],uav:[6,6],fpv:[6,6],dronop:[5,7]};
+const AVE={inf:[14,5],mech:[8,10],at:[8,6],recon:[6,5],mortar:[5,7],supply:[5,8],ifv:[8,10],tank:[8,14],arty:[4,16],manpads:[8,6],shorad:[5,12],sam:[3,14],heliA:[5,10],heliT:[5,10],cas:[4,0],mr:[3,0],sead:[3,0],ftr:[4,0],bmb:[2,0],rec:[3,0],tb2:[3,0],uav:[6,6],fpv:[6,6],dronop:[5,7],bot:[3,8]};
 SQUADS.forEach(S=>{S.av=AVE[S.k][0];S.eta=AVE[S.k][1]});
 const GREN={n:'El bombası',dmg:40,ap:1,splash:34,soft:1,sup:50,k:'gren'};
 const COVN={trench:'Siper hattı',sandbag:'Kum torbası',wall:'Taş duvar',hedge:'Çit',fox:'Tüfekçi çukuru',rubble:'Enkaz',wreck:'Araç enkazı'};
@@ -142,6 +144,6 @@ const ROLE={inf:'Hat piyadesi · nokta tutar, el bombası atar',at:'Zırh avcıs
  tank:'Ağır zırh · cephenin ana vurucu gücü',ifv:'Piyade desteği · 25 mm top, sis perdesi',mech:'ZMA ve içinde tam piyade mangası',mortar:'Hafif dolaylı ateş · çabuk mevzilenir',arty:'Ağır dolaylı ateş · çok uzun menzil',
  manpads:'Omuzdan füze · alçak uçan hedefler',shorad:'Uçaksavar topu ve kızılötesi füze',sam:'Radarlı uzun menzil · ARM hedefi olur',heliA:'Tanksavar füzesi, roket ve top',heliT:'Nakliye helikopteri ve içinde piyade mangası',
  fpv:'Üç kamikaze dron · hedefe dalar',cas:'30 mm top veya roket koşusu',mr:'Lazer güdümlü bomba ve hava-hava füzesi',sead:'Radar avcısı · anti-radyasyon füzesi',ftr:'Hava üstünlüğü · düşman uçağı avlar',
- bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron'};
+ bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron',bot:'Nehir devriyesi · makineli tüfek, köprü altından geçer'};
 
 export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CS,DEF,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,OBJL,PAYN,PI,RANKN,RIV,ROLE,RL,SQUADS,STATEN,STN,T,TAU,W,ZK,riverX};

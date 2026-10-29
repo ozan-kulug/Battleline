@@ -80,6 +80,7 @@ function tryManual(u,i,mw){const w=u.d.w[i];if(!w||u.cd[i]>0)return;
   fire(u,i,t,px,py,true)}
 function separate(){buildHash();for(const a of state.units){if(a.inB||a.inHeli||flying(a))continue;const cx=(a.x/UH|0),cy=(a.y/UH|0);for(let yy=cy-1;yy<=cy+1;yy++)for(let xx=cx-1;xx<=cx+1;xx++){const l=uhash.get((yy+1)*UHW+xx+1);if(l)for(const b of l){if(b.id<=a.id||b.inB||flying(b))continue;
   const dx=b.x-a.x,dy=b.y-a.y,ra=a.d.inf?5:20,rb=b.d.inf?5:20,m=ra+rb,d2=dx*dx+dy*dy;if(d2>=m*m||d2<.01)continue;
+  if(!a.d.naval!==!b.d.naval)continue;
   if(a.side!==b.side&&a.d.inf!==b.d.inf){const v=a.d.inf?b:a,s=a.d.inf?a:b;if(v.moving&&!v.d.supply&&!v.abandoned){state.curSrc=v.id;s.hp=0;kill(s);continue}}
   const d=Math.sqrt(d2),p=(m-d)*.25,ux=dx/d,uy=dy/d;
   if(a.d.inf&&!b.d.inf){b.x+=ux*p*.2;b.y+=uy*p*.2;a.x-=ux*p*1.8;a.y-=uy*p*1.8}else if(b.d.inf&&!a.d.inf){a.x-=ux*p*.2;a.y-=uy*p*.2;b.x+=ux*p*1.8;b.y+=uy*p*1.8}
