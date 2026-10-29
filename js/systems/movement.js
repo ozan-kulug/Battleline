@@ -54,7 +54,7 @@ function moveUnit(u,dt){u.moving=false;if(u.inB||!u.dest)return;
   u.a+=clamp(angDiff(wa,u.a),-u.d.turn*dt,u.d.turn*dt);const al=Math.abs(angDiff(wa,u.a));
   if(u.crush)sp*=.35;
   if(al<.7){const s=Math.min(d,sp*(back?.45:1)*(1-al/.7*.6)*dt)*(back?-1:1),ox=u.x,oy=u.y;u.x+=Math.cos(u.a)*s;u.y+=Math.sin(u.a)*s;
-    if(isWater(u.x,u.y)&&(!isWater(ox,oy)||Math.abs(u.x-riverX(u.y))<=Math.abs(ox-riverX(oy)))){u.x=ox;u.y=oy;u.wb=(u.wb||0)+dt;if(u.wb>2.5){u.wb=0;u.dest=null}}}
+    if(isWater(u.x,u.y)&&(!isWater(ox,oy)||Math.abs(u.x-riverX(u.y))<=Math.abs(ox-riverX(oy)))){u.x=ox;u.y=oy;u.wb=(u.wb||0)+dt;if(u.wb>2.5){u.wb=0;u.dest=null}}else u.wb=0}
   u.moving=true;crushCheck(u,dt)}
 function crushCheck(u,dt){const b=buildingAt(u.x,u.y);u.crush=!!b;if(b){hurtB(b,(u.key==='tank'?90:40)*dt);if(R()<dt*6)P({k:'dust',x:u.x,y:u.y,vx:gauss()*10,vy:gauss()*10,r:6,g:22,max:1.5,a:.5})}
   for(const c of coversNear(u.x,u.y)){if(c.r!=null||!isFinite(c.hp))continue;if(segInfo(c,u.x,u.y).d<11){c.hp-=(u.key==='tank'?320:180)*dt;if(c.hp<=0){breakCover(c);break}}}
