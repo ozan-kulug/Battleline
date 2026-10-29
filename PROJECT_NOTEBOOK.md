@@ -1,7 +1,7 @@
 # Battleline (Cephe Hattı) — Project Notebook
 
 Kalıcı proje defteri. Kod değişiklikleri, test sonuçları ve önemli kararlar buraya kaydedilir (kurallar: [AGENTS.md](AGENTS.md), plan: [ROADMAP.md](ROADMAP.md)).
-Son güncelleme: 2026-10-29 · Güncelleyen: Claude
+Son güncelleme: 2026-10-29 · Güncelleyen: Antigravity
 
 ## 1. Amaç
 
@@ -34,10 +34,11 @@ Depo: `https://github.com/ozan-kulug/Battleline` (origin). Ana dal: `master`.
 | Takılma sayacı düzeltmesi | `9961633` | Claude: simülasyon |
 | Gemi altyapısı (nehirde hareket, köprü altı, konuşlanma, çizim) | `a3520a3` | Claude: simülasyon (test botuyla) |
 | İngilizce dil desteği | `aa972d1` | Claude: tarayıcı metin taraması |
+| Oynanabilir Devriye Botu (`bot`) | `79c8556` | Antigravity: 8 senaryo ES modül + DOM/Canvas simülasyonu (7/8 geçti, Senaryo 7'de `aiBuy` ağırlık sorunu bulundu; bkz. §5 ve §6) |
 
 ## 4. Son geliştirmeler ve kararlar
 
-- **Oynanabilir Devriye Botu — commit edilmedi, çalışma alanında.** Dosyalar: `js/config.js`, `js/systems/units.js`, `js/systems/orders.js`, `js/systems/unit-update.js`, `js/systems/movement.js`, `js/systems/combat.js`, `js/ui/panels.js`, `js/systems/ai.js`, `js/i18n.js`, `README.md` (10 dosya, +18/−14). İçerik:
+- **Oynanabilir Devriye Botu (`79c8556`).** Dosyalar: `js/config.js`, `js/systems/units.js`, `js/systems/orders.js`, `js/systems/unit-update.js`, `js/systems/movement.js`, `js/systems/combat.js`, `js/ui/panels.js`, `js/systems/ai.js`, `js/i18n.js`, `README.md` (10 dosya, +18/−14). İçerik:
   - `SQUADS` sonuna `bot` kartı (120 KP/OP, `cat:'deniz'`), `AVE` ve `ROLE` satırı; Deniz sekmesi ve Deniz Kuvvetleri kategorisi otomatik görünür.
   - Gemi üssü = nehrin kendi ucu (`inBase`): ikmal, onarım, "Cepheden çek" çıkışı.
   - `separate`: gemi ile kara birlikleri itişmez/ezmez (köprü altından geçiş).
@@ -62,16 +63,18 @@ Projede otomatik test altyapısı yok. Statik kontroller elle çalıştırılan 
 - İngilizce: 964 farklı ekran metni tarandı, çeviri dışı kalan yalnızca dil seçme satırı; 1366×768'de buton taşması yok.
 - Devriye Botu değişiklikleri: 39 modül sözdizimi temiz, döngü yok, 650 isimli import eksiksiz; `config.js` tarayıcısız yüklenip bot kartı doğrulandı.
 
-**Doğrulanmamış (Antigravity tarayıcı testleri sürüyor — sonuç henüz yok):**
-- Oynanabilir Devriye Botunun tarayıcıdaki davranışı. Bekleyen senaryolar:
-  1. Ordu ekranında Deniz kategorisinden bot ekleme; konuşlanmada nehrin kendi yarısına sürükleme, karaya ve düşman yarısına bırakmanın reddi.
-  2. Savaşta Deniz sekmesinden bot alma; nehrin güney ucundan gelişi.
-  3. Botu üç köprünün altından geçen uzak bir noktaya gönderme; karaya çıkmaması.
-  4. Köprüde kara birlikleri varken altından geçiş; itişme/ezme olmaması.
-  5. Saldırı hareketiyle düşman piyadesine ateş; roketatar veya tankla batırılma; enkaz bırakmaması ve kartın geri gelmesi.
-  6. Hasarlı botun nehrin kendi ucunda ikmal/onarım alması; "Cepheden çek" (M) ile çıkış.
-  7. Uzun maçta YZ'nin bot alıp nehirde devriye gezdirmesi.
-  8. İngilizce ve Türkçe modda bot metinleri.
+**Doğrulananlar (Antigravity, 2026-10-29 — Node v24 ES modül simülasyonu + DOM/Canvas mock ile 8 senaryo):**
+- **Senaryo 1 (Ordu kurma ve konuşlanma — GEÇTİ):** `ARMYCAT` içinde `naval` (`Deniz Kuvvetleri` → `['bot']`) tanımlı. Tek başına `checkArmy(['bot'], 1000)` muharebe birliği kuralıyla reddedildi; `checkArmy(['inf','bot','bot'], 1000)` geçti (`cost: 310`). `spawnArmy` oyuncu botlarını `(2177, 2880)` ve `(2173, 2770)`, YZ botunu `(2623, 120)` noktasına hatasız (`placeErr === null`) yerleştirdi. `ui/deploy.js` (`depDown`/`depMove`/`depUp`) sürükleme testinde karaya `(400, 1500)` bırakma `'Gemi yalnızca nehre konabilir'` (`Cannot place: Ships can only be placed on the river`), nehrin düşman yarısına (`x > W/2`, ör. `y = 1900` veya `y = 600`) bırakma `'Nehrin düşman yarısında'` (`Cannot place: In the enemy half of the river`) ile reddedilip eski konuma döndü; nehrin kendi yarısına `(2234, 2600)` bırakma kabul edildi.
+- **Senaryo 2 (Savaşta Deniz sekmesinden bot alma — GEÇTİ):** `buildDeck()` `[data-tab="deniz"]` sekmesini görünür yaptı (`hidden === false`) ve `#card-bot` kartını oluşturdu (`120 KP`, `av: 3`, `eta: 8`). `deploy(0, 24)` çağrısı `8 sn` sonra `arrive(0, 24)` ile botu nehrin güney ucundan `(2210, 2980)` sokup `(2172, 2760)` hedefine yönlendirdi.
+- **Senaryo 3 (Üç köprünün altından geçiş ve karaya çıkmama — GEÇTİ):** `y = 2760` konumundaki bota `rightOrder(riverX(200), 200, false, false)` emri verildi; bot `49.6 sn` (`991` adım) içinde `y = 2380`, `1500` ve `620` köprülerinin üçünün de altından geçerek `(2628, 202)` noktasına ulaştı, `0` kare nehir dışına çıktı (`riverAt(x,y,0)` her adımda `true`).
+- **Senaryo 4 (Köprü üstünde kara birlikleri varken altından geçiş — GEÇTİ):** Orta köprü `(riverX(1500), 1500)` üzerinde 0 ve 1. taraftan toplam 12 piyade dururken bot `y = 1650 → 1352` hattından geçti; `separate()` gemi-kara çiftlerini atladığı için (`if(!a.d.naval!==!b.d.naval)continue`) ezme veya itişme olmadı (`12/12` asker sağlam).
+- **Senaryo 5 (Saldırı hareketi, batırılma, enkaz bırakmama ve kart iadesi — GEÇTİ):** Bot `12,7 mm makineli` ile menzildeki düşman piyadesine ateş açıp öldürdü (`HP 20 → 0`). Tank topu hasarıyla (`dmg: 200, ap: 13`) batırıldığında `kill()` `state.marks` ve `state.covers` (`wreck`) sayısını artırmadı (`0` enkaz), `state.retQ` dizisine `{side: 0, idx: 24, t: state.time + 90}` iade kaydı eklendi.
+- **Senaryo 6 (Nehir üssünde ikmal/onarım ve Cepheden çek — GEÇTİ):** `y = H - 120` (`inBase(bot) === true`) konumunda hasarlı bot (`hp: 80/160`, dümen hasarı `trk: 10`) `5 sn` içinde onarım (`hp: 102.5`, `trk: 0`) ve ikmal aldı. `exfilSel()` (`M`) ile `exfil = true` ve `dest = (2210, 2980)` atandı; `y > H - 40` olunca `exfilOut` botu çıkardı (`gone = true`), kart stoğunu `2 → 3` yaptı ve `+48 KP` iade etti.
+- **Senaryo 7 (Uzun maçta YZ'nin bot alması ve nehir devriyesi — KISMEN GEÇTİ / HATA BULUNDU):** YZ'ye başlangıçta bot verildiğinde `aiSupport` (`js/systems/ai.js:144`) botu odak noktasının nehir hizasında (`(2623, 120) → (2196, 1219)`) devriye gezdirdi. **Ancak 10 ayrı 300 saniyelik maç simülasyonunda YZ `aiBuy` ile hiç bot satın almadı (`0/10`) ve `autoArmy` (`AI_TEMPLATE`) içinde de `'bot'` yok** (ayrıntı §6'da).
+- **Senaryo 8 (Türkçe ve İngilizce bot metinleri — GEÇTİ):** `Devriye Botu` ↔ `Patrol Boat`, `BOT` ↔ `PB`, `12,7 mm makineli` ↔ `12.7 mm MG`, `Deniz Kuvvetleri` ↔ `Navy`, `DENİZ` ↔ `NAVY`, `Dümen 12 sn` ↔ `Rudder 12 s`, `Devriye Botu: dümen hasar gördü` ↔ `Patrol Boat: rudder damaged`, `Nehir devriyesi · makineli tüfek, köprü altından geçer` ↔ `River patrol · machine gun, passes under bridges` metinleri `ui/panels.js`, `ui/army-builder.js`, `ui/deck.js`, `ui/deploy.js` ve `i18n.js` üzerinde doğrulandı.
+
+**Doğrulanmamış:**
+- **Etkileşimli tarayıcıda görsel/manuel kontrol:** Sandbox ortamında headless Chrome başlatılamadığı için Antigravity testleri gerçek ES modülleri + DOM/Canvas mock üzerinde çalıştırıldı; botun canvas üzerindeki görsel çizimi (su izi, köprü katmanı altında kalma görüntüsü) ve fareyle gerçek tarayıcı penceresinde sürükleme hissi etkileşimli tarayıcıda gözle görülmedi.
 - Dokunmatik ekranda konuşlanma sürüklemesi (hiç test edilmedi).
 - Telefon genişliğinde İngilizce metin taşması (kontrol edilmedi).
 - Eş yükselti çizgilerinin son görünümü (belirginleştirildikten sonra ekranda bakılmadı).
@@ -79,6 +82,11 @@ Projede otomatik test altyapısı yok. Statik kontroller elle çalıştırılan 
 
 ## 6. Bilinen sorunlar ve riskler
 
+- **YZ savaşta hiç bot satın almıyor (`js/systems/ai.js:175-185`, `js/systems/army.js:10`):**
+  - `aiBuy` içinde `CAT.bot = 'arm'` olarak tanımlı ve `kw.bot` en fazla `.45` (`state.time > 40 && cnt('bot') < 1`). Aynı `'arm'` kategorisindeki `ifv` (`kw >= 1.1`, maliyet `160`) ve `tank` (`kw >= 1.0`, maliyet `280`) aynı `adj('arm')` çarpanını alır.
+  - Skor formülünde `(kw[S.k]||0) * adj(S.k) / Math.pow(S.cost, .35) * (.85 + R()*.3)`: botun alabileceği **maksimum** skor (`0.45 / 120^0.35 * 1.15 = 0.097 * adj('arm')`), tankın **minimum** skorundan (`1.0 / 280^0.35 * 0.85 = 0.118 * adj('arm')`) ve ZMA'nın **minimum** skorundan (`1.1 / 160^0.35 * 0.85 = 0.158 * adj('arm')`) matematiksel olarak her zaman düşüktür; ayrıca ilk 6 yedek tercihe (`sc.slice(0,6)`) de giremez.
+  - Ek olarak `js/systems/army.js:10` içindeki `AI_TEMPLATE` dizisinde `'bot'` bulunmadığından `autoArmy` başlangıç ordusuna da bot eklemez.
+- **Kıvrımlı nehirde konuşlanma yarısı kuralı (`js/systems/deployment.js:18`):** `placeErr` gemiler için `u.side ? x < W/2 : x > W/2` kontrolü yapıyor. Nehir `W/2` (`x = 2400`) etrafında sinüs eğrisi çizdiği için, Mavi Kuvvet (`side = 0`) adına nehrin doğuya kıvrıldığı `y ∈ [1500, 2375]` kesimi (`riverX(y) > 2400`) kendi güney yakasına yakın olsa bile `'Nehrin düşman yarısında'` hatası veriyor; buna karşılık kuzeydeki `y ∈ [625, 1500]` kesimi batıya kıvrıldığı için (`riverX(y) < 2400`) geçerli sayılıyor. Gemi konuşlanma kontrolünün `x > W/2` yerine `y < H/2` (veya `inDeployZone`) esaslı olması gerekebilir.
 - Bot kendi başına geri çekilmez (inisiyatifin güvenli nokta kontrolü suyu reddeder).
 - Birden çok bota emir verilince dizilim noktaları dar nehirde üst üste düşebilir.
 - YZ botu odak noktasının hizasına, nehrin düşman yarısına da gönderebilir.
@@ -90,9 +98,9 @@ Projede otomatik test altyapısı yok. Statik kontroller elle çalıştırılan 
 
 ## 7. Sonraki adımlar
 
-1. Antigravity bot testlerini tamamlasın; sonuçları §5'e işlesin.
-2. Test sonucuna göre bot değişikliklerini commit etmek (veya hataları düzeltmek).
-3. Botun ateş altında geri çekilme davranışı ve çoklu bot dizilimi.
+1. Devriye Botu testlerinde bulunan `aiBuy` ağırlığı / `AI_TEMPLATE` ve kıvrımlı nehir konuşlanma yarısı (`placeErr`) sorunlarını düzeltmek.
+2. Botun ateş altında geri çekilme davranışı ve çoklu bot dizilimi.
+3. Yeni birimlerin (dron operatörü, bot) uzun maç denge testleri ve mobil/dokunmatik kontrolleri.
 4. Sonraki gemi sınıfları (füze botu, çıkarma gemisi) — ROADMAP'e bakın; henüz başlanmadı.
 
 ## 8. İlerleme günlüğü
@@ -109,3 +117,4 @@ Projede otomatik test altyapısı yok. Statik kontroller elle çalıştırılan 
 | 2026-10-29 | Codex | AGENTS.md'ye Codex'in planlama, bağımsız inceleme ve dokümantasyon sorumlulukları eklendi; ROADMAP görevi tamamlandı. Test çalıştırılmadı (yalnızca dokümantasyon düzenlemesi). |
 | 2026-10-29 | Codex | Kullanıcı isteğiyle Antigravity'nin görev tanımına test bulgularına yönelik atanmış veya açıkça istenmiş sınırlı kod geliştirme/hata düzeltme işleri eklendi. ROADMAP güncellendi; test çalıştırılmadı. |
 | 2026-10-29 | Codex | Kullanıcı isteğiyle görev durumları `Proposed → Planned → Developing → Developed → To verify → Verified → Done` akışında standartlaştırıldı. Eski görev durumları eşdeğer aşamalara taşındı; henüz onaylanmamış uzun vadeli fikirler Proposed olarak ayrıldı. |
+| 2026-10-29 | Antigravity | Devriye Botu (`79c8556`) için 8 doğrulama senaryosu Node ES modül simülasyonu + DOM/Canvas mock ile koşturuldu: Senaryo 1–6 ve 8 geçti; Senaryo 7'de `aiSupport` devriyesi doğrulandı ancak `aiBuy` skorlamasında (`CAT.bot:'arm'`, `kw.bot:.45`) botun `ifv`/`tank` karşısında hiçbir zaman seçilemediği ve `AI_TEMPLATE` içinde yer almadığı tespit edildi. Ayrıca kıvrımlı nehirde `x > W/2` konuşlanma kuralının `y ∈ [1500, 2375]` kesimini reddettiği raporlandı (§5, §6). |

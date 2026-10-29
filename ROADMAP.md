@@ -5,7 +5,7 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 
 ## Mevcut aşama
 
-**Aşama 3 — Deniz savaşı, ilk sürüm.** Oynanabilir Devriye Botu kodlandı ve commit edilmeden çalışma alanında bekliyor; tarayıcı testleri Antigravity'de sürüyor.
+**Aşama 3 — Deniz savaşı, ilk sürüm.** Oynanabilir Devriye Botu (`79c8556`) kodlandı ve Antigravity tarafından 8 senaryoyla doğrulandı; Senaryo 1–6 ve 8 geçti, Senaryo 7'de YZ'nin `aiBuy` skorlaması nedeniyle bot satın almadığı (ve kıvrımlı nehirde `x > W/2` konuşlanma kuralının yan etkisi) tespit edildi.
 
 ## Görev durumu akışı
 
@@ -21,9 +21,9 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 
 ## Sıradaki öncelikler
 
-1. Devriye Botu tarayıcı testleri (Antigravity) → sonuçlar notebook'a.
-2. Test sonucuna göre düzeltme ve bot commit'i (Claude).
-3. Botun ateş altında geri çekilmesi ve çoklu bot dizilimi.
+1. Devriye Botu test bulgularının (`aiBuy` ağırlığı / `AI_TEMPLATE` ve nehir konuşlanma yarısı kontrolü) düzeltilmesi (Claude veya kullanıcı atamasıyla Antigravity).
+2. Botun ateş altında geri çekilmesi ve çoklu bot dizilimi.
+3. Yeni birimlerin uzun maç denge testleri.
 
 ## Görev durumu
 
@@ -38,8 +38,8 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 | Dron Operatör Timi | Done | Claude | `0e33ce5` |
 | Gemi altyapısı | Done | Claude | `a3520a3` |
 | İngilizce dil desteği | Done | Claude | `aa972d1` |
-| Oynanabilir Devriye Botu | To verify | Kod: Claude · Test: Antigravity | Çalışma alanında, commit edilmedi; 8 test senaryosu notebook §5'te |
-| Devriye Botu tarayıcı testleri | Developing | Antigravity | Sonuç bekleniyor |
+| Oynanabilir Devriye Botu | Verified | Kod: Claude · Test: Antigravity | `79c8556`; 8 senaryonun 7'si geçti, YZ bot satın alma (`aiBuy`) bulgusu notebook §5–§6'da |
+| Devriye Botu tarayıcı/simülasyon testleri | Done | Antigravity | 8 senaryo ES modül + DOM/Canvas simülasyonuyla doğrulandı ve `PROJECT_NOTEBOOK.md` §5–§6'ya işlendi |
 | Codex çalışma rolünü AGENTS.md'ye ekleme | Done | Codex | Planlama, bağımsız inceleme ve dokümantasyon kapsamı ile ajanlar arası çakışma kuralları eklendi |
 | Antigravity görev kapsamını genişletme | Done | Codex | Test bulgularına yönelik atanmış/kullanıcıca istenmiş sınırlı kod düzeltmeleri ve kayıt koşulları AGENTS.md'ye eklendi |
 | Görev durumu akışını standartlaştırma | Done | Codex | Proposed'dan Done'a yedi aşamalı akış tanımlandı; mevcut işler yeni aşamalara taşındı |
@@ -52,7 +52,7 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 
 ## Yakın vadeli hedefler
 
-- Devriye Botunu doğrulayıp commit etmek.
+- Devriye Botu test bulgularını (`aiBuy` ve konuşlanma yarısı kontrolü) düzeltmek.
 - Gemi davranışlarını tamamlamak: kendini koruma, çoklu gemi düzeni.
 - Yeni özelliklerin dengesini uzun maçlarla ayarlamak.
 
