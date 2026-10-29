@@ -21,9 +21,10 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 
 ## Sıradaki öncelikler
 
-1. Devriye Botu test bulgularının (`aiBuy` ağırlığı / `AI_TEMPLATE` ve nehir konuşlanma yarısı kontrolü) düzeltilmesi (Claude veya kullanıcı atamasıyla Antigravity).
-2. Botun ateş altında geri çekilmesi ve çoklu bot dizilimi.
-3. Yeni birimlerin uzun maç denge testleri.
+1. YZ'nin Devriye Botu satın almaması bulgusunu düzeltmek.
+2. Kıvrımlı nehirde botun yanlış konuşlanma yarısı sayılması bulgusunu düzeltmek.
+3. Botun ateş altında geri çekilmesi ve çoklu bot dizilimi.
+4. Yeni birimlerin uzun maç denge testleri.
 
 ## Görev durumu
 
@@ -43,11 +44,14 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 | Codex çalışma rolünü AGENTS.md'ye ekleme | Done | Codex | Planlama, bağımsız inceleme ve dokümantasyon kapsamı ile ajanlar arası çakışma kuralları eklendi |
 | Antigravity görev kapsamını genişletme | Done | Codex | Test bulgularına yönelik atanmış/kullanıcıca istenmiş sınırlı kod düzeltmeleri ve kayıt koşulları AGENTS.md'ye eklendi |
 | Görev durumu akışını standartlaştırma | Done | Codex | Proposed'dan Done'a yedi aşamalı akış tanımlandı; mevcut işler yeni aşamalara taşındı |
-| Dokunmatik konuşlanma testi | Planned | Antigravity | Hiç test edilmedi |
-| Telefon genişliğinde İngilizce taşma kontrolü | Planned | Antigravity | |
+| Büyük buglar için GitHub Issue iş akışını tanımlama | Done | Codex | AGENTS.md'ye Issue açma ve kayıt/bağlantı kuralları eklendi |
+| Devriye Botu YZ satın alma hatasını GitHub Issue'a aktarma | Planned | Codex | Issue metni hazır; GitHub entegrasyonu oluşturma isteğini 403 ile reddetti (Issues yazma yetkisi gerekli) |
+| Kıvrımlı nehir konuşlanma hatasını GitHub Issue'a aktarma | Planned | Codex | Issue metni hazır; GitHub entegrasyonu oluşturma isteğini 403 ile reddetti (Issues yazma yetkisi gerekli) |
+| Dokunmatik konuşlanma testi | Developing | Antigravity | Test ediliyor |
+| Telefon genişliğinde İngilizce taşma kontrolü | Developing | Antigravity | Test ediliyor |
 | Botun ateş altında geri çekilmesi | Planned | — | Sorumlu atanmadı |
 | Çoklu bot dizilimi (dar nehir) | Planned | — | Sorumlu atanmadı |
-| Yeni birimlerin denge testi (dron operatörü, bot) | Planned | Antigravity | Uzun maçlar |
+| Yeni birimlerin denge testi (dron operatörü, bot) | Developing | Antigravity | Uzun maçlar test ediliyor |
 | 375 px seçim paneli taşması | Planned | — | Eski sorun |
 
 ## Yakın vadeli hedefler

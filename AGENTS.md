@@ -34,6 +34,13 @@ Bu projede **Claude** (Claude Code), **Codex** ve **Antigravity** birlikte çal�
 - Test sonucu, testi kimin, hangi senaryoyla, ne zaman yaptığıyla birlikte notebook §5'e yazılır.
 - Kodun davranışından emin olunmayan noktalar açıkça belirtilir.
 
+## GitHub Issues
+
+- Büyük, tekrarlanabilir ve ayrı iş olarak düzeltilecek hatalar GitHub Issues'ta açılır. Küçük pürüzler ve henüz kararlaştırılmamış fikirler ROADMAP'te kalır.
+- Issue; yeniden üretme adımlarını, beklenen ve gerçekleşen davranışı, etkiyi ve tamamlanma/doğrulama ölçütünü içerir. Test kanıtı PROJECT_NOTEBOOK.md'de tutulur.
+- ROADMAP'teki ilgili göreve Issue bağlantısı eklenir; Issue kapatılmadan önce düzeltme doğrulanır ve kayıtlar güncellenir.
+- Depoya GitHub erişimi yoksa Issue açılmış gibi davranılmaz; bulgu ROADMAP/notebook'ta korunur ve erişim gerektiği belirtilir.
+
 ## Dosya ve Git disiplini
 
 - Göreve başlamadan önce `git status` ve `git log` kontrol edilir; diğer ajanın değişiklikleri görülür.
