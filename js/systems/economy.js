@@ -1,5 +1,6 @@
 /* systems/economy.js — Ekonomi ve hedefler: nokta ele geçirme, gelir, bakım gideri, ikmal, kart iadesi. */
 import {state} from '../state.js';
+import {tr} from '../i18n.js';
 import {AIDIF,CS,GW,SQUADS,W,ZK} from '../config.js';
 import {damage,panic,stress} from './combat.js';
 import {fireCells} from './effects.js';
@@ -29,7 +30,7 @@ function perSecond(){const h=[0,0];for(const o of state.objs)if(o.owner>=0)h[o.o
   const upk=[0,1].map(sd=>{let v=0;for(const u of state.units)if(u.side===sd&&!u.abandoned)v+=u.val||0;for(const e of state.airbase[sd])if(e.st==='air')v+=SQUADS.find(q=>q.plane===e.key).cost;return Math.max(.35,1-v/9000)});
   const net=[inc[0]*upk[0],inc[1]*upk[1]];state.money[0]+=net[0];state.money[1]+=net[1]*AIDIF[state.aiDiff].inc;
   if(pts[0]>pts[1])state.tickets[1]=Math.max(0,state.tickets[1]-(pts[0]-pts[1])*.5);else if(pts[1]>pts[0])state.tickets[0]=Math.max(0,state.tickets[0]-(pts[1]-pts[0])*.5);
-  $('inc').textContent=`+${net[0].toFixed(1)}/sn`;$('inc').title=`Taban +3`+Object.entries(brk).map(([n,v])=>` · ${n} +${v}`).join('')+` · Bakım gideri −%${Math.round((1-upk[0])*100)} · Düşman imhası değerinin %20'si ayrıca`;
+  $('inc').textContent=tr(`+${net[0].toFixed(1)}/sn`);$('inc').title=tr(`Taban +3`+Object.entries(brk).map(([n,v])=>` · ${n} +${v}`).join('')+` · Bakım gideri −%${Math.round((1-upk[0])*100)} · Düşman imhası değerinin %20'si ayrıca`);
   for(const o of state.objs){if(o.owner<0)continue;if(o.k==='depot')for(const u of state.units)if(u.side===o.owner&&!flying(u)&&Math.hypot(u.x-o.x,u.y-o.y)<300)resupply(u,1.2);
     if(o.k==='airfield')for(const u of state.units)if(u.side===o.owner&&u.d.heli&&u.alt==='landed'&&Math.hypot(u.x-o.x,u.y-o.y)<300)resupply(u,4)}
   for(let i=state.retQ.length-1;i>=0;i--)if(state.time>=state.retQ[i].t){const q=state.retQ.splice(i,1)[0];state.avail[q.side][q.idx]++;if(q.side===0)log(`${SQUADS[q.idx].n} kartı yeniden kullanılabilir`,'')}

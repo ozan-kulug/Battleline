@@ -1,5 +1,6 @@
 /* ui/deck.js — Takviye destesi kartları ve sekmeleri. */
 import {state} from '../state.js';
+import {tr} from '../i18n.js';
 import {DEF,PAYN,SQUADS} from '../config.js';
 import {drawDrone,drawHeli,drawPlane,drawShip,drawSoldier,drawVeh} from '../renderer.js';
 import {deploy} from '../systems/units.js';
@@ -8,8 +9,8 @@ import {$} from '../utils/helpers.js';
 const cards=[];
 function fakeUnit(k,side){const d=DEF[k];return{side,key:k,d,a:-.25,ta:-.15,hp:d.hp,flash:0,recoil:0,st:'deployed',sup:0,stM:null,moving:false,sees:[],inB:null,trk:0,tur:0,alt:'landed',altT:0,radarOn:false,burn:false}}
 function buildDeck(){const dk=$('deck');const ci={};SQUADS.forEach((S,i)=>{const b=document.createElement('button');b.type='button';b.className='card';b.id='card-'+S.k;b.dataset.cat=S.cat;ci[S.cat]=(ci[S.cat]||0)+1;
-  b.innerHTML=`<span class="hk">⇧${ci[S.cat]%10}</span><canvas width="148" height="80"></canvas><span class="nm">${S.n}</span><span class="ct">${S.cost} KP</span><span class="av"></span><span class="fill"></span>`;
-  b.title=S.plane?`${S.n} (${S.cost} KP): hava üssüne gelir. ${Object.entries(DEF[S.plane].pay).map(([k,v])=>PAYN[k]+' ×'+v).join(', ')}`:`${S.n} (${S.cost} KP): ${S.m.map(k=>DEF[k].n).join(', ')}${S.k==='heliT'?' + Piyade Mangası (içinde)':''}`;
+  b.innerHTML=tr(`<span class="hk">⇧${ci[S.cat]%10}</span><canvas width="148" height="80"></canvas><span class="nm">${S.n}</span><span class="ct">${S.cost} KP</span><span class="av"></span><span class="fill"></span>`);
+  b.title=tr(S.plane?`${S.n} (${S.cost} KP): hava üssüne gelir. ${Object.entries(DEF[S.plane].pay).map(([k,v])=>PAYN[k]+' ×'+v).join(', ')}`:`${S.n} (${S.cost} KP): ${S.m.map(k=>DEF[k].n).join(', ')}${S.k==='heliT'?' + Piyade Mangası (içinde)':''}`);
   b.addEventListener('click',()=>{if(state.running&&!state.over)deploy(0,i)});dk.appendChild(b);
   const c=b.querySelector('canvas').getContext('2d');c.setTransform(2,0,0,2,0,0);drawSquadArt(c,S);cards.push([b,S])});
   /* deniz sekmesi yalnızca satın alınabilir gemi varsa görünür */

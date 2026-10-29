@@ -1,5 +1,6 @@
 /* main.js — Giriş noktası: modülleri başlatır ve oyunu açar. */
 import {newGame} from './game.js';
+import {lang,tr,trDom} from './i18n.js';
 import {frame,resize} from './game-loop.js';
 import {initInput} from './input.js';
 import {computeVis} from './systems/vision.js';
@@ -9,6 +10,8 @@ import {initDeploy} from './ui/deploy.js';
 import {initHud} from './ui/hud.js';
 import {initMenus} from './ui/menus.js';
 
+// Sayfadaki sabit metinler seçili dile çevrilir (İngilizce varsayılan)
+document.documentElement.lang=lang;document.title=tr(document.title);trDom(document.body);
 // Olay dinleyicileri, tek dosyalı sürümdeki kayıt sırasıyla
 initDeck();
 initHud();

@@ -1,6 +1,7 @@
 /* ui/deploy.js — Konuşlanma safhası arayüzü: birlik sürükleme, yön verme, birlik listesi, savaşı başlatma.
    Simülasyon bu safhada state.running=false olduğu için ilerlemez; yalnızca birliklerin konumu ve yönü değişir. */
 import {state} from '../state.js';
+import {tr} from '../i18n.js';
 import {clampCam,toW} from '../camera.js';
 import {DEF,FINE,PI} from '../config.js';
 import {cam} from '../state.js';
@@ -21,8 +22,8 @@ function pickOwn(x,y){const u=hitUnit(x,y,0);return u&&!u.d.plane?u:null}
 function selectSq(u,add){const on=add?!u.sel:true;if(!add)state.units.forEach(x=>x.sel=false);for(const m of state.units)if(m.side===0&&(m===u||(u.sq&&m.sq===u.sq)))m.sel=on}
 function setFace(list,a){for(const u of list){u.a=u.ta=a;u.faceA=a}}
 function hint(){const h=$('depHint');h.classList.remove('warn');
-  h.textContent=FINE?'Birliği sürükle: yer değiştir · Sağ tık + sürükle: yön · Q / E: döndür · Shift: çoklu seçim · Esc: iptal':'Birliğe dokun ve sürükle: yer değiştir · boş alanı sürükle: haritayı kaydır'}
-function say(t){const h=$('depHint');h.textContent=t;h.classList.add('warn');const t0=msgT=performance.now();setTimeout(()=>{if(msgT===t0&&state.phase==='deploy')hint()},3500)}
+  h.textContent=tr(FINE?'Birliği sürükle: yer değiştir · Sağ tık + sürükle: yön · Q / E: döndür · Shift: çoklu seçim · Esc: iptal':'Birliğe dokun ve sürükle: yer değiştir · boş alanı sürükle: haritayı kaydır')}
+function say(t){const h=$('depHint');h.textContent=tr(t);h.classList.add('warn');const t0=msgT=performance.now();setTimeout(()=>{if(msgT===t0&&state.phase==='deploy')hint()},3500)}
 function after(){computeVis();roster();updUI();place()}
 /* safha çubuğu üst şeridin, liste de çubuğun hemen altına konur; dar ekranda üst şerit birkaç satıra bölündüğü için ölçülerek yerleştirilir.
    Liste alttaki seçim paneline (en fazla 420 px / dar ekranda %34) yer bırakır. */
@@ -38,8 +39,8 @@ function roster(){const rows=[];
     const bad=ms.some(u=>placeErr(u,u.x,u.y,null)),on=ms.every(u=>u.sel),cg=ms.find(u=>u.cargo&&u.cargo.length);
     rows.push(`<button type="button" class="dp-r${on?' on':''}${bad?' bad':''}" data-sq="${sq.id}"><span>${sq.n}</span><small>${ms.length>1?`${ms.length} birim`:DEF[ms[0].key].tag}${cg?` · içinde ${cg.cargo.length} asker`:''}${bad?' · geçersiz konum':''}</small></button>`)}
   for(const e of state.airbase[0])rows.push(`<div class="dp-r air"><span>${DEF[e.key].n}</span><small>Hava üssünde · savaş başlayınca kalkabilir</small></div>`);
-  const h=rows.join(''),l=$('depList');if(l.dataset.h!==h){l.innerHTML=h;l.dataset.h=h}
-  $('depN').textContent=`${own().length} birim sahada`}
+  const h=rows.join(''),l=$('depList');if(l.dataset.h!==h){l.innerHTML=tr(h);l.dataset.h=h}
+  $('depN').textContent=tr(`${own().length} birim sahada`)}
 /* ---------- tuval girdisi (input.js çağırır; true dönerse olay tüketilmiştir) ---------- */
 function depDown(e){if(e.button===1)return false;
   if(dep.drag){if(e.pointerType==='touch'){dep.drag=null;return false}return true}
@@ -69,7 +70,7 @@ function depUp(e){const d=dep.drag;
 /* ---------- safha geçişleri ---------- */
 function close(){dep.drag=null;state.drag=null;$('dep').hidden=true;document.body.classList.remove('deploying')}
 /* o: {name, cost, back}: back ordu kurma ekranını açar (seçilen ordu orada korunur) */
-function enterDeploy(o){info=o;dep.drag=null;state.units.forEach(u=>u.sel=false);$('depName').textContent=`${o.name} · ${o.cost} OP`;
+function enterDeploy(o){info=o;dep.drag=null;state.units.forEach(u=>u.sel=false);$('depName').textContent=tr(`${o.name} · ${o.cost} OP`);
   document.body.classList.add('deploying');$('dep').hidden=false;hint();after()}
 /* tüm birimler geçerli konumdaysa savaş başlar; değilse geçersiz olanlar seçilir ve neden gösterilir */
 function go(){const bad=own().filter(u=>placeErr(u,u.x,u.y,null));

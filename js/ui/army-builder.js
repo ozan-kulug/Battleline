@@ -1,5 +1,6 @@
 /* ui/army-builder.js — Savaş öncesi ordu kurma ekranı: taraflar, kategoriler, birlik ayrıntısı, ordu puanı ve seçili ordu paneli. */
 import {ARMY,ARMYCAT,AW,DEF,PAYN,ROLE,SQUADS} from '../config.js';
+import {tr} from '../i18n.js';
 import {DEFAULT_ARMY,addBlock,armyCap,autoArmy,checkArmy,countOf,sqOf} from '../systems/army.js';
 import {startMatch} from '../game.js';
 import {drawSquadArt} from './deck.js';
@@ -35,39 +36,39 @@ function weapons(S){const rows=[],seen=new Set(),{c}=members(S);
   return rows}
 /* ---------- çizim ---------- */
 function build(){if(built)return;built=true;
-  $('armyBudget').innerHTML=ARMY.budgets.map(b=>`<button type="button" class="btn" data-b="${b}">${ARMY.bn[b]} <b>${b}</b></button>`).join('');
-  $('armyCats').innerHTML=ARMYCAT.map(c=>`<button type="button" class="ab-cat" data-tab="${c.k}"><span>${c.n}</span><small></small></button>`).join('');
+  $('armyBudget').innerHTML=tr(ARMY.budgets.map(b=>`<button type="button" class="btn" data-b="${b}">${ARMY.bn[b]} <b>${b}</b></button>`).join(''));
+  $('armyCats').innerHTML=tr(ARMYCAT.map(c=>`<button type="button" class="ab-cat" data-tab="${c.k}"><span>${c.n}</span><small></small></button>`).join(''));
   const g=$('armyCards');
-  for(const c of ARMYCAT)for(const k of c.m){const S=sqOf(k),el=document.createElement('div');el.className='ab-card';el.dataset.k=k;el.dataset.cat=c.k;el.tabIndex=0;el.setAttribute('role','button');el.setAttribute('aria-label',`${S.n}, ${S.cost} OP`);
-    el.innerHTML=`<span class="ab-cnt"></span><span class="ab-cost">${S.cost}</span><div class="ab-art"><canvas width="148" height="80"></canvas></div><b class="ab-nm">${S.n}</b><span class="ab-role">${ROLE[k]}</span>`+
-      `<div class="ab-ctl"><button type="button" class="btn" data-rem="${k}" aria-label="Bir ${S.n} çıkar">−</button><button type="button" class="btn" data-add="${k}" aria-label="Bir ${S.n} ekle">+</button></div>`;
+  for(const c of ARMYCAT)for(const k of c.m){const S=sqOf(k),el=document.createElement('div');el.className='ab-card';el.dataset.k=k;el.dataset.cat=c.k;el.tabIndex=0;el.setAttribute('role','button');el.setAttribute('aria-label',tr(`${S.n}, ${S.cost} OP`));
+    el.innerHTML=tr(`<span class="ab-cnt"></span><span class="ab-cost">${S.cost}</span><div class="ab-art"><canvas width="148" height="80"></canvas></div><b class="ab-nm">${S.n}</b><span class="ab-role">${ROLE[k]}</span>`+
+      `<div class="ab-ctl"><button type="button" class="btn" data-rem="${k}" aria-label="Bir ${S.n} çıkar">−</button><button type="button" class="btn" data-add="${k}" aria-label="Bir ${S.n} ekle">+</button></div>`);
     const cx=el.querySelector('canvas').getContext('2d');cx.setTransform(2,0,0,2,0,0);drawSquadArt(cx,S);g.appendChild(el)}}
 function renderInfo(){const k=ab.pick,S=sqOf(k),cat=catOf(k),{c,cargo}=members(S),n=countOf(ab.list,k),blk=addBlock(ab.list,k,ab.budget),w=weapons(S);
   const comp=Object.entries(c).map(([u,q])=>`${q}× ${DEF[u].n}`).join(' · ')+(cargo?` · içinde ${cargo.n}`:'');
   const el=$('armyInfo');
-  el.innerHTML=`<div class="ab-ih"><div><small>${cat.n.toLocaleUpperCase('tr')}</small><h2>${S.n}</h2></div><b>${S.cost}<small> OP</small></b></div>`+
+  el.innerHTML=tr(`<div class="ab-ih"><div><small>${cat.n.toLocaleUpperCase('tr')}</small><h2>${S.n}</h2></div><b>${S.cost}<small> OP</small></b></div>`+
     `<p class="ab-rl">${ROLE[k]}</p><div class="ab-prev"><canvas width="296" height="160"></canvas></div><p class="ab-comp">${comp}</p>`+
     `<div class="ab-stats">${stats(S).map(([l,v])=>`<div><small>${l}</small><b>${v}</b></div>`).join('')}</div>`+
     (w.length?`<table class="ab-wt"><thead><tr><th>Silah</th><th>Menzil</th><th>Hasar</th><th>Delme</th><th>Cephane</th></tr></thead><tbody>${w.map(r=>`<tr>${r.map((x,i)=>i?`<td>${x}</td>`:`<th>${x}</th>`).join('')}</tr>`).join('')}</tbody></table>`:'<p class="muted ab-now">Silahsız birlik</p>')+
-    `<div class="ab-iadd"><span>Orduda <b>×${n}</b> · en fazla ${armyCap(k)}</span><button type="button" class="btn" data-rem="${k}"${n?'':' disabled'}>Çıkar</button><button type="button" class="btn on" data-add="${k}"${blk?` disabled title="${blk}"`:''}>Orduya ekle</button></div>`+(blk?`<p class="ab-blk">${blk}</p>`:'');
+    `<div class="ab-iadd"><span>Orduda <b>×${n}</b> · en fazla ${armyCap(k)}</span><button type="button" class="btn" data-rem="${k}"${n?'':' disabled'}>Çıkar</button><button type="button" class="btn on" data-add="${k}"${blk?` disabled title="${blk}"`:''}>Orduya ekle</button></div>`+(blk?`<p class="ab-blk">${blk}</p>`:''));
   const cx=el.querySelector('canvas').getContext('2d');cx.setTransform(4,0,0,4,0,0);drawSquadArt(cx,S)}
 function renderList(){const rows=[];
   for(const cat of ARMYCAT){const ks=cat.m.filter(k=>countOf(ab.list,k));if(!ks.length)continue;rows.push(`<div class="ab-lh">${cat.n}</div>`);
     for(const k of ks){const S=sqOf(k),q=countOf(ab.list,k);
       rows.push(`<div class="ab-row${k===ab.pick?' sel':''}" data-k="${k}"><span class="nm">${S.n}</span><span class="q">×${q}</span><span class="c">${S.cost*q}</span>`+
         `<button type="button" class="btn" data-rem="${k}" aria-label="Bir ${S.n} çıkar">−</button><button type="button" class="btn" data-add="${k}" aria-label="Bir ${S.n} ekle"${addBlock(ab.list,k,ab.budget)?' disabled':''}>+</button></div>`)}}
-  $('armyRows').innerHTML=rows.length?rows.join(''):'<p class="ab-empty">Henüz birlik seçilmedi.<br>Kategorilerden birlik ekle veya otomatik doldur.</p>'}
+  $('armyRows').innerHTML=tr(rows.length?rows.join(''):'<p class="ab-empty">Henüz birlik seçilmedi.<br>Kategorilerden birlik ekle veya otomatik doldur.</p>')}
 function update(){const chk=checkArmy(ab.list,ab.budget),left=ab.budget-chk.cost,cat=ARMYCAT.find(c=>c.k===ab.cat);
-  $('armyPts').textContent=`${chk.cost} / ${ab.budget}`;$('armyBar').style.width=Math.min(100,chk.cost/ab.budget*100)+'%';$('armyTot').classList.toggle('over',chk.cost>ab.budget);
-  $('armyUsed').textContent=`${chk.cost} OP`;$('armyLeft').textContent=`${left} OP`;$('armyLeft').classList.toggle('warn',left<0);$('armyN').textContent=`${ab.list.length} birlik`;
+  $('armyPts').textContent=tr(`${chk.cost} / ${ab.budget}`);$('armyBar').style.width=Math.min(100,chk.cost/ab.budget*100)+'%';$('armyTot').classList.toggle('over',chk.cost>ab.budget);
+  $('armyUsed').textContent=tr(`${chk.cost} OP`);$('armyLeft').textContent=tr(`${left} OP`);$('armyLeft').classList.toggle('warn',left<0);$('armyN').textContent=tr(`${ab.list.length} birlik`);
   for(const b of $('armyBudget').children)b.classList.toggle('on',+b.dataset.b===ab.budget);
-  for(const b of $('armyCats').children){const c=ARMYCAT.find(x=>x.k===b.dataset.tab),q=ab.list.filter(k=>c.m.includes(k)).length;b.classList.toggle('on',c===cat);b.querySelector('small').textContent=q?`×${q}`:''}
-  $('armyCatT').textContent=cat.n;$('armyCatS').textContent=`${cat.m.length} birlik türü · çift tıkla veya + ile ekle`;
+  for(const b of $('armyCats').children){const c=ARMYCAT.find(x=>x.k===b.dataset.tab),q=ab.list.filter(k=>c.m.includes(k)).length;b.classList.toggle('on',c===cat);b.querySelector('small').textContent=tr(q?`×${q}`:'')}
+  $('armyCatT').textContent=tr(cat.n);$('armyCatS').textContent=tr(`${cat.m.length} birlik türü · çift tıkla veya + ile ekle`);
   for(const el of $('armyCards').children){const k=el.dataset.k,q=countOf(ab.list,k),blk=addBlock(ab.list,k,ab.budget),ad=el.querySelector('[data-add]');
     el.hidden=el.dataset.cat!==ab.cat;el.classList.toggle('in',q>0);el.classList.toggle('sel',k===ab.pick);el.classList.toggle('na',!!blk&&!q);
-    el.querySelector('.ab-cnt').textContent=q?`×${q}`:'';el.querySelector('[data-rem]').disabled=!q;ad.disabled=!!blk;ad.title=blk||'Orduya ekle'}
+    el.querySelector('.ab-cnt').textContent=tr(q?`×${q}`:'');el.querySelector('[data-rem]').disabled=!q;ad.disabled=!!blk;ad.title=tr(blk||'Orduya ekle')}
   renderInfo();renderList();
-  const m=$('armyMsg'),flash=ab.msg&&performance.now()-ab.msgT<3500;m.textContent=flash?ab.msg:chk.ok?`Hazır · ${left} OP kullanılmadı`:chk.err[0];m.className=flash||!chk.ok?'warn':'ok';
+  const m=$('armyMsg'),flash=ab.msg&&performance.now()-ab.msgT<3500;m.textContent=tr(flash?ab.msg:chk.ok?`Hazır · ${left} OP kullanılmadı`:chk.err[0]);m.className=flash||!chk.ok?'warn':'ok';
   $('armyGo').disabled=!chk.ok;save()}
 /* ---------- eylemler ---------- */
 function add(k){const blk=addBlock(ab.list,k,ab.budget);ab.pick=k;if(blk){ab.msg=blk;ab.msgT=performance.now();setTimeout(update,3600)}else{ab.list.push(k);ab.msg=null}update()}
