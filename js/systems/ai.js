@@ -139,6 +139,8 @@ function aiSupport(sd,sqs,main){const f=AIS[sd].focus;if(!f)return;const st=main
     if(q.k==='manpads'||q.k==='shorad'){sqGo(q,behind(sd,st.x,110),st.y+gauss()*90,'move','aa'+f.n+(main?main.id:''));continue}
     if(q.k==='sam'){sqGo(q,behind(sd,f.x,650),clamp(f.y+gauss()*120,60,H-60),'move','sam'+f.n);continue}
     if(q.k==='uav'){const L=dist2(st,f)||1;if(!q.m.some(u=>u.home))sqGo(q,f.x+(st.x-f.x)/L*150,f.y+(st.y-f.y)/L*150,'move','u'+f.n);continue}
+    /* dron operatörü cephenin gerisinde, kontrol menzili içinde durur; hedefleri kendisi seçer (systems/drones.js) */
+    if(q.k==='dronop'){sqGo(q,behind(sd,st.x,220),clamp(st.y+gauss()*90,60,H-60),'move','do'+f.n);continue}
     if(q.k==='fpv'){if(main&&main.type==='attack'&&main.ph==='assault')sqGo(q,main.o.x,main.o.y,'attack','fa'+main.id);else sqGo(q,st.x,st.y,'move','fs'+f.n);continue}}}
 function aiMicro(sd){const A=AIS[sd];
   for(const sq of state.squads.values()){if(sq.side!==sd)continue;sq.m=sq.m.filter(u=>u.hp>0&&!u.gone);if(!sq.m.length){state.squads.delete(sq.id);continue}
@@ -168,8 +170,8 @@ function aiBuy(sd){if(state.pending[sd].length>=3)return;const A=AIS[sd],en=1-sd
     mortar:cnt('mortar')<1?1.6:cnt('mortar')<2?.5+eDug*.08:.1,supply:cnt('supply')<Math.min(2,Math.ceil(veh/3))?1.4:0,ifv:1.1+eInf*.03,tank:1+Math.max(0,eArm-cnt('tank'))*.5+(A.posture==='agg'?.5:0),
     arty:cnt('arty')<1?1.2+eDug*.06:cnt('arty')<2?.5+(eInd?.3:0):0,manpads:Math.max(0,eAir*1.2-ourAA)*.7+(eAir?.2:0),shorad:Math.max(0,eAir*1.5-ourAA)*.6+(eAir?.3:0),sam:cnt('sam')<1&&ePlanes?.9:0,
     heliA:cnt('heliA')<2&&eArm?1.2:.25,heliT:.3,cas:abc('cas')<1&&state.time>60?1.1+eArm*.1:0,mr:abc('mr')<1&&eArm>1?1:0,sead:eRadar&&abc('sead')<1?1.4:0,ftr:eAir&&abc('ftr')<1?1.2:0,
-    bmb:abc('bmb')<1&&state.money[sd]>600&&eDug>3?.5:0,rec:abc('rec')<1&&mem.length<6?.8:0,tb2:abc('tb2')<1&&state.time>90?.9:0,uav:cnt('uav')<1?1:cnt('uav')<2?.3:0,fpv:eArm>1?.7:.15};
-  const CAT={inf:'inf',mech:'inf',ifv:'arm',tank:'arm',at:'at',mortar:'fire',arty:'fire',recon:'eyes',uav:'eyes',rec:'eyes',supply:'log',manpads:'aa',shorad:'aa',sam:'aa',heliA:'heli',heliT:'heli',fpv:'heli',cas:'air',mr:'air',sead:'air',ftr:'air',bmb:'air',tb2:'air'};
+    bmb:abc('bmb')<1&&state.money[sd]>600&&eDug>3?.5:0,rec:abc('rec')<1&&mem.length<6?.8:0,tb2:abc('tb2')<1&&state.time>90?.9:0,uav:cnt('uav')<1?1:cnt('uav')<2?.3:0,fpv:eArm>1?.7:.15,dronop:cnt('dronop')<1?1.1+eArm*.08:cnt('dronop')<2?.35+eArm*.05:0};
+  const CAT={dronop:'fire',inf:'inf',mech:'inf',ifv:'arm',tank:'arm',at:'at',mortar:'fire',arty:'fire',recon:'eyes',uav:'eyes',rec:'eyes',supply:'log',manpads:'aa',shorad:'aa',sam:'aa',heliA:'heli',heliT:'heli',fpv:'heli',cas:'air',mr:'air',sead:'air',ftr:'air',bmb:'air',tb2:'air'};
   const want={inf:.3,arm:.26,at:.06+Math.min(.12,eArm*.02),fire:.11+Math.min(.06,eDug*.01),eyes:.05,log:.05,aa:.03+Math.min(.1,eAir*.03),heli:.05,air:.06},have={};let tot=0;
   for(const q of our){const S=SQUADS.find(x=>x.k===q.k);if(!S)continue;have[CAT[q.k]]=(have[CAT[q.k]]||0)+S.cost;tot+=S.cost}
   for(const e of state.airbase[sd])if(e.st!=='lost'){const S=SQUADS.find(x=>x.plane===e.key);have.air=(have.air||0)+S.cost;tot+=S.cost}

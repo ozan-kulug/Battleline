@@ -17,7 +17,7 @@ function mkUnit(side,key,x,y,sq,val){const d=DEF[key];const u={id:state.uid++,si
   alt:d.air?(d.plane?'high':'low'):null,altT:0,flares:d.flares||0,fuel:d.fuel||0,pay:d.pay?{...d.pay}:{},burn:false,run:null,strikes:[],chase:null,rtb:false,
   cargo:d.cap?[]:null,inHeli:null,board:null,landReq:false,unloadReq:false,wantUp:false,radarOn:false,radarT:d.radar?5:0,radarOffT:0,aaCd:0,
   runType:d.pay?(d.pay.gun!=null?'gun':d.pay.carpet!=null?'carpet':null):null,loiter:null,
-  fm:'free',xp:0,stunT:0,panicT:0,shotAtT:-99,queue:[],aps:d.aps||0,apsCd:0,era:d.era?{...d.era}:null,opt:0,eng:false,fire:0,lts:[],sol:[],stk:[],abandoned:false,vcov:null,crewTo:null,veh:null};
+  fm:'free',xp:0,drones:d.drones||0,stunT:0,panicT:0,shotAtT:-99,queue:[],aps:d.aps||0,apsCd:0,era:d.era?{...d.era}:null,opt:0,eng:false,fire:0,lts:[],sol:[],stk:[],abandoned:false,vcov:null,crewTo:null,veh:null};
   state.units.push(u);return u}
 function spawnSquad(side,idx,cx,cy,dx,dy){const S=SQUADS[idx],sq={id:state.sqid++,side,k:S.k,n:S.n,m:[],orderT:0,obj:null,dug:0};state.squads.set(sq.id,sq);
   const val=S.cost/S.m.length;S.m.forEach((k,i)=>{const off=(i-(S.m.length-1)/2)*16;const u=mkUnit(side,k,cx+(side?1:-1)*(i%2)*12,cy+off,sq,val);

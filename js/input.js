@@ -85,11 +85,11 @@ addEventListener('keydown',e=>{const c=e.code;if(e.target.closest&&e.target.clos
   if(!(camK&&e.shiftKey))state.keys[c]=true;if(!state.running)return;
   if(c==='Space'){e.preventDefault();if(!state.over){state.paused=!state.paused;$('pause').hidden=!state.paused}return}
   if(e.repeat)return;
-  if(c.startsWith('Digit')){const n=+c.slice(5);if(e.shiftKey){const vis=cards.filter(([b,S])=>S.cat===state.deckTab);if(n>=1&&n<=vis.length)deploy(0,SQUADS.indexOf(vis[n-1][1]));return}if(e.ctrlKey||e.metaKey){e.preventDefault();state.groups[n]=sel().map(u=>u.id);if(state.groups[n].length)log(`Grup ${n} atandı (${state.groups[n].length} birlik)`,'');return}selectGroup(n);return}
+  if(c.startsWith('Digit')){const n=+c.slice(5);if(e.shiftKey){const vis=cards.filter(([b,S])=>S.cat===state.deckTab);const k=n||10;if(k<=vis.length)deploy(0,SQUADS.indexOf(vis[k-1][1]));return}if(e.ctrlKey||e.metaKey){e.preventDefault();state.groups[n]=sel().map(u=>u.id);if(state.groups[n].length)log(`Grup ${n} atandı (${state.groups[n].length} birlik)`,'');return}selectGroup(n);return}
   if(camK&&(state.dc||!e.shiftKey))return;
   const map={KeyA:()=>setArm(!state.attackArm),KeyS:stopSel,KeyH:holdSel,KeyD:()=>setFastArm(!state.fastArm),KeyZ:()=>stanceSel('stand'),KeyX:()=>stanceSel('crouch'),KeyC:()=>stanceSel('prone'),KeyB:()=>stanceSel(null),
     KeyK:digSel,KeyE:exitSel,KeyG:deploySel,KeyF:()=>setMissionArm(!state.missionArm),KeyT:shellSel,KeyN:ACT.salvo,KeyO:autoSel,KeyR:smokeSel,KeyV:dcToggle,KeyJ:()=>setRunArm(!state.runArm),KeyP:()=>setPrecArm(!state.precArm),KeyY:()=>{altSel();radarSel()},KeyI:burnSel,KeyU:()=>{rtbSel();unloadSel()},KeyL:landSel,KeyM:exfilSel,
-    KeyQ:()=>state.units.forEach(u=>u.sel=u.side===0&&u.x>0&&!u.d.plane),KeyW:setFormSel,Comma:setInitSel,
+    KeyQ:()=>state.units.forEach(u=>u.sel=u.side===0&&u.x>0&&!u.d.plane),KeyW:setFormSel,Comma:setInitSel,Period:ACT.dlaunch,
     Escape:()=>{if(state.dc){state.dc=null;updTip()}else if(state.missionArm||state.attackArm||state.runArm||state.precArm||state.fastArm){setArm(false);setMissionArm(false);setRunArm(false);setPrecArm(false);setFastArm(false)}else state.units.forEach(u=>u.sel=false)}};
   if(map[c]){map[c]();updUI()}});
 addEventListener('keyup',e=>{state.keys[e.code]=false});

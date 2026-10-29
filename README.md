@@ -35,6 +35,7 @@ Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({a
 
 - **Kamera:** W A S D, oklar, teker ve orta tuş. W/A/S/D'nin eski komutları Shift ile çalışır: ⇧W dizilim, ⇧A saldırı hareketi, ⇧S dur, ⇧D hızlı hareket. Doğrudan kontrolde (V) WASD aracı sürer.
 - **Manga kontrolü:** Bir askere tıklamak veya kutu seçimi tüm mangayı seçer; Alt+tık tek asker seçer. Emirlerde mangalar blok olarak dizilir (`orders.js squadForm`), siperde ve binada her manga bitişik yer alır, araca bütün olarak biner. Yürürken öndeki asker geride kalanı bekler (`movement.js sqLag`). İnisiyatif kararlarını manga lideri tüm manga için verir: birlikte siper alma, binaya girme, geri çekilme, atış pozisyonu değiştirme (`initiative.js`). Panel manga görünümü gösterir.
+- **Dron Operatör Timi** (`systems/drones.js`): 2 operatör, kişi başı 3 kamikaze dron, 1400 m kontrol menzili. Başlangıç ekranındaki **KAMİKAZE DRONLAR** seçeneği (savaşta panelden de değişir): *Operatör yönetir*: operatör hedefi kendisi seçer (zor durumdaki dostların yanındaki ve ele geçirilmekte olan noktalardaki düşmanlar önce, sonra topçu, tank, zırhlı ve toplu piyade; uçaksavar yakınındaki hedefler düşük öncelikli), aynı anda en fazla 2 dron. *Ben yönetirim*: nokta (.) ile dron kaldırılır, dron boşta kendiliğinden dalmaz, düşmana sağ tık veya saldırı hareketiyle dalar. Operatör ölürse veya dron menzili aşarsa bağlantı kopar. Kullanılmayan dron operatöre dönünce stoka eklenir, stok ikmalle dolar. Yapay zekâ da bu birimi satın alır, cephenin gerisine yerleştirir ve dronlarını otomatik yönetir.
 - **Arazi:** Tepeler, uzun sırtlar, vadiler ve nehir vadisi (`terrain.js` `hills`, `ridges`). Görüş hattı yer şekillerini hesaba katar: iki göz yüksekliği arasındaki çizgiyi aşan sırt görüşü keser (`vision.js los`, yüksek irtifadaki helikopter hariç). Vadide görüş kısalır, tepede artar. Yokuş yukarı hareket yavaşlar. Harita eş yükselti çizgileri ve gölgelendirmeyle çizilir.
 
 ## Konuşlanma safhası
@@ -79,6 +80,7 @@ js/
   systems/units.js      Birlik/manga oluşturma (spawnSquad, spawnLoaded), takviye, nakliyeden indirme
   systems/army.js       Savaş öncesi ordu: OP hesabı, doğrulama, YZ ordusu, başlangıç dizilişi
   systems/deployment.js Konuşlanma bölgeleri, yerleştirme kuralları, sürükleme önizlemesi
+  systems/drones.js     Dron operatörü: dron kaldırma, kontrol bağlantısı, geri alma, operatör yapay zekâsı
   systems/spatial.js    Uzamsal ızgara
   systems/vision.js     Görüş hattı, gizlenme, tespit, son görülen konumlar
   systems/effects.js    Parçacıklar, patlama, krater, yangın, yıkım efektleri

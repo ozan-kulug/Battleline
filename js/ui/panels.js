@@ -2,7 +2,7 @@
 import {state} from '../state.js';
 import {COVN,FINE,FMN,FORMN,INITN,PAYN,RANKN,STATEN,STN} from '../config.js';
 import {leash} from '../systems/initiative.js';
-import {altSel,autoSel,burnSel,dcToggle,deploySel,digSel,exfilSel,exitSel,holdSel,landSel,radarSel,rtbSel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel,wpnSel} from '../systems/orders.js';
+import {altSel,autoSel,burnSel,dcToggle,deploySel,digSel,droneLaunchSel,droneModeToggle,exfilSel,exitSel,holdSel,landSel,radarSel,rtbSel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel,wpnSel} from '../systems/orders.js';
 import {rank} from '../systems/units.js';
 import {effStance} from '../world/cover.js';
 import {elevAt} from '../world/terrain.js';
@@ -10,6 +10,9 @@ import {elevAt} from '../world/terrain.js';
 const fmtA=(w,a)=>typeof a==='object'?`TAH ${Math.floor(a.he)} · SİS ${Math.floor(a.smoke)}`:a===Infinity?'∞':`${Math.floor(a)} / ${w.ammo}`;
 const moraleN=(sup,panic)=>panic?'Panik, geri çekiliyor':sup>=90?'Kırılma eşiğinde':sup>65?'Yere yapıştı':sup>30?'Baskı altında':'Sakin';
 const terrN=u=>{const e=elevAt(u.x,u.y);return e>.5?'Tepe · görüş ve isabet artar':e<-.25?'Vadi · gizli, görüş kısa':'Düz'};
+/* dron operatörü satırları: stok, havadaki dronlar, menzil, yönetim modu */
+function opRows(us){const ops=us.filter(u=>u.d.dronOp);if(!ops.length)return'';const st=ops.reduce((a,u)=>a+Math.floor(u.drones),0),mx=ops.reduce((a,u)=>a+u.d.drones,0),air=state.units.filter(d=>d.op&&ops.includes(d.op)&&d.hp>0&&!d.gone).length;
+  return`<div class="row"><span>Dron stoku</span><b>${st} / ${mx}${air?` · havada ${air}`:''}</b></div><div class="row"><span>Kontrol menzili</span><b>${ops[0].d.ctrl} m</b></div><div class="row"><span>Dron yönetimi</span><b>${state.droneManual?'Oyuncu':'Operatör (otomatik)'}</b></div>`}
 /* manga görünümü: piyade manga olarak seçildiğinde toplu durum */
 function squadInfo(sq,s){const ms=sq.m.filter(m=>m.hp>0&&!m.gone),n=ms.length,hp=ms.reduce((a,m)=>a+m.hp,0),mx=ms.reduce((a,m)=>a+m.d.hp,0),sup=ms.reduce((a,m)=>a+m.sup,0)/Math.max(1,n);
   const panic=ms.filter(m=>m.panicT>0).length,cov=ms.filter(m=>m.cov||m.inB).length,c={};for(const m of ms)c[m.d.n]=(c[m.d.n]||0)+1;const L=ms.find(m=>!m.inB)||ms[0];
@@ -20,6 +23,7 @@ function squadInfo(sq,s){const ms=sq.m.filter(m=>m.hp>0&&!m.gone),n=ms.length,hp
   h+=`<div class="row"><span>Siperde</span><b>${cov} / ${n}</b></div><div class="row"><span>Duruş</span><b>${STN[effStance(L)]}${L.stM?'':' (oto)'}</b></div>`;
   h+=`<div class="row"><span>İnisiyatif</span><b>${INITN[L.init||'on']}</b></div><div class="row"><span>Atış modu</span><b>${FMN[L.fm]}</b></div><div class="row"><span>Arazi</span><b>${terrN(L)}</b></div>`;
   if(th)h+=`<div class="row"><span>Son karar</span><b>${th.s}</b></div>`;
+  h+=opRows(ms);
   h+=Object.entries(c).map(([k,q])=>`<div class="row"><span>${k}</span><b>×${q}</b></div>`).join('');
   for(const m of ms)m.d.w.forEach((w,i)=>{if(w.anti&&typeof w.ammo==='number')h+=`<div class="row"><span>${w.n} (${m.d.n})</span><b>${fmtA(w,m.ammo[i])}</b></div>`});
   return h}
@@ -37,6 +41,7 @@ function selInfo(s){
     h+=`<div class="row"><span>Rütbe</span><b>${RANKN[rank(u)]} · ${Math.round(u.xp)} TP</b></div><div class="row"><span>Atış modu</span><b>${FMN[u.fm]}</b></div>`;
     h+=`<div class="row"><span>İnisiyatif</span><b>${INITN[u.init||'on']}${(u.init||'on')!=='off'?` · ${Math.round(leash(u))} m alan`:''}</b></div>`;if(u.th&&state.time-u.th.t<12)h+=`<div class="row"><span>Son karar</span><b>${u.th.s}</b></div>`}
   if(u.d.radar)h+=`<div class="row"><span>Radar</span><b class="${u.radarOn?'warn':''}">${u.radarOn?'Açık (iz bırakıyor)':u.radarT>0?`Açılıyor ${Math.ceil(u.radarT)} sn`:'Kapalı'}</b></div>`;
+  h+=opRows([u]);
   if(u.d.inf){h+=`<div class="row"><span>Duruş</span><b>${STN[effStance(u)]}${u.stM?'':' (oto)'}</b></div>`;
     h+=`<div class="row"><span>Siper</span><b>${u.inB?`Bina (${u.inB.occ.length}/${u.inB.cap})`:u.cov?COVN[u.cov.t]:u.dig>=0?`Kazıyor %${Math.round(u.dig*100)}`:'Açıkta'}</b></div>`;
     const cd=u.inB?'Her yönden %70':!u.cov?'Yok':u.cov.t==='trench'?'Her yönden %70, hat boyunca %15':u.cov.t==='fox'?'Her yönden %67':u.cov.t==='hedge'?'Önden %35, gizlenme':u.cov.r!=null?'Her yönden %50':'Önden %70, yandan yok';
@@ -73,6 +78,8 @@ function selButtons(s){if(!s.length)return'';const any=f=>s.some(f),all=f=>s.eve
   const inf=s.filter(u=>u.d.inf);if(inf.length){const st=v=>inf.every(u=>u.stM===v);
     const b=[btn('st-stand','Ayakta','Z',st('stand')),btn('st-crouch','Çömel','X',st('crouch')),btn('st-prone','Yat','C',st('prone')),btn('st-auto','Oto','B',st(null)),btn('dig','Siper kaz','K')];
     if(inf.some(u=>u.inB))b.push(btn('exit','Binadan çık','E'));h+=grpH('PİYADE',b)}
+  const ops=s.filter(u=>u.d.dronOp);if(ops.length){const st=ops.reduce((a,u)=>a+Math.floor(u.drones),0),b=[];if(state.droneManual)b.push(btn('dlaunch',`Dron kaldır (${st})`,'.'));
+    b.push(btn('dmode',state.droneManual?'Yönetim: oyuncu':'Yönetim: operatör','',state.droneManual));h+=grpH('DRON',b)}
   const ind=s.filter(u=>u.d.indirect);if(ind.length){const dep=ind.some(u=>u.st==='deployed'||u.st==='deploying');
     h+=grpH('TOPÇU',[btn('deploy',dep?'Toparlan':'Mevzilen','G'),btn('mission','Ateş görevi','F',state.missionArm),btn('shell',ind.every(u=>u.shell==='he')?'Mermi: Tahrip':'Mermi: Sis','T'),btn('salvo',`Atım ×${state.salvo}`,'N'),btn('auto',ind.every(u=>u.auto)?'Serbest atış: açık':'Serbest atış: kapalı','O',ind.every(u=>u.auto))])}
   const pl=s.filter(u=>u.d.plane);let he=s.filter(u=>u.d.heli);const rd=s.filter(u=>u.d.radar);
@@ -88,6 +95,6 @@ function selButtons(s){if(!s.length)return'';const any=f=>s.some(f),all=f=>s.eve
   return h}
 const ACT={form:setFormSel,init:setInitSel,atk:()=>setArm(!state.attackArm),stop:stopSel,hold:holdSel,dc:dcToggle,'st-stand':()=>stanceSel('stand'),'st-crouch':()=>stanceSel('crouch'),'st-prone':()=>stanceSel('prone'),'st-auto':()=>stanceSel(null),
   dig:digSel,exit:exitSel,fast:()=>setFastArm(!state.fastArm),deploy:deploySel,mission:()=>setMissionArm(!state.missionArm),shell:shellSel,salvo:()=>{state.salvo=state.salvo===1?3:state.salvo===3?6:1},auto:autoSel,smoke:smokeSel,
-  run:()=>setRunArm(!state.runArm),prec:()=>setPrecArm(!state.precArm),wpn:wpnSel,alt:altSel,burn:burnSel,rtb:rtbSel,exfil:exfilSel,land:landSel,unload:unloadSel,radar:radarSel};
+  run:()=>setRunArm(!state.runArm),prec:()=>setPrecArm(!state.precArm),wpn:wpnSel,alt:altSel,burn:burnSel,rtb:rtbSel,exfil:exfilSel,land:landSel,unload:unloadSel,radar:radarSel,dlaunch:droneLaunchSel,dmode:droneModeToggle};
 
 export {ACT,selButtons,selInfo};

@@ -6,9 +6,9 @@
 #ovl{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:4px 18px;margin:0;padding:0;list-style:none;font-size:11.5px}
 #ovl li{display:grid;grid-template-columns:118px 1fr;gap:8px;line-height:1.4}
 #ovl kbd{color:var(--amber);font-family:var(--mono)}
-#diffRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-#diffRow span{font-family:var(--disp);font-weight:700;letter-spacing:.12em;color:var(--mute);font-size:12px;margin-right:4px}
-#diffRow .btn{font-size:12px;padding:5px 12px}
+#diffRow,#droneRow{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+#diffRow span,#droneRow span{font-family:var(--disp);font-weight:700;letter-spacing:.12em;color:var(--mute);font-size:12px;margin-right:4px}
+#diffRow .btn,#droneRow .btn{font-size:12px;padding:5px 12px}
 .go{justify-self:start;background:var(--amber);color:#1a1405;border:0;font-family:var(--disp);font-weight:800;font-size:20px;letter-spacing:.1em;padding:8px 22px;cursor:pointer}
 .go:focus-visible{outline:2px solid var(--fg);outline-offset:2px}
 #pause{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-family:var(--disp);font-size:42px;font-weight:800;letter-spacing:.2em;color:var(--amber);pointer-events:none}

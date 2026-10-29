@@ -3,6 +3,7 @@ import {state} from '../state.js';
 import {FORMN,PI,SQUADS,TAU,W} from '../config.js';
 import {cam,recentImp} from '../state.js';
 import {assignRunFor,strikeKey} from './air.js';
+import {launchDrone} from './drones.js';
 import {popSmoke} from './effects.js';
 import {flying,giveMove,setFM,unloadHeli} from './units.js';
 import {knownEnemies} from './vision.js';
@@ -113,7 +114,13 @@ function altSel(){for(const u of sel()){if(u.d.drone)continue;if(u.d.plane&&!u.d
 function radarSel(){const rd=sel().filter(u=>u.d.radar);if(!rd.length)return;const on=!rd.every(u=>u.radarOn||u.radarT>0);for(const u of rd){if(on){if(!u.radarOn&&!(u.radarT>0))u.radarT=5}else{u.radarOn=false;u.radarT=0}u.radarOffT=0}}
 function landSel(){const he=sel().filter(u=>u.d.heli&&!u.d.drone);const up=he.length&&he.every(u=>u.alt==='landed');for(const u of he){if(up)u.wantUp=true;else{u.dest=null;u.landReq=true}}}
 function unloadSel(){for(const u of sel())if(u.d.cap&&u.cargo.length){u.dest=null;if(u.d.heli)u.unloadReq=true;else unloadHeli(u)}}
-function rtbSel(){for(const u of sel()){if(u.d.plane){u.rtb=true;u.run=null;u.strikes=[];u.chase=null}else if(u.d.drone){u.kTgt=null;giveMove(u,u.side?W-120:120,u.y,'move');u.home=true}}}
+function rtbSel(){for(const u of sel()){if(u.d.plane){u.rtb=true;u.run=null;u.strikes=[];u.chase=null}else if(u.d.drone){u.kTgt=null;if(u.op)giveMove(u,u.op.x,u.op.y,'move');else giveMove(u,u.side?W-120:120,u.y,'move');u.home=true}}}
+/* seçili dron operatörlerinin her biri bir kamikaze dron kaldırır; kalkan dronlar seçilir */
+function droneLaunchSel(){const ops=sel().filter(u=>u.d.dronOp&&u.drones>=1),out=[];for(const u of ops){const d=launchDrone(u,null);if(d)out.push(d)}
+  if(out.length){state.units.forEach(u=>u.sel=false);out.forEach(d=>d.sel=true);log(`${out.length} kamikaze dron havada: düşmana sağ tıkla`,'good')}else if(sel().some(u=>u.d.dronOp))log('Operatörlerin dron stoku boş','bad')}
+/* kamikaze dron yönetimi: otomatik (operatör seçer) veya oyuncu */
+function droneModeToggle(){state.droneManual=!state.droneManual;try{localStorage.setItem('cephe-hatti.dron',state.droneManual?'1':'0')}catch(e){}
+  for(const d of state.units)if(d.op&&d.side===0)d.manual=state.droneManual;log(state.droneManual?'Kamikaze dronları sen yönetiyorsun':'Kamikaze dronları operatörler yönetiyor','')}
 function burnSel(){const p=sel().filter(u=>u.d.plane);const v=!p.every(u=>u.burn);p.forEach(u=>u.burn=v)}
 function wpnSel(){const p=sel().filter(u=>u.d.plane&&u.d.pay.gun!=null);const v=p.every(u=>u.runType!=='rockets')?'rockets':'gun';p.forEach(u=>u.runType=v)}
 function setRunArm(v){state.runArm=v&&sel().some(u=>u.d.plane&&u.runType&&u.pay[u.runType]>=1);if(state.runArm){state.attackArm=state.missionArm=state.precArm=false}updTip()}
@@ -142,4 +149,4 @@ function dcToggle(){if(state.dc){state.dc=null}else{const s=sel();if(s.length===
 function setArm(v){state.attackArm=v&&sel().length>0;if(state.attackArm)state.missionArm=state.runArm=state.precArm=state.fastArm=false;updTip()}
 function setMissionArm(v){state.missionArm=v&&sel().some(u=>u.d.indirect);if(state.missionArm)state.attackArm=state.runArm=state.precArm=false;updTip()}
 
-export {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,cen,coverSlots,groupSq,squadOf,dcToggle,deploySel,digSel,exfilOut,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel,wpnSel};
+export {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,cen,coverSlots,droneLaunchSel,droneModeToggle,groupSq,squadOf,dcToggle,deploySel,digSel,exfilOut,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel,wpnSel};

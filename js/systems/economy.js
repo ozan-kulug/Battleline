@@ -19,6 +19,7 @@ function resupply(u,k){if(u.abandoned)return;if(u.eng&&R()<.12*k)u.eng=false;if(
   u.d.w.forEach((w,i)=>{if(typeof w.ammo==='object'){for(const s in w.ammo)if(u.ammo[i][s]<w.ammo[s])u.ammo[i][s]=Math.min(w.ammo[s],u.ammo[i][s]+(s==='he'?.6:.3)*k)}
     else if(w.ammo!=null&&u.ammo[i]<w.ammo)u.ammo[i]=Math.min(w.ammo,u.ammo[i]+(w.ammo>50?6:.5)*k)});
   if(u.d.gren&&u.gren<u.d.gren)u.gren=Math.min(u.d.gren,u.gren+.2*k);
+  if(u.d.dronOp&&u.drones<u.d.drones)u.drones=Math.min(u.d.drones,u.drones+.04*k);
   if((u.d.veh||u.d.heli)&&u.hp<u.d.hp)u.hp=Math.min(u.d.hp,u.hp+3*k);if(u.d.flares&&u.flares<u.d.flares)u.flares=Math.min(u.d.flares,u.flares+.25*k);if(u.d.smokeL&&u.smokeL<u.d.smokeL)u.smokeL=Math.min(u.d.smokeL,u.smokeL+.05*k)}
 function perSecond(){const h=[0,0];for(const o of state.objs)if(o.owner>=0)h[o.owner]++;
   for(const u of state.units){if(flying(u))continue;const ci=(u.y/CS|0)*GW+(u.x/CS|0);if(fireCells.has(ci)){state.curSrc=null;if(u.d.inf){stress(u,25);damage(u,{dmg:6,ap:0,k:'fire',soft:1},u.x,u.y,1)}else u.hp-=2}}

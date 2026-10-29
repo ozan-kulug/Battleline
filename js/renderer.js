@@ -28,6 +28,7 @@ function drawSoldier(c,u,x,y,s){const col=COL[u.side],st=effStance(u),k=u.key;c.
   else if(k==='manpads'){c.lineWidth=2.6;c.beginPath();c.moveTo(-6,wy);c.lineTo(9,wy);c.stroke();c.fillStyle='#20241d';c.fillRect(1,wy-3,3,2.5)}
   else if(k==='atgm'){c.lineWidth=2.6;c.beginPath();c.moveTo(-2,wy);c.lineTo(9,wy);c.stroke();c.fillStyle='#20241d';c.fillRect(2,wy-2.5,4,5)}
   else if(k==='mg'){c.lineWidth=1.9;c.beginPath();c.moveTo(x0,wy);c.lineTo(x0+10,wy);c.stroke()}
+  else if(k==='dop'){c.fillStyle='#20241d';c.fillRect(2.5,-2.6,4.2,5.2);c.fillStyle='#7fd48a';c.fillRect(3.2,-1.9,2.8,3.8);c.strokeStyle='#20241d';c.lineWidth=.8;c.beginPath();c.moveTo(-1.5,-1);c.lineTo(-4,-6);c.stroke()}
   else if(k==='sniper'){c.lineWidth=1.1;c.beginPath();c.moveTo(x0,wy);c.lineTo(x0+12,wy);c.stroke()}
   else if(k==='mortar'){if(u.st==='deployed'||u.st==='deploying'){c.fillStyle='#20241d';c.beginPath();c.arc(7,-4,3,0,TAU);c.fill();c.fillStyle='#4a4f44';c.beginPath();c.arc(7,-4,1.6,0,TAU);c.fill()}else{c.lineWidth=2.2;c.beginPath();c.moveTo(-4,-2.6);c.lineTo(4,-2.6);c.stroke()}}
   else{c.lineWidth=1.3;c.beginPath();c.moveTo(x0,wy);c.lineTo(x0+7,wy);c.stroke()}
@@ -179,6 +180,10 @@ function render(){
     if(u.dig>=0){const bw=14*sc;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(u.x-bw/2,u.y+8,bw,2.5*sc);ctx.fillStyle='#c9a35a';ctx.fillRect(u.x-bw/2,u.y+8,bw*u.dig,2.5*sc)}
     if(u.d.indirect&&(u.st==='deploying'||u.st==='packing')){const bw=20*sc,f=1-u.stT/(u.st==='deploying'?u.d.setupT:u.d.packT);ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(u.x-bw/2,u.y+yo,bw,2.5*sc);ctx.fillStyle='#e8a838';ctx.fillRect(u.x-bw/2,u.y+yo,bw*f,2.5*sc)}
     if((u.d.veh||u.d.air)&&(z<.95||u.sel)){ctx.fillStyle=u.side?'rgba(240,140,128,.95)':'rgba(150,200,245,.95)';ctx.fillText(u.d.tag,u.x,u.y+yo+4)}}
+  /* dron kontrol bağlantıları: seçili operatörün menzili ve dronlarına, seçili dronun operatörüne çizgi */
+  for(const d of state.units){if(!d.op||d.side!==0||d.hp<=0||d.gone||!(d.sel||d.op.sel))continue;const o=d.op,far=Math.hypot(o.x-d.x,o.y-d.y)>o.d.ctrl*.85;
+    ctx.strokeStyle=far?'rgba(226,88,75,.8)':'rgba(127,212,138,.55)';ctx.lineWidth=lw;ctx.setLineDash([3*lw,5*lw]);ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(d.x,d.y);ctx.stroke();ctx.setLineDash([])}
+  {const seen=new Set();for(const o of S){if(!o.d.dronOp||seen.has(o.sq))continue;seen.add(o.sq);ctx.strokeStyle='rgba(127,212,138,.35)';ctx.lineWidth=1.2*lw;ctx.setLineDash([10*lw,8*lw]);ctx.beginPath();ctx.arc(o.x,o.y,o.d.ctrl,0,TAU);ctx.stroke();ctx.setLineDash([])}}
   if(state.phase==='deploy')drawDeployTop(z,lw);
   for(let i=state.marks.length-1;i>=0;i--){const m=state.marks[i];if(!m.ping)continue;m.t+=1/60;if(m.t>.7){state.marks.splice(i,1);continue}ctx.strokeStyle=m.c;ctx.globalAlpha=1-m.t/.7;ctx.lineWidth=2*lw;ctx.beginPath();ctx.arc(m.x,m.y,6+m.t*30,0,TAU);ctx.stroke();ctx.globalAlpha=1}
   const mw=toW(state.mouse.x,state.mouse.y);

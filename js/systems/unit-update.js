@@ -4,6 +4,7 @@ import {W} from '../config.js';
 import {moveHeli,updDrone,updPlane} from './air.js';
 import {updIndirect} from './artillery.js';
 import {canUse,fire,kill,launchAA,pickTarget,throwGren} from './combat.js';
+import {opTick} from './drones.js';
 import {nearSupply} from './economy.js';
 import {popSmoke} from './effects.js';
 import {initiative} from './initiative.js';
@@ -58,6 +59,7 @@ function updUnit(u,dt){
   }
   if(u.d.heli)moveHeli(u,dt);else if(isDC)dcControl(u,dt);else moveUnit(u,dt);
   if(!isDC)initiative(u,dt);
+  if(u.d.dronOp&&!isDC)opTick(u,dt);
   if(!u.d.inf&&!u.d.air&&!u.dest&&!u.moving&&u.faceA!=null&&u.init!=='off'&&u.trk<=0&&!u.d.indirect&&!u.d.supply&&!(u.stunT>0)&&!u.abandoned&&Math.abs(angDiff(u.faceA,u.a))>.08)u.a+=clamp(angDiff(u.faceA,u.a),-u.d.turn*.6*dt,u.d.turn*.6*dt);
   if(!u.dest&&u.queue.length&&!u.inB&&!(u.panicT>0))u.dest=u.queue.shift();
   if(u.d.veh&&u.hp<u.d.hp*.35&&R()<dt*5)state.parts.push({x:u.x+gauss()*6,y:u.y+gauss()*6,vx:6+gauss()*4,vy:-4+gauss()*4,life:0,max:2.5,r:4,g:18,col:'rgba(40,38,34,.5)'});

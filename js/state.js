@@ -54,6 +54,7 @@ export const state={
   timers:[],
   AI_SIDES:[1],
   aiDiff:'normal',
+  droneManual:false,
   fastArm:false,
   drag:null,
   mouse:{x:-1,y:-1,in:false},
