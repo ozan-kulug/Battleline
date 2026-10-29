@@ -5,8 +5,10 @@ import {leash} from '../systems/initiative.js';
 import {altSel,autoSel,burnSel,dcToggle,deploySel,digSel,exfilSel,exitSel,holdSel,landSel,radarSel,rtbSel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel,wpnSel} from '../systems/orders.js';
 import {rank} from '../systems/units.js';
 import {effStance} from '../world/cover.js';
+import {elevAt} from '../world/terrain.js';
 
 const fmtA=(w,a)=>typeof a==='object'?`TAH ${Math.floor(a.he)} · SİS ${Math.floor(a.smoke)}`:a===Infinity?'∞':`${Math.floor(a)} / ${w.ammo}`;
+const terrN=u=>{const e=elevAt(u.x,u.y);return e>.5?'Tepe · görüş ve isabet artar':e<-.25?'Vadi · gizli, görüş kısa':'Düz'};
 function selInfo(s){
   if(!s.length)return'<h3 class="muted">Seçili birlik yok</h3><div class="row"><span>Sol tık, sürükle veya çift tık (manga)</span></div>';
   if(s.length>1){const c={};for(const u of s)c[u.d.n]=(c[u.d.n]||0)+1;const sup=s.filter(u=>u.d.inf&&u.sup>65).length;
@@ -16,6 +18,7 @@ function selInfo(s){
   h+=`<div class="row"><span>Sağlamlık</span><b>${Math.ceil(u.hp)} / ${u.d.hp}</b></div><div class="mbar"><i style="width:${u.hp/u.d.hp*100}%"></i></div>`;
   if(!u.d.plane){const mor=u.panicT>0?'Panik, geri çekiliyor':u.stunT>0?'Sersemledi':u.sup>=90?'Kırılma eşiğinde':u.sup>65?(u.d.inf?'Yere yapıştı':'Mürettebat sarsıldı'):u.sup>30?'Baskı altında':'Sakin';
     h+=`<div class="row"><span>Moral</span><b class="${u.sup>65||u.panicT>0?'warn':''}">${mor}</b></div><div class="mbar sup"><i style="width:${u.sup}%"></i></div>`;
+    if(!u.d.air)h+=`<div class="row"><span>Arazi</span><b>${terrN(u)}</b></div>`;
     h+=`<div class="row"><span>Rütbe</span><b>${RANKN[rank(u)]} · ${Math.round(u.xp)} TP</b></div><div class="row"><span>Atış modu</span><b>${FMN[u.fm]}</b></div>`;
     h+=`<div class="row"><span>İnisiyatif</span><b>${INITN[u.init||'on']}${(u.init||'on')!=='off'?` · ${Math.round(leash(u))} m alan`:''}</b></div>`;if(u.th&&state.time-u.th.t<12)h+=`<div class="row"><span>Son karar</span><b>${u.th.s}</b></div>`}
   if(u.d.radar)h+=`<div class="row"><span>Radar</span><b class="${u.radarOn?'warn':''}">${u.radarOn?'Açık (iz bırakıyor)':u.radarT>0?`Açılıyor ${Math.ceil(u.radarT)} sn`:'Kapalı'}</b></div>`;

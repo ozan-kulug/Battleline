@@ -6,11 +6,15 @@ import {flying} from './units.js';
 import {log} from '../ui/feedback.js';
 import {clamp} from '../utils/helpers.js';
 import {coverAt,effStance,vehCover} from '../world/cover.js';
-import {bgrid,cellAt,elevAt,grid} from '../world/terrain.js';
+import {bgrid,cellAt,elev,elevAt,grid} from '../world/terrain.js';
 
 /* ---------- görüş ---------- */
-function los(ax,ay,bx,by,ia,ib,nf){const dx=bx-ax,dy=by-ay,d=Math.hypot(dx,dy),n=Math.ceil(d/8);let fd=0;
+/* nf: orman görüşü kesmez (yüksekten bakış). sky: yüksek irtifadan bakış, yer şekilleri de kesmez.
+   Arazi: iki göz yüksekliği arasındaki çizginin altında kalan sırt görüşü keser. */
+const EYE=.12;
+function los(ax,ay,bx,by,ia,ib,nf,sky){const dx=bx-ax,dy=by-ay,d=Math.hypot(dx,dy),n=Math.ceil(d/8);let fd=0;const ha=elevAt(ax,ay)+EYE,hb=elevAt(bx,by)+EYE;
   for(let k=1;k<n;k++){const x=ax+dx*k/n,y=ay+dy*k/n,cx=x/CS|0,cy=y/CS|0;if(cx<0||cy<0||cx>=GW||cy>=GH)continue;const ci=cy*GW+cx;
+    if(!sky&&elev[ci]>ha+(hb-ha)*k/n+.04)return false;
     if(grid[ci]===T.FOREST&&!nf){fd+=8;if(fd>120)return false}
     const bi=bgrid[ci];if(bi>=0&&bi!==ia&&bi!==ib){const b=state.buildings[bi];if(!b.dead&&x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h)return false}
     if(!(k&1))for(const s of state.smokes){if(s.age>1.2&&s.age<s.life-2){const rr=s.r*.8;if((x-s.x)**2+(y-s.y)**2<rr*rr)return false}}}
@@ -20,7 +24,7 @@ function conceal(t){let m;const c=cellAt(t.x,t.y);
       if(t.cov&&(t.cov.t==='fox'||t.cov.t==='trench'))m*=.75;else if(t.cov&&t.cov.t==='hedge')m*=.7;else if(t.cov)m*=.85;if(t.moving)m*=1.2}}
   else m=c===T.FOREST?.6:c===T.TOWN?.8:1;
   if(t.d.stealth)m*=.7;if(t.reveal>0)m=Math.max(m,t.inB?.75:.9);return m}
-const visEff=f=>f.d.vis*(1+.3*Math.min(1,elevAt(f.x,f.y)))*(f.opt>0?.6:1)*(f.inB?1.2:1)*(f.d.inf&&effStance(f)==='prone'?.85:1)*(f.d.heli&&f.alt==='high'?1.3:1);
+const visEff=f=>f.d.vis*(1+.3*clamp(elevAt(f.x,f.y),-.6,1))*(f.opt>0?.6:1)*(f.inB?1.2:1)*(f.d.inf&&effStance(f)==='prone'?.85:1)*(f.d.heli&&f.alt==='high'?1.3:1);
 function computeVis(){for(const u of state.units){u.sees=[];if(u.d.inf)u.cov=coverAt(u);else if(!u.d.air)u.vcov=vehCover(u)}
   buildHash();const cc=new Map();const conc=e=>{let c=cc.get(e.id);if(c===undefined){c=conceal(e);cc.set(e.id,c)}return c};
   const airU=state.units.filter(e=>flying(e)),inBU=state.units.filter(e=>e.inB);
@@ -32,7 +36,7 @@ function computeVis(){for(const u of state.units){u.sees=[];if(u.d.inf)u.cov=cov
       if(f.d.plane&&!f.d.gvis)continue;
       const d=Math.hypot(e.x-f.x,e.y-f.y);if(d>ve)continue;
       if(f.d.gvis){if(d<ve*conc(e)*(f.alt==='low'?.85:1)&&skyLos(f.x,f.y,e.x,e.y)){v.add(e.id);if(f.d.uav)f.sees.push(e)}continue}
-      if(d<55||(d<ve*conc(e)&&los(f.x,f.y,e.x,e.y,ia,e.inB?e.inB.i:-1,(f.d.heli&&f.alt==='high')||elevAt(f.x,f.y)>elevAt(e.x,e.y)+.5))){f.sees.push(e);v.add(e.id)}}}
+      if(d<55||(d<ve*conc(e)&&los(f.x,f.y,e.x,e.y,ia,e.inB?e.inB.i:-1,(f.d.heli&&f.alt==='high')||elevAt(f.x,f.y)>elevAt(e.x,e.y)+.5,f.d.heli&&f.alt==='high'))){f.sees.push(e);v.add(e.id)}}}
     for(const o of state.objs){if(o.k!=='hill'||o.owner!==s)continue;for(const e of state.units){if(e.side===s||e.abandoned)continue;if(flying(e)){v.add(e.id);continue}const d=Math.hypot(e.x-o.x,e.y-o.y);if(d<950*conc(e)&&los(o.x,o.y,e.x,e.y,-1,e.inB?e.inB.i:-1,true))v.add(e.id)}}
     state.vis[s]=v}
   for(const u of state.units)if(u.side===1&&state.vis[0].has(u.id))ghosts.set(u.id,{u,x:u.x,y:u.y,t:state.time});for(const [id,g] of ghosts)if(g.u.hp<=0||g.u.gone||state.time-g.t>30)ghosts.delete(id)}

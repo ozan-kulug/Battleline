@@ -23,6 +23,7 @@ let OBJ0=[];
 let ROADS=[];
 let STREETS=[];
 let hills=[];
+let ridges=[];
 let swamps=[];
 function buildObjDefs(){const a=[];for(const o of OBJL){a.push({...o},{k:o.k,x:W-o.x,y:H-o.y})}
   a.push({k:'city',x:W/2,y:H/2},{k:'bridge',x:riverX(620),y:620},{k:'bridge',x:riverX(2380),y:2380});
@@ -49,7 +50,14 @@ function genTerrain(){
   const leftOK=(x,y)=>x<riverX(y)-170;
   // tepeler (yükselti)
   for(const [x,y,rad,h] of [[1700,1980,340,1.6],[620,1100,270,1],[1480,1220,230,.9],[1950,640,250,1.1],[420,2000,220,.8]])hills.push({x,y,r:rad,h},{x:W-x,y:H-y,r:rad,h});
-  for(let cy=0;cy<GH;cy++)for(let cx=0;cx<GW;cx++){const px=cx*CS+8,py=cy*CS+8;let e=0;for(const hl of hills){const d=Math.hypot(px-hl.x,py-hl.y)/hl.r;if(d<1){const v=hl.h*(1-d*d);if(v>e)e=v}}elev[cy*GW+cx]=e}
+  // sırtlar (h>0) ve vadiler (h<0): uzun yer şekilleri. Tepe ve sırt yamaçları düzdür (koni): tepeden etek görülür; vadiler içbükeydir [x1,y1,x2,y2,yarı genişlik,yükseklik]
+  ridges=[];for(const [x1,y1,x2,y2,w,h] of [[880,300,1520,430,150,.9],[1250,2480,1900,2720,160,1],[1990,1230,2010,1760,120,.7],[260,1330,640,1520,110,.55],[720,690,1260,930,130,-.7],[880,1880,1400,2110,120,-.6],[300,2550,900,2850,130,-.45]])
+    ridges.push({x1,y1,x2,y2,w,h},{x1:W-x1,y1:H-y1,x2:W-x2,y2:H-y2,w,h});
+  for(let cy=0;cy<GH;cy++)for(let cx=0;cx<GW;cx++){const px=cx*CS+8,py=cy*CS+8;let e=0,lo=0;for(const hl of hills){const d=Math.hypot(px-hl.x,py-hl.y)/hl.r;if(d<1){const v=hl.h*(1-d);if(v>e)e=v}}
+    for(const rg of ridges){if(px<Math.min(rg.x1,rg.x2)-rg.w||px>Math.max(rg.x1,rg.x2)+rg.w||py<Math.min(rg.y1,rg.y2)-rg.w||py>Math.max(rg.y1,rg.y2)+rg.w)continue;const d=segInfo(rg,px,py).d/rg.w;if(d<1){const v=rg.h>0?rg.h*(1-d):rg.h*(1-d*d);if(v>e)e=v;if(v<lo)lo=v}}
+    // nehir vadisi: kıyılar nehre doğru alçalır
+    const rd=Math.abs(px-riverX(py))/300;if(rd<1){const v=-.4*(1-rd*rd);if(v<lo)lo=v}
+    elev[cy*GW+cx]=e+lo}
   // tarlalar
   for(let i=0;i<16;i++){const w=170+r()*230,h=120+r()*170,x=260+r()*1700,y=120+r()*2700;if(!leftOK(x+w,y)||!leftOK(x+w,y+h))continue;state.fields.push([x,y,w,h,r()<.5],[W-x-w,H-y-h,w,h,r()<.5]);markR(x,y,w,h,T.FIELD);markR(W-x-w,H-y-h,w,h,T.FIELD)}
   // ormanlar
@@ -138,15 +146,17 @@ function drawBld(b){const g=tctx,cx=b.x+b.w/2,cy=b.y+b.h/2;
 function drawTerrain(r){
   const sm=document.createElement('canvas');sm.width=GW;sm.height=GH;const sc=sm.getContext('2d');const id=sc.createImageData(GW,GH);
   const hsl=(h,s,l)=>{s/=100;l/=100;const k=n=>(n+h/30)%12,a=s*Math.min(l,1-l),f=n=>l-a*Math.max(-1,Math.min(k(n)-3,9-k(n),1));return[f(0)*255,f(8)*255,f(4)*255]};
-  for(let i=0;i<GW*GH;i++){const t=grid[i],e=elev[i]*4;let c;
+  for(let i=0;i<GW*GH;i++){const t=grid[i],cx=i%GW,cy=i/GW|0,nw=cx>0&&cy>0?elev[i-GW-1]:elev[i],se=cx<GW-1&&cy<GH-1?elev[i+GW+1]:elev[i],e=elev[i]*4+(nw-se)*26;let c;
     if(t===T.FOREST)c=hsl(98,24,17+r()*2+e);else if(t===T.FIELD)c=hsl(47,30,39+r()*3+e);else if(t===T.TOWN)c=hsl(68,10,33+r()*2);else if(t===T.WATER)c=hsl(198,26,27);else if(t===T.FORD)c=hsl(190,18,36);
     else if(t===T.SWAMP)c=hsl(82,20,22+r()*3);else if(t===T.CONC)c=hsl(60,5,43+r()*2);else c=hsl(78,23,29+r()*3+e);
     id.data[i*4]=c[0];id.data[i*4+1]=c[1];id.data[i*4+2]=c[2];id.data[i*4+3]=255}
   sc.putImageData(id,0,0);tctx.imageSmoothingEnabled=true;tctx.imageSmoothingQuality='high';tctx.drawImage(sm,0,0,W,H);
   for(let i=0;i<60000;i++){tctx.fillStyle=r()<.5?'rgba(0,0,0,.07)':'rgba(255,255,220,.04)';tctx.fillRect(r()*W,r()*H,2+r()*3,2+r()*3)}
-  // tepe eş yükselti çizgileri
-  for(const hl of hills){const g=tctx.createRadialGradient(hl.x-hl.r*.3,hl.y-hl.r*.3,0,hl.x,hl.y,hl.r);g.addColorStop(0,'rgba(255,250,215,.10)');g.addColorStop(1,'rgba(255,250,215,0)');tctx.fillStyle=g;tctx.beginPath();tctx.arc(hl.x,hl.y,hl.r,0,TAU);tctx.fill();
-    tctx.strokeStyle='rgba(70,58,32,.24)';tctx.lineWidth=1.6;for(let k=1;k<=3;k++){const rr=hl.r*(1-k*.24);tctx.beginPath();for(let a=0;a<=TAU+.01;a+=TAU/48){const q=rr*(1+.05*Math.sin(a*5+hl.x*.01)+.03*Math.sin(a*9+hl.y*.02));const x=hl.x+Math.cos(a)*q,y=hl.y+Math.sin(a)*q;a?tctx.lineTo(x,y):tctx.moveTo(x,y)}tctx.stroke()}}
+  // tepe parlaması ve tüm yer şekilleri için eş yükselti çizgileri (tepeler kahverengi, vadiler koyu kesik çizgi)
+  for(const hl of hills){const g=tctx.createRadialGradient(hl.x-hl.r*.3,hl.y-hl.r*.3,0,hl.x,hl.y,hl.r);g.addColorStop(0,'rgba(255,250,215,.10)');g.addColorStop(1,'rgba(255,250,215,0)');tctx.fillStyle=g;tctx.beginPath();tctx.arc(hl.x,hl.y,hl.r,0,TAU);tctx.fill()}
+  for(const [lv,col,dash] of [[.3,'rgba(70,58,32,.3)',0],[.7,'rgba(70,58,32,.34)',0],[1.1,'rgba(70,58,32,.38)',0],[-.28,'rgba(20,36,40,.38)',1],[-.55,'rgba(20,36,40,.45)',1]]){
+    tctx.strokeStyle=col;tctx.lineWidth=1.6;tctx.setLineDash(dash?[6,5]:[]);tctx.beginPath();contour(lv,(ax,ay,bx,by)=>{tctx.moveTo(ax,ay);tctx.lineTo(bx,by)});tctx.stroke()}
+  tctx.setLineDash([]);
   for(const [x,y,w,h,v] of state.fields){tctx.save();tctx.beginPath();tctx.rect(x,y,w,h);tctx.clip();tctx.strokeStyle='rgba(70,52,18,.22)';tctx.lineWidth=2;tctx.beginPath();
     if(v)for(let k=x;k<x+w;k+=7){tctx.moveTo(k,y);tctx.lineTo(k,y+h)}else for(let k=y;k<y+h;k+=7){tctx.moveTo(x,k);tctx.lineTo(x+w,k)}tctx.stroke();tctx.restore()}
   // bataklık: su birikintileri ve sazlık
@@ -182,10 +192,15 @@ function drawTerrain(r){
   for(const b of state.buildings)drawBld(b);
   refreshMini();
 }
+/* eş yükselti çizgisi (kare yürütme): her hücrede seviyenin kestiği kenarlar birleştirilir; köşe sırası sol üst, sağ üst, sağ alt, sol alt */
+function contour(lv,seg){for(let cy=0;cy<GH-1;cy++)for(let cx=0;cx<GW-1;cx++){const i=cy*GW+cx,a=elev[i],b=elev[i+1],c=elev[i+GW+1],d=elev[i+GW];
+  const m=(a>lv)|(b>lv)<<1|(c>lv)<<2|(d>lv)<<3;if(m===0||m===15)continue;const x=cx*CS+8,y=cy*CS+8,f=(p,q)=>p===q?.5:(lv-p)/(q-p);
+  const P=[];if((m&1)!==(m>>1&1))P.push([x+CS*f(a,b),y]);if((m>>1&1)!==(m>>2&1))P.push([x+CS,y+CS*f(b,c)]);if((m>>2&1)!==(m>>3&1))P.push([x+CS*f(d,c),y+CS]);if((m>>3&1)!==(m&1))P.push([x,y+CS*f(a,d)]);
+  if(P.length===2)seg(P[0][0],P[0][1],P[1][0],P[1][1]);else if(P.length===4){if(m===5){seg(P[3][0],P[3][1],P[0][0],P[0][1]);seg(P[1][0],P[1][1],P[2][0],P[2][1])}else{seg(P[0][0],P[0][1],P[1][0],P[1][1]);seg(P[2][0],P[2][1],P[3][0],P[3][1])}}}}
 function refreshMini(){mbctx.imageSmoothingQuality='high';mbctx.drawImage(tc,0,0,220,138)}
 function scorch(x,y,rad){const g=tctx.createRadialGradient(x,y,0,x,y,rad);g.addColorStop(0,'rgba(20,16,10,.55)');g.addColorStop(.6,'rgba(30,24,14,.3)');g.addColorStop(1,'rgba(30,24,14,0)');tctx.fillStyle=g;tctx.beginPath();tctx.arc(x,y,rad,0,TAU);tctx.fill()}
 const bcell=new Map();
 function buildingAt(x,y){const cx=x/CS|0,cy=y/CS|0;if(cx<0||cy<0||cx>=GW||cy>=GH)return null;const l=bcell.get(cy*GW+cx);if(!l)return null;for(const b of l)if(!b.dead&&x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h)return b;return null}
 const isWater=(x,y)=>cellAt(x,y)===T.WATER;
 
-export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawCover,drawRubble,elevAt,genTerrain,grid,isWater,refreshMini,scorch};
+export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,refreshMini,scorch};

@@ -34,6 +34,7 @@ Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({a
 ## Kontroller ve oynanış notları
 
 - **Kamera:** W A S D, oklar, teker ve orta tuş. W/A/S/D'nin eski komutları Shift ile çalışır: ⇧W dizilim, ⇧A saldırı hareketi, ⇧S dur, ⇧D hızlı hareket. Doğrudan kontrolde (V) WASD aracı sürer.
+- **Arazi:** Tepeler, uzun sırtlar, vadiler ve nehir vadisi (`terrain.js` `hills`, `ridges`). Görüş hattı yer şekillerini hesaba katar: iki göz yüksekliği arasındaki çizgiyi aşan sırt görüşü keser (`vision.js los`, yüksek irtifadaki helikopter hariç). Vadide görüş kısalır, tepede artar. Yokuş yukarı hareket yavaşlar. Harita eş yükselti çizgileri ve gölgelendirmeyle çizilir.
 
 ## Konuşlanma safhası
 

@@ -20,7 +20,7 @@ function updMissile(p,dt,i){p.life-=dt;const t=p.tgt;state.curSrc=p.from;
   p.a=Math.atan2(dy,dx);p.x+=dx/d*st;p.y+=dy/d*st}
 function updProj(dt){for(let i=state.proj.length-1;i>=0;i--){const p=state.proj[i];
   if(p.k==='msl'){updMissile(p,dt,i);continue}
-  if(p.k==='atgm'&&p.hit&&p.src){const s=p.src,t=p.tgt;if(s.hp<=0||s.gone||s.sup>70||s.stunT>0||s.panicT>0||(t&&!los(s.x,s.y,t.x,t.y,s.inB?s.inB.i:-1,t.inB?t.inB.i:-1,s.d.heli&&s.alt==='high'))){p.hit=false;p.tx+=gauss()*34;p.ty+=gauss()*34}}
+  if(p.k==='atgm'&&p.hit&&p.src){const s=p.src,t=p.tgt;if(s.hp<=0||s.gone||s.sup>70||s.stunT>0||s.panicT>0||(t&&!los(s.x,s.y,t.x,t.y,s.inB?s.inB.i:-1,t.inB?t.inB.i:-1,s.d.heli&&s.alt==='high',s.d.heli&&s.alt==='high'))){p.hit=false;p.tx+=gauss()*34;p.ty+=gauss()*34}}
   if(p.hit&&p.tgt&&p.tgt.hp>0){p.tx=p.tgt.x;p.ty=p.tgt.y}
   p.t+=dt;const f=Math.min(1,p.t/p.T);p.x=p.sx+(p.tx-p.sx)*f;p.y=p.sy+(p.ty-p.sy)*f;
   if((p.k==='atgm'||p.k==='rpg'||p.k==='arock'||p.k==='rocket')&&R()<.7)state.parts.push({x:p.x,y:p.y,vx:gauss()*4,vy:gauss()*4,life:0,max:.9,r:2,g:7,col:'rgba(210,205,190,.45)'});
