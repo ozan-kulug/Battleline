@@ -29,7 +29,19 @@ Başlangıç ekranındaki **ORDU KUR** düğmesi savaştan önce ordu seçilen e
 - Kızıl Kuvvet (yapay zekâ) aynı bütçeyle `autoArmy` ile kendi ordusunu kurar.
 - Son kurulan ordu tarayıcıda hatırlanır (`localStorage`); okunamazsa önerilen orduyla açılır.
 
-Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({armies:[oyuncu, YZ]})` → `newGame` birlik listesini sıfırlar ve `systems/army.js spawnArmy` her mangayı takviyelerle aynı `spawnLoaded` fonksiyonuyla kurar. Oyun bitince **YENİDEN SAVAŞ** tekrar ordu ekranına götürür; savaş ortasında yardım ekranından **DEVAM ET** ise savaşa döner.
+Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({armies:[oyuncu, YZ], deploy:true})` → `newGame` birlik listesini sıfırlar ve `systems/army.js spawnArmy` her mangayı takviyelerle aynı `spawnLoaded` fonksiyonuyla kurar. Oyun bitince **YENİDEN SAVAŞ** tekrar ordu ekranına götürür; savaş ortasında yardım ekranından **DEVAM ET** ise savaşa döner.
+
+## Konuşlanma safhası
+
+Ordu ekranındaki **SAVAŞA BAŞLA** savaşı hemen açmaz; önce konuşlanma safhası gelir: `Ordu kurma → Konuşlanma → Savaş`.
+
+- **Durum:** `state.phase==='deploy'` ve `state.running=false`. Simülasyonun tamamı (`simStep`: birlikler, YZ, ekonomi, nokta ele geçirme, takviye sayaçları, mermiler) yalnızca `running` iken ilerlediği için bu safhada hiçbir şey ilerlemez; yalnızca birliklerin konumu ve yönü değişir. Savaş tuşları ve takviye kartları da çalışmaz.
+- **Bölge:** `systems/deployment.js deployZone(side)` haritadan çıkarılır: her taraf kendi kenarından, kendi yarısındaki en yakın stratejik noktanın alanına 40 m kalana kadar. Hiçbir nokta savaştan önce ele geçirilemez. YZ bölgesi simetriktir ve YZ ordusu oraya kurulur.
+- **Kurallar** (`placeErr`): bölge dışı, nehir ve sığ geçit, bina üstü ve başka birimle çakışma reddedilir. Geçersiz bırakılan birlik eski yerinde kalır.
+- **Kontroller:** Birliği sol tıkla sürükle (manga birlikte taşınır). Sağ tık + sürükle yön verir. Q / E seçili grubu 15° döndürür. Shift çoklu seçim yapar, boş alanı sürüklemek kutuyla seçer, Esc sürüklemeyi iptal eder. Orta tuş, teker, oklar ve mini harita kamerayı her zamanki gibi oynatır. Dokunmatikte birliğe dokunup sürüklenir, boş alan haritayı kaydırır.
+- Sağdaki **Birlikler** listesi mangaları, nakliyedeki askerleri ve hava üssündeki uçakları gösterir; tıklanınca seçer ve kamerayı oraya götürür.
+- **SAVAŞI BAŞLAT** tüm birimleri yeniden doğrular, sonra `game.js beginBattle()` ile savaşı başlatır. **‹ Ordu ekranı** seçilen orduyu koruyarak geri döner.
+- `?hizli` konuşlanmayı da atlar.
 Derleme adımı ve bağımlılık yoktur. Yazı tipleri Google Fonts'tan yüklenir; internet yoksa sistem yazı tipine düşer.
 
 ## Dosya yapısı
@@ -42,6 +54,7 @@ css/
   panels.css            Alt şerit: mini harita, takviye destesi, seçim/emir paneli, düğmeler
   menus.css             Başlangıç/yardım ekranı, zorluk seçimi, duraklatma yazısı
   army.css              Savaş öncesi ordu kurma ekranı (kendi dar ekran kuralları dahil)
+  deploy.css            Konuşlanma safhası çubuğu ve birlik listesi
   responsive.css        Dar ekran ve hareket azaltma uyarlamaları (en son yüklenir)
 js/
   main.js               Giriş noktası: olay dinleyicilerini sırayla kurar, oyunu başlatır
@@ -59,6 +72,7 @@ js/
   world/cover.js        Siper bulma, yönlü siper koruması, duruşlar, tüfekçi çukuru
   systems/units.js      Birlik/manga oluşturma (spawnSquad, spawnLoaded), takviye, nakliyeden indirme
   systems/army.js       Savaş öncesi ordu: OP hesabı, doğrulama, YZ ordusu, başlangıç dizilişi
+  systems/deployment.js Konuşlanma bölgeleri, yerleştirme kuralları, sürükleme önizlemesi
   systems/spatial.js    Uzamsal ızgara
   systems/vision.js     Görüş hattı, gizlenme, tespit, son görülen konumlar
   systems/effects.js    Parçacıklar, patlama, krater, yangın, yıkım efektleri
@@ -79,6 +93,7 @@ js/
   ui/hud.js             Üst şerit, hava üssü paneli, arayüz güncellemesi
   ui/menus.js           Başlangıç/yardım ekranı, zorluk seçimi, ?hizli kısayolu
   ui/army-builder.js    Ordu kurma ekranı: kategoriler, birlik kartları, ayrıntı, seçili ordu
+  ui/deploy.js          Konuşlanma safhası: sürükleme, yön verme, birlik listesi, savaşı başlatma
 ```
 
 ## Paylaşılan durum nerede?
@@ -98,7 +113,7 @@ config → utils → canvas/state → world/* → systems/(units, vision, effect
        → (initiative, ai) → unit-update/renderer → ui/* → game, game-loop, input → main
 ```
 
-Olay dinleyicileri `initDeck`, `initHud`, `initInput`, `initMenus` ve `initArmy` içindedir. `main.js` bunları tek dosyalı sürümdeki kayıt sırasıyla çağırır.
+Olay dinleyicileri `initDeck`, `initHud`, `initInput`, `initMenus`, `initArmy` ve `initDeploy` içindedir. `main.js` bunları tek dosyalı sürümdeki kayıt sırasıyla çağırır.
 
 ## Yeni kod eklerken
 

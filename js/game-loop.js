@@ -34,7 +34,7 @@ let uiT=0;
 function frame(now){const dt=clamp((now-state.last)/1000,0,.05);state.last=now;
   if(state.dc){const tx=state.dc.x-state.VW/cam.z/2,ty=state.dc.y-state.VH/cam.z/2;cam.x+=(tx-cam.x)*Math.min(1,dt*5);cam.y+=(ty-cam.y)*Math.min(1,dt*5)}
   else{const ps=600/cam.z*dt;if(state.keys.ArrowLeft)cam.x-=ps;if(state.keys.ArrowRight)cam.x+=ps;if(state.keys.ArrowUp)cam.y-=ps;if(state.keys.ArrowDown)cam.y+=ps;
-    if(state.mouse.in&&!state.drag&&state.running&&FINE){const m=8;if(state.mouse.x<m)cam.x-=ps;if(state.mouse.x>state.VW-m)cam.x+=ps;if(state.mouse.y<m)cam.y-=ps;if(state.mouse.y>state.VH-m)cam.y+=ps}}
+    if(state.mouse.in&&!state.drag&&(state.running||state.phase==='deploy')&&FINE){const m=8;if(state.mouse.x<m)cam.x-=ps;if(state.mouse.x>state.VW-m)cam.x+=ps;if(state.mouse.y<m)cam.y-=ps;if(state.mouse.y>state.VH-m)cam.y+=ps}}
   clampCam();
   if(state.running&&!state.paused)simStep(dt);
   if(!state.paused)updParts(dt);state.shake*=Math.pow(.015,dt);if(state.shake<.15)state.shake=0;

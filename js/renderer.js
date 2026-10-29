@@ -5,6 +5,7 @@ import {ctx,fctx,fogC,mctx,mmBase,tc} from './canvas.js';
 import {COL,DEF,H,PI,TAU,W,ZK} from './config.js';
 import {cam} from './state.js';
 import {estSig,muzzle} from './systems/combat.js';
+import {dep,deployZone} from './systems/deployment.js';
 import {SPR,drawFX} from './systems/effects.js';
 import {leash} from './systems/initiative.js';
 import {sel} from './systems/orders.js';
@@ -97,6 +98,7 @@ function render(){
     ctx.fillStyle='rgba(16,19,14,.8)';ctx.fillRect(o.x-15,o.y-15,30,30);ctx.strokeStyle=oc;ctx.lineWidth=1.5;ctx.strokeRect(o.x-15,o.y-15,30,30);
     ctx.fillStyle=oc;ctx.font='800 22px "Saira Condensed",Impact,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(o.n,o.x,o.y+1);
     if(z>.3){const fz=11/Math.max(z,.45);ctx.font=`700 ${fz}px "Saira Condensed",sans-serif`;ctx.fillStyle='rgba(16,19,14,.75)';const tw=ctx.measureText(ZK[o.k].n.toLocaleUpperCase('tr')+'  +'+ZK[o.k].inc).width;ctx.fillRect(o.x-tw/2-4,o.y+18,tw+8,fz+4);ctx.fillStyle=oc;ctx.fillText(ZK[o.k].n.toLocaleUpperCase('tr')+'  +'+ZK[o.k].inc,o.x,o.y+20+fz/2)}}
+  if(state.phase==='deploy')drawDeployZones(z);
   const S=sel();ctx.lineWidth=1/z;
   if(S.length&&S.length<=6)for(const u of S){if(!u.anchor||(u.init||'on')==='off'||u.d.air)continue;ctx.strokeStyle='rgba(127,212,138,.28)';ctx.setLineDash([2/z,5/z]);ctx.beginPath();ctx.arc(u.anchor.x,u.anchor.y,leash(u),0,TAU);ctx.stroke();ctx.setLineDash([])}
   for(const u of S){const w=u.d.w[0];if(w&&(S.length<8||!u.d.inf)){ctx.strokeStyle='rgba(232,168,56,.3)';ctx.setLineDash([4/z,6/z]);ctx.beginPath();ctx.arc(u.x,u.y,w.r,0,TAU);ctx.stroke();
@@ -172,6 +174,7 @@ function render(){
     if(u.dig>=0){const bw=14*sc;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(u.x-bw/2,u.y+8,bw,2.5*sc);ctx.fillStyle='#c9a35a';ctx.fillRect(u.x-bw/2,u.y+8,bw*u.dig,2.5*sc)}
     if(u.d.indirect&&(u.st==='deploying'||u.st==='packing')){const bw=20*sc,f=1-u.stT/(u.st==='deploying'?u.d.setupT:u.d.packT);ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(u.x-bw/2,u.y+yo,bw,2.5*sc);ctx.fillStyle='#e8a838';ctx.fillRect(u.x-bw/2,u.y+yo,bw*f,2.5*sc)}
     if((u.d.veh||u.d.air)&&(z<.95||u.sel)){ctx.fillStyle=u.side?'rgba(240,140,128,.95)':'rgba(150,200,245,.95)';ctx.fillText(u.d.tag,u.x,u.y+yo+4)}}
+  if(state.phase==='deploy')drawDeployTop(z,lw);
   for(let i=state.marks.length-1;i>=0;i--){const m=state.marks[i];if(!m.ping)continue;m.t+=1/60;if(m.t>.7){state.marks.splice(i,1);continue}ctx.strokeStyle=m.c;ctx.globalAlpha=1-m.t/.7;ctx.lineWidth=2*lw;ctx.beginPath();ctx.arc(m.x,m.y,6+m.t*30,0,TAU);ctx.stroke();ctx.globalAlpha=1}
   const mw=toW(state.mouse.x,state.mouse.y);
   if(state.dc){const u=state.dc,w=u.d.w[0];if(w){const [ox,oy]=muzzle(u);const ang=u.ta;const d=Math.min(Math.hypot(mw.x-u.x,mw.y-u.y),w.r);
@@ -185,6 +188,24 @@ function render(){
   ctx.setTransform(state.DPR,0,0,state.DPR,0,0);
   if(state.drag&&state.drag.box){ctx.strokeStyle='#e8a838';ctx.fillStyle='rgba(232,168,56,.08)';ctx.lineWidth=1;const x=Math.min(state.drag.sx,state.drag.cx),y=Math.min(state.drag.sy,state.drag.cy),w=Math.abs(state.drag.cx-state.drag.sx),h=Math.abs(state.drag.cy-state.drag.sy);ctx.fillRect(x,y,w,h);ctx.strokeRect(x+.5,y+.5,w,h)}
 }
+/* ---------- konuşlanma safhası katmanları ---------- */
+function drawDeployZones(z){for(const sd of [0,1]){const r=deployZone(sd),me=sd===0;
+    ctx.fillStyle=me?'rgba(98,166,230,.09)':'rgba(226,88,75,.06)';ctx.fillRect(r.x0,r.y0,r.x1-r.x0,r.y1-r.y0);
+    ctx.strokeStyle=me?'rgba(98,166,230,.85)':'rgba(226,88,75,.55)';ctx.lineWidth=2.5/z;ctx.setLineDash([14/z,9/z]);ctx.strokeRect(r.x0,r.y0,r.x1-r.x0,r.y1-r.y0);ctx.setLineDash([]);
+    const fz=13/Math.max(z,.4);ctx.font=`800 ${fz}px "Saira Condensed",sans-serif`;ctx.textAlign='center';ctx.textBaseline='top';ctx.fillStyle=me?'#62a6e6':'#e2584b';
+    ctx.fillText(me?'KONUŞLANMA BÖLGESİ':'DÜŞMAN KONUŞLANMA BÖLGESİ',(r.x0+r.x1)/2,r.y0+8/z)}}
+function arrowFrom(x,y,a,len,col,w){const ex=x+Math.cos(a)*len,ey=y+Math.sin(a)*len,h=Math.min(9,len*.4);ctx.strokeStyle=col;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(ex,ey);
+  ctx.moveTo(ex,ey);ctx.lineTo(ex-Math.cos(a-.5)*h,ey-Math.sin(a-.5)*h);ctx.moveTo(ex,ey);ctx.lineTo(ex-Math.cos(a+.5)*h,ey-Math.sin(a+.5)*h);ctx.stroke()}
+function drawDeployTop(z,lw){const d=dep.drag,moving=d&&d.k==='move'&&d.cand?new Set(d.us.map(o=>o.u)):null;
+  /* yön okları: her birimin savaş başında bakacağı yön */
+  for(const u of state.units){if(u.side!==0||u.d.plane||(moving&&moving.has(u)))continue;const a=u.faceA??u.a,L=u.d.inf?13:34;
+    arrowFrom(u.x+Math.cos(a)*(u.d.inf?6:20),u.y+Math.sin(a)*(u.d.inf?6:20),a,L-(u.d.inf?6:20)+8,u.sel?'rgba(232,168,56,.95)':'rgba(150,200,245,.55)',(u.sel?1.8:1.2)*lw)}
+  if(d&&d.k==='move'&&d.cand&&d.moved){const ok=d.bad.every(b=>!b);
+    for(let i=0;i<d.cand.length;i++){const c=d.cand[i],o=d.us[i];ctx.strokeStyle=ok?'rgba(127,212,138,.35)':'rgba(226,88,75,.35)';ctx.lineWidth=lw;ctx.setLineDash([3*lw,4*lw]);ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(c.x,c.y);ctx.stroke();ctx.setLineDash([]);
+      ctx.globalAlpha=.6;drawUnit(ctx,{...c.u,x:c.x,y:c.y},c.x,c.y,1);ctx.globalAlpha=1;
+      ctx.strokeStyle=d.bad[i]?'#e2584b':'#7fd48a';ctx.lineWidth=2*lw;ctx.beginPath();ctx.arc(c.x,c.y,c.u.d.inf?8:24,0,TAU);ctx.stroke()}
+    const b=d.bad.find(Boolean),c0=d.cand[0];if(b){const fz=11/Math.max(z,.5);ctx.font=`700 ${fz}px "JetBrains Mono",monospace`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#e2584b';ctx.fillText(b,c0.x,c0.y-(c0.u.d.inf?12:30))}}
+  if(d&&d.k==='face'&&d.ang!=null){arrowFrom(d.c.x,d.c.y,d.ang,80/Math.max(z,.5),'#e8a838',2.5*lw);for(const u of d.us)arrowFrom(u.x,u.y,d.ang,u.d.inf?16:40,'rgba(232,168,56,.8)',1.5*lw)}}
 function drawMini(){if(state.mmDirty){refreshMini();state.mmDirty=false}mctx.drawImage(mmBase,0,0);const sx=220/W,sy=138/H;
   for(const o of state.objs){mctx.fillStyle=o.owner===0?'#62a6e6':o.owner===1?'#e2584b':'#d8d3bd';mctx.fillRect(o.x*sx-4,o.y*sy-4,8,8);mctx.fillStyle='#10130e';mctx.font='800 8px sans-serif';mctx.textAlign='center';mctx.textBaseline='middle';mctx.fillText(o.n,o.x*sx,o.y*sy+.5)}
   mctx.strokeStyle='rgba(226,88,75,.6)';mctx.lineWidth=1;for(const [id,g] of ghosts)if(!state.vis[0].has(id))mctx.strokeRect(g.x*sx-1.5,g.y*sy-1.5,3,3);

@@ -5,6 +5,7 @@ import {initInput} from './input.js';
 import {computeVis} from './systems/vision.js';
 import {initArmy} from './ui/army-builder.js';
 import {buildDeck,initDeck} from './ui/deck.js';
+import {initDeploy} from './ui/deploy.js';
 import {initHud} from './ui/hud.js';
 import {initMenus} from './ui/menus.js';
 
@@ -15,6 +16,7 @@ initInput();
 addEventListener('resize',resize);
 initMenus();
 initArmy();
+initDeploy();
 resize();
 buildDeck();
 newGame();

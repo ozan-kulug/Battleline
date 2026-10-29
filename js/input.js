@@ -7,6 +7,7 @@ import {cam,md} from './state.js';
 import {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,dcToggle,deploySel,digSel,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel} from './systems/orders.js';
 import {deploy} from './systems/units.js';
 import {cards} from './ui/deck.js';
+import {depDown,depMove,depUp} from './ui/deploy.js';
 import {log,updTip} from './ui/feedback.js';
 import {updUI} from './ui/hud.js';
 import {ACT} from './ui/panels.js';
@@ -23,6 +24,7 @@ function clickSelect(wx,wy,shift){const u=hitUnit(wx,wy,0);const now=performance
   if(!u){const b=buildingAt(wx,wy);if(b&&b.occ.length&&b.occ[0].side===0){if(!shift)state.units.forEach(x=>x.sel=false);b.occ.forEach(o=>o.sel=true);return}}
   if(!shift)state.units.forEach(x=>x.sel=false);if(u)u.sel=shift?!u.sel:true}
 function endPointer(e){
+  if(state.phase==='deploy'&&depUp(e)){md[e.button]=false;return}
   if(e.pointerType==='touch'){touches.delete(e.pointerId);if(touches.size<2)pinch=null;
     if(state.drag&&state.drag.touch&&!state.drag.moved&&touches.size===0&&state.running)tapAt(e.offsetX,e.offsetY);if(touches.size===0)state.drag=null;return}
   md[e.button]=false;
@@ -49,6 +51,8 @@ export function initInput(){
 cvs.addEventListener('contextmenu',e=>e.preventDefault());
 cvs.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.offsetX,e.offsetY,Math.exp(-e.deltaY*.0015))},{passive:false});
 cvs.addEventListener('pointerdown',e=>{cvs.setPointerCapture(e.pointerId);state.mouse={x:e.offsetX,y:e.offsetY,in:true};
+  /* konuşlanma safhası: birlik sürükleme ve yön verme önce denenir; kaydırma, yakınlaştırma ve iki parmak hareketi aşağıdaki mevcut yoldan sürer */
+  if(state.phase==='deploy'&&!(e.pointerType==='touch'&&touches.size)&&depDown(e))return;
   if(e.pointerType==='touch'){touches.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
     if(touches.size===2){const [a,b]=[...touches.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),z:cam.z};state.drag=null}
     else state.drag={touch:1,sx:e.offsetX,sy:e.offsetY,cx:e.offsetX,cy:e.offsetY,cam:{x:cam.x,y:cam.y},moved:false};return}
@@ -62,6 +66,7 @@ cvs.addEventListener('pointerdown',e=>{cvs.setPointerCapture(e.pointerId);state.
     if(state.precArm){addStrike(w.x,w.y);if(!e.shiftKey)setPrecArm(false);return}
     state.drag={sx:e.offsetX,sy:e.offsetY,cx:e.offsetX,cy:e.offsetY,shift:e.shiftKey,box:false}}});
 cvs.addEventListener('pointermove',e=>{state.mouse={x:e.offsetX,y:e.offsetY,in:true};
+  if(state.phase==='deploy'&&depMove(e))return;
   if(e.pointerType==='touch'){if(!touches.has(e.pointerId))return;touches.set(e.pointerId,{x:e.offsetX,y:e.offsetY});
     if(pinch&&touches.size>=2){const [a,b]=[...touches.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);zoomAt((a.x+b.x)/2,(a.y+b.y)/2,pinch.z*d/pinch.d/cam.z);return}
     if(state.drag&&state.drag.touch){state.drag.cx=e.offsetX;state.drag.cy=e.offsetY;if(Math.hypot(state.drag.cx-state.drag.sx,state.drag.cy-state.drag.sy)>10)state.drag.moved=true;if(state.drag.moved){cam.x=state.drag.cam.x-(state.drag.cx-state.drag.sx)/cam.z;cam.y=state.drag.cam.y-(state.drag.cy-state.drag.sy)/cam.z;clampCam()}}return}

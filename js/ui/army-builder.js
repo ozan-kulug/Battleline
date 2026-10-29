@@ -3,7 +3,7 @@ import {ARMY,ARMYCAT,AW,DEF,PAYN,ROLE,SQUADS} from '../config.js';
 import {DEFAULT_ARMY,addBlock,armyCap,autoArmy,checkArmy,countOf,sqOf} from '../systems/army.js';
 import {startMatch} from '../game.js';
 import {drawSquadArt} from './deck.js';
-import {log} from './feedback.js';
+import {enterDeploy} from './deploy.js';
 import {$} from '../utils/helpers.js';
 
 /* son kurulan ordu bu tarayıcıda hatırlanır (yalnızca kolaylık; okunamazsa önerilen orduyla açılır) */
@@ -75,10 +75,10 @@ function rem(k){const i=ab.list.lastIndexOf(k);if(i>=0)ab.list.splice(i,1);ab.pi
 function pick(k){ab.pick=k;ab.cat=catOf(k).k;update()}
 function pickCat(c){ab.cat=c;const cat=ARMYCAT.find(x=>x.k===c);if(!cat.m.includes(ab.pick))ab.pick=cat.m[0];update()}
 function back(){$('army').hidden=true;$('ov').hidden=false}
-/* doğrulanan oyuncu ordusu ve aynı bütçeyle kurulan YZ ordusu mevcut başlatma akışına verilir */
+/* doğrulanan oyuncu ordusu ve aynı bütçeyle kurulan YZ ordusu mevcut başlatma akışına verilir; savaş konuşlanma onayıyla başlar */
 function go(){const chk=checkArmy(ab.list,ab.budget);if(!chk.ok){update();return}
-  const mine=ab.list.slice(),foe=autoArmy(ab.budget);$('army').hidden=true;startMatch({armies:[mine,foe]});
-  log(`${ab.name}: ${mine.length} birlik cepheye konuşlandı (${chk.cost} OP)`,'good')}
+  const mine=ab.list.slice(),foe=autoArmy(ab.budget);$('army').hidden=true;startMatch({armies:[mine,foe],deploy:true});
+  enterDeploy({name:ab.name,cost:chk.cost,back:openArmy})}
 function openArmy(){if(!ab.list)load();build();$('armyName').value=ab.name;$('ov').hidden=true;$('army').hidden=false;update()}
 
 /* olay dinleyicileri: main.js tarafından başlatılır */

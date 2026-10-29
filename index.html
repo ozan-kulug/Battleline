@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="css/panels.css">
 <link rel="stylesheet" href="css/menus.css">
 <link rel="stylesheet" href="css/army.css">
+<link rel="stylesheet" href="css/deploy.css">
 <link rel="stylesheet" href="css/responsive.css">
 <script type="module" src="js/main.js"></script>
 </head>
@@ -77,6 +78,19 @@
     <div id="diffRow"><span>DÜŞMAN KOMUTANI</span><button class="btn" type="button" data-d="easy">Kolay</button><button class="btn on" type="button" data-d="normal">Normal</button><button class="btn" type="button" data-d="hard">Zor</button></div>
     <button class="go" id="goBtn" type="button">ORDU KUR</button>
   </div>
+</div>
+
+<!-- Konuşlanma safhası: harita görünür, simülasyon durur; içerik ui/deploy.js tarafından doldurulur -->
+<div id="dep" hidden>
+  <div id="depBar" class="panel">
+    <div class="dp-t"><b>KONUŞLANMA SAFHASI</b><small id="depName"></small></div>
+    <p id="depHint" role="status"></p>
+    <div class="dp-a"><button id="depBack" class="btn" type="button">‹ Ordu ekranı</button><button id="depGo" class="go" type="button">SAVAŞI BAŞLAT</button></div>
+  </div>
+  <aside id="depR" class="panel">
+    <div class="dp-h"><span>BİRLİKLER</span><small id="depN"></small></div>
+    <div id="depList"></div>
+  </aside>
 </div>
 
 <!-- Savaş öncesi ordu kurma ekranı: içerik ui/army-builder.js tarafından doldurulur -->

@@ -38,6 +38,7 @@ export const state={
   deckTab:'kara',
   running:false,
   matchOn:false,
+  phase:null,
   paused:false,
   over:false,
   attackArm:false,

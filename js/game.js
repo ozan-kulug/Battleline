@@ -16,7 +16,7 @@ import {OBJ0,genTerrain} from './world/terrain.js';
    Birlik listesi önce sıfırlandığı için başlangıç birlikleri hiçbir zaman iki kez oluşmaz. */
 function newGame(opts={}){
   genTerrain();state.units=[];state.squads=new Map();state.proj=[];state.parts=[];state.marks=[];state.fires=[];state.timers=[];fireCells.clear();ghosts.clear();state.shake=0;state.smokes=[];state.cbs=[];state.uid=1;state.sqid=1;state.time=0;state.money=[400,400];state.tickets=[500,500];state.avail=[SQUADS.map(S=>S.av),SQUADS.map(S=>S.av)];state.pending=[[],[]];state.retQ=[];
-  state.vis=[new Set(),new Set()];state.aiNext=null;state.over=false;state.dc=null;state.groups={};state.attackArm=state.missionArm=state.runArm=state.precArm=false;state.airbase=[[],[]];state.abid=1;state.stats={kills:[0,0],lost:[0,0]};
+  state.vis=[new Set(),new Set()];state.aiNext=null;state.over=false;state.dc=null;state.groups={};state.attackArm=state.missionArm=state.runArm=state.precArm=false;state.airbase=[[],[]];state.abid=1;state.stats={kills:[0,0],lost:[0,0]};state.phase=null;
   state.objs=OBJ0.map(o=>({...o,own:0,owner:-1,c:[0,0]}));aiReset();
   if(opts.armies)for(const s of [0,1])spawnArmy(s,opts.armies[s]);
   else for(const s of [0,1]){const bx=s?W-280:280;
@@ -25,8 +25,11 @@ function newGame(opts={}){
   cam.z=state.VW<700?.45:.62;cam.x=0;cam.y=H/2-state.VH/2/cam.z;clampCam();buildObjUI();
 }
 
-/* yeni savaşı kurar ve başlatır (ordu kurma ekranı ve geliştirici hızlı başlatması buradan girer) */
-function startMatch(opts){newGame(opts);state.matchOn=true;state.running=true;state.over=false;state.paused=false;
-  $('pause').hidden=true;$('ov').hidden=true;$('ovl').hidden=false;state.last=performance.now()}
+/* yeni savaşı kurar (ordu kurma ekranı ve geliştirici hızlı başlatması buradan girer).
+   opts.deploy: önce konuşlanma safhası; simülasyon state.running=false olduğu için durur, savaş beginBattle ile başlar */
+function startMatch(opts={}){newGame(opts);state.over=false;state.paused=false;$('pause').hidden=true;$('ov').hidden=true;$('ovl').hidden=false;
+  if(opts.deploy){state.phase='deploy';state.matchOn=false;state.running=false;return}
+  beginBattle()}
+function beginBattle(){state.phase=null;state.matchOn=true;state.running=true;state.over=false;state.paused=false;$('pause').hidden=true;state.last=performance.now()}
 
-export {newGame,startMatch};
+export {beginBattle,newGame,startMatch};

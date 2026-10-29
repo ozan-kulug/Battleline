@@ -11,8 +11,9 @@ const QUICK=new URLSearchParams(location.search).has('hizli');
 export function initMenus(){
 if(QUICK)$('goBtn').textContent='HIZLI BAŞLAT';
 /* savaş yoksa (ilk açılış veya oyun sonu) ordu kurma ekranına, savaş sürüyorsa kaldığı yere döner */
-$('goBtn').addEventListener('click',()=>{if(!state.matchOn||state.over){if(QUICK)startMatch();else openArmy();return}
+$('goBtn').addEventListener('click',()=>{if(state.phase==='deploy'){$('ov').hidden=true;$('ovl').hidden=false;return}
+  if(!state.matchOn||state.over){if(QUICK)startMatch();else openArmy();return}
   $('ov').hidden=true;$('ovl').hidden=false;state.running=true;state.over=false;state.paused=false;$('pause').hidden=true;state.last=performance.now()});
 $('diffRow').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b)return;state.aiDiff=b.dataset.d;for(const x of $('diffRow').querySelectorAll('[data-d]'))x.classList.toggle('on',x===b)});
-$('helpBtn').addEventListener('click',()=>{if(state.over)return;state.running=false;$('ovt').textContent='CEPHE HATTI';$('goBtn').textContent=state.matchOn?'DEVAM ET':QUICK?'HIZLI BAŞLAT':'ORDU KUR';$('ovl').hidden=false;$('ov').hidden=false});
+$('helpBtn').addEventListener('click',()=>{if(state.over)return;state.running=false;$('ovt').textContent='CEPHE HATTI';$('goBtn').textContent=state.phase==='deploy'?'KONUŞLANMAYA DÖN':state.matchOn?'DEVAM ET':QUICK?'HIZLI BAŞLAT':'ORDU KUR';$('ovl').hidden=false;$('ov').hidden=false});
 }
