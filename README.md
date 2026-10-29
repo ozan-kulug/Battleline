@@ -1,4 +1,6 @@
-# Cephe Hattı — modüler sürüm
+# Battleline — modüler sürüm
+
+Oyunun adı Battleline (eski adı: Cephe Hattı). Klasör ve tarayıcı kayıt anahtarları (`cephe-hatti.*`) teknik ad olarak korunur.
 
 Tek dosyalı `cephe-hatti.html` oyununun ES modüllerine bölünmüş hâli. Oynanış, denge, arayüz ve kontroller tek dosyalı sürümle aynıdır.
 

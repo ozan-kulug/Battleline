@@ -44,7 +44,7 @@ const PAT=[
 ];
 /* sözlük: Türkçe → İngilizce. Büyük/küçük harf biçimleri (FABRİKA, ana muharebe tankı) otomatik eklenir */
 const PH={
- 'Cephe Hattı':'Battleline','CEPHE HATTI':'BATTLELINE','MAVİ KUVVET':'BLUE FORCE','KIZIL KUVVET':'RED FORCE','Mavi Kuvvet':'Blue Force','Kızıl Kuvvet':'Red Force','Yardım':'Help',
+ 'MAVİ KUVVET':'BLUE FORCE','KIZIL KUVVET':'RED FORCE','Mavi Kuvvet':'Blue Force','Kızıl Kuvvet':'Red Force','Yardım':'Help',
  // birimler
  'Tüfekçi':'Rifleman','Makineli Tüfekçi':'Machine Gunner','Roketatarcı':'RPG Gunner','Güdümlü Füze Atıcı':'ATGM Gunner','Keşifçi':'Scout','Keskin Nişancı':'Sniper','Havancı':'Mortarman',
  'Zırhlı Muharebe Aracı':'Infantry Fighting Vehicle','Ana Muharebe Tankı':'Main Battle Tank','155 mm Obüs':'155 mm Howitzer','İkmal Kamyonu':'Supply Truck','Mürettebat':'Crew',

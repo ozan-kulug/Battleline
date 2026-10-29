@@ -25,5 +25,5 @@ $('helpBtn').addEventListener('click',dmSync);
 for(const x of $('langRow').querySelectorAll('[data-lang]'))x.classList.toggle('on',x.dataset.lang===lang);
 $('langRow').addEventListener('click',e=>{const b=e.target.closest('[data-lang]');if(!b||b.dataset.lang===lang)return;setLang(b.dataset.lang);const u=new URL(location.href);u.searchParams.delete('lang');location.href=u.href});
 $('diffRow').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b)return;state.aiDiff=b.dataset.d;for(const x of $('diffRow').querySelectorAll('[data-d]'))x.classList.toggle('on',x===b)});
-$('helpBtn').addEventListener('click',()=>{if(state.over)return;state.running=false;$('ovt').textContent=tr('CEPHE HATTI');$('goBtn').textContent=tr(state.phase==='deploy'?'KONUŞLANMAYA DÖN':state.matchOn?'DEVAM ET':QUICK?'HIZLI BAŞLAT':'ORDU KUR');$('ovl').hidden=false;$('ov').hidden=false});
+$('helpBtn').addEventListener('click',()=>{if(state.over)return;state.running=false;$('ovt').textContent=tr('BATTLELINE');$('goBtn').textContent=tr(state.phase==='deploy'?'KONUŞLANMAYA DÖN':state.matchOn?'DEVAM ET':QUICK?'HIZLI BAŞLAT':'ORDU KUR');$('ovl').hidden=false;$('ov').hidden=false});
 }
