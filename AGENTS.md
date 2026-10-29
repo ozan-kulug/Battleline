@@ -1,15 +1,31 @@
-# AGENTS.md — Claude ve Antigravity ortak çalışma kuralları
+# AGENTS.md — Claude, Codex ve Antigravity ortak çalışma kuralları
 
-Bu projede iki yapay zekâ ajanı birlikte çalışır: **Claude** (Claude Code) ve **Antigravity**. Kurallar ikisi için de geçerlidir.
+Bu projede **Claude** (Claude Code), **Codex** ve **Antigravity** birlikte çalışır. Kurallar üçü için de geçerlidir.
 İlgili dosyalar: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) (kayıt), [ROADMAP.md](ROADMAP.md) (görev durumu).
 
 ## Görevlendirme
 
 - Her görevin **sorumlusu ve kapsamı** (hangi dosyalar, ne bitince "tamam") başlamadan ROADMAP'teki görev tablosuna yazılır.
+- ROADMAP görevleri şu akışla izlenir: `Proposed` → `Planned` → `Developing` → `Developed` → `To verify` → `Verified` → `Done`. Tanımlar ve geçiş ölçütleri ROADMAP.md'de tutulur; durum değişince tablo güncellenir.
 - Varsayılan iş bölümü:
   - **Claude:** kod geliştirme, statik kontroller (sözdizimi, import/export, döngü denetimi), dokümantasyon.
-  - **Antigravity:** tarayıcı testleri, manuel oynanış testleri, tarayıcı otomasyonu.
+  - **Codex:** özellik planlama ve tasarım kararlarını netleştirme, bağımsız kod incelemesi, istenen dokümantasyon ve proje kayıtlarını güncelleme. Kullanıcı açıkça istemedikçe ana kod geliştirme veya tarayıcı testi sorumluluğunu üstlenmez.
+  - **Antigravity:** tarayıcı testleri, manuel oynanış testleri ve tarayıcı otomasyonu; ayrıca ROADMAP'te sorumlusu olduğu veya kullanıcı tarafından açıkça verilen sınırlı kod geliştirme ve hata düzeltme işleri.
 - Kullanıcı farklı bir iş bölümü belirtirse o geçerlidir.
+
+## Codex için çalışma kapsamı
+
+- Yeni özelliklerde önce gereksinimleri ve tasarım kararlarını kullanıcıyla netleştirir; onaylanan kapsamı ROADMAP'e, kalıcı kararları PROJECT_NOTEBOOK.md'ye kaydeder.
+- Kod incelemesinde mevcut çalışma alanını ve Git farklarını esas alır; bulguları dosya ve konum belirterek, önem sırasına göre raporlar.
+- Dokümantasyon görevlerinde yalnızca istenen kapsamı değiştirir ve ilgili kayıtları günceller.
+- Claude veya Antigravity'nin değişikliklerini sahiplenmez, geri almaz ya da eşzamanlı olarak aynı dosyalara müdahale etmez. Dosya çakışması görürse ilgili ajanın çalışmasının bitmesini veya görevin devredilmesini bekler.
+- Bir tarayıcı ya da manuel test yapmadıysa test sonucu bildirmez; doğrulanmamış davranışları açıkça belirtir.
+
+## Antigravity için geliştirme kapsamı
+
+- Test sırasında bulduğu bir hata için, görev kendisine atanmışsa veya kullanıcı açıkça isterse, ilgili dosyalarda sınırlı düzeltme yapabilir.
+- Kod değişikliğine başlamadan önce görevin kapsamı ve etkilenecek dosyalar ROADMAP'te belirtilir; aynı dosyada başka ajan çalışıyorsa görev devredilmeden düzenleme yapılmaz.
+- Değişikliği ve gerçekten yaptığı kontrolleri PROJECT_NOTEBOOK.md'ye kaydeder. Tarayıcı testi ile kod düzeltmesinin sonuçlarını ayrı ayrı raporlar.
 
 ## Testler
 

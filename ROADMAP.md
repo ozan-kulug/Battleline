@@ -1,11 +1,23 @@
 # Battleline — Roadmap
 
-Son güncelleme: 2026-10-29 · Durum anahtarı: **To do** · **In progress** · **Verify** (kod bitti, test bekliyor) · **Done**
+Son güncelleme: 2026-10-29 · Durumlar ve açıklamaları için [Görev durumu akışı](#görev-durumu-akışı)
 Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kurallar: [AGENTS.md](AGENTS.md)
 
 ## Mevcut aşama
 
 **Aşama 3 — Deniz savaşı, ilk sürüm.** Oynanabilir Devriye Botu kodlandı ve commit edilmeden çalışma alanında bekliyor; tarayıcı testleri Antigravity'de sürüyor.
+
+## Görev durumu akışı
+
+`Proposed` → `Planned` → `Developing` → `Developed` → `To verify` → `Verified` → `Done`
+
+- **Proposed:** Fikir veya ihtiyaç olarak kaydedildi; kapsamı ya da önceliği henüz kararlaştırılmadı.
+- **Planned:** Kapsamı ve tamamlanma ölçütü netleşti; başlamaya hazır.
+- **Developing:** Sorumlu kişi görevi yürütüyor.
+- **Developed:** Uygulama tamamlandı; doğrulama için teslim edilecek.
+- **To verify:** Doğrulama senaryosu ve sorumlusu belli; kontrol bekliyor.
+- **Verified:** Belirlenen kontroller başarıyla tamamlandı.
+- **Done:** Doğrulama ve gerekli kayıt/teslim adımları tamamlandı; görev kapatıldı.
 
 ## Sıradaki öncelikler
 
@@ -26,14 +38,17 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 | Dron Operatör Timi | Done | Claude | `0e33ce5` |
 | Gemi altyapısı | Done | Claude | `a3520a3` |
 | İngilizce dil desteği | Done | Claude | `aa972d1` |
-| Oynanabilir Devriye Botu | Verify | Kod: Claude · Test: Antigravity | Çalışma alanında, commit edilmedi; 8 test senaryosu notebook §5'te |
-| Devriye Botu tarayıcı testleri | In progress | Antigravity | Sonuç bekleniyor |
-| Dokunmatik konuşlanma testi | To do | Antigravity | Hiç test edilmedi |
-| Telefon genişliğinde İngilizce taşma kontrolü | To do | Antigravity | |
-| Botun ateş altında geri çekilmesi | To do | — | Sorumlu atanmadı |
-| Çoklu bot dizilimi (dar nehir) | To do | — | Sorumlu atanmadı |
-| Yeni birimlerin denge testi (dron operatörü, bot) | To do | Antigravity | Uzun maçlar |
-| 375 px seçim paneli taşması | To do | — | Eski sorun |
+| Oynanabilir Devriye Botu | To verify | Kod: Claude · Test: Antigravity | Çalışma alanında, commit edilmedi; 8 test senaryosu notebook §5'te |
+| Devriye Botu tarayıcı testleri | Developing | Antigravity | Sonuç bekleniyor |
+| Codex çalışma rolünü AGENTS.md'ye ekleme | Done | Codex | Planlama, bağımsız inceleme ve dokümantasyon kapsamı ile ajanlar arası çakışma kuralları eklendi |
+| Antigravity görev kapsamını genişletme | Done | Codex | Test bulgularına yönelik atanmış/kullanıcıca istenmiş sınırlı kod düzeltmeleri ve kayıt koşulları AGENTS.md'ye eklendi |
+| Görev durumu akışını standartlaştırma | Done | Codex | Proposed'dan Done'a yedi aşamalı akış tanımlandı; mevcut işler yeni aşamalara taşındı |
+| Dokunmatik konuşlanma testi | Planned | Antigravity | Hiç test edilmedi |
+| Telefon genişliğinde İngilizce taşma kontrolü | Planned | Antigravity | |
+| Botun ateş altında geri çekilmesi | Planned | — | Sorumlu atanmadı |
+| Çoklu bot dizilimi (dar nehir) | Planned | — | Sorumlu atanmadı |
+| Yeni birimlerin denge testi (dron operatörü, bot) | Planned | Antigravity | Uzun maçlar |
+| 375 px seçim paneli taşması | Planned | — | Eski sorun |
 
 ## Yakın vadeli hedefler
 
@@ -41,10 +56,10 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 - Gemi davranışlarını tamamlamak: kendini koruma, çoklu gemi düzeni.
 - Yeni özelliklerin dengesini uzun maçlarla ayarlamak.
 
-## Uzun vadeli hedefler
+## Öneri aşamasındaki fikirler
 
-- Ek gemi sınıfları: füze botu, çıkarma gemisi, büyük savaş gemileri (ortak gemi altyapısı hazır; henüz başlanmadı).
-- Ek haritalar veya harita varyasyonları (şu an tek, sabit tohumlu harita).
-- Otomatik test altyapısı (şu an yok; ihtiyaç ve kapsam henüz belirlenmedi).
+- `Proposed` — Ek gemi sınıfları: füze botu, çıkarma gemisi, büyük savaş gemileri (ortak gemi altyapısı hazır; henüz başlanmadı).
+- `Proposed` — Ek haritalar veya harita varyasyonları (şu an tek, sabit tohumlu harita).
+- `Proposed` — Otomatik test altyapısı (şu an yok; ihtiyaç ve kapsam henüz belirlenmedi).
 
-*Not: Uzun vadeli hedefler, bu oturumdaki isteklerden ve README'deki hazırlık notlarından çıkarıldı; kullanıcı tarafından onaylanmış bir plan değildir.*
+*Not: Bu fikirler kullanıcı tarafından onaylanmış görevler değildir; kapsam ve öncelik kararlaştırılınca `Planned` aşamasına alınır.*

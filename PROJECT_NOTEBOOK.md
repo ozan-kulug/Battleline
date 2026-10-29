@@ -106,3 +106,6 @@ Projede otomatik test altyapısı yok. Statik kontroller elle çalıştırılan 
 | 2026-10-29 | Kullanıcı | Antigravity projeye bağlandı; iki ajan birlikte çalışıyor. `origin` uzak deposu tanımlı (kimin eklediği ve ne zaman push edildiği doğrulanmadı; görülen: `master` = `origin/master` = `aa972d1`). |
 | 2026-10-29 | Claude | Oynanabilir Devriye Botu kodlandı; statik kontroller geçti; commit edilmedi, tarayıcı testi Antigravity'de. |
 | 2026-10-29 | Claude | PROJECT_NOTEBOOK.md, ROADMAP.md, AGENTS.md oluşturuldu. |
+| 2026-10-29 | Codex | AGENTS.md'ye Codex'in planlama, bağımsız inceleme ve dokümantasyon sorumlulukları eklendi; ROADMAP görevi tamamlandı. Test çalıştırılmadı (yalnızca dokümantasyon düzenlemesi). |
+| 2026-10-29 | Codex | Kullanıcı isteğiyle Antigravity'nin görev tanımına test bulgularına yönelik atanmış veya açıkça istenmiş sınırlı kod geliştirme/hata düzeltme işleri eklendi. ROADMAP güncellendi; test çalıştırılmadı. |
+| 2026-10-29 | Codex | Kullanıcı isteğiyle görev durumları `Proposed → Planned → Developing → Developed → To verify → Verified → Done` akışında standartlaştırıldı. Eski görev durumları eşdeğer aşamalara taşındı; henüz onaylanmamış uzun vadeli fikirler Proposed olarak ayrıldı. |
