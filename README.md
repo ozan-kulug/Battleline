@@ -40,6 +40,18 @@ Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({a
 - **Dron Operatör Timi** (`systems/drones.js`): 2 operatör, kişi başı 3 kamikaze dron, 1400 m kontrol menzili. Başlangıç ekranındaki **KAMİKAZE DRONLAR** seçeneği (savaşta panelden de değişir): *Operatör yönetir*: operatör hedefi kendisi seçer (zor durumdaki dostların yanındaki ve ele geçirilmekte olan noktalardaki düşmanlar önce, sonra topçu, tank, zırhlı ve toplu piyade; uçaksavar yakınındaki hedefler düşük öncelikli), aynı anda en fazla 2 dron. *Ben yönetirim*: nokta (.) ile dron kaldırılır, dron boşta kendiliğinden dalmaz, düşmana sağ tık veya saldırı hareketiyle dalar. Operatör ölürse veya dron menzili aşarsa bağlantı kopar. Kullanılmayan dron operatöre dönünce stoka eklenir, stok ikmalle dolar. Yapay zekâ da bu birimi satın alır, cephenin gerisine yerleştirir ve dronlarını otomatik yönetir.
 - **Arazi:** Tepeler, uzun sırtlar, vadiler ve nehir vadisi (`terrain.js` `hills`, `ridges`). Görüş hattı yer şekillerini hesaba katar: iki göz yüksekliği arasındaki çizgiyi aşan sırt görüşü keser (`vision.js los`, yüksek irtifadaki helikopter hariç). Vadide görüş kısalır, tepede artar. Yokuş yukarı hareket yavaşlar. Harita eş yükselti çizgileri ve gölgelendirmeyle çizilir.
 
+## Maç içi ekonomi
+
+Tüm değerler `config.js` içindeki `ECON` bloğundadır (öneri değerleri; tempo ayarı buradan yapılır).
+
+- **Rezerv (KP):** başlangıç 400, tavan 1500. Tavan doluyken gelir boşa gider (deste başlığında rezerv kırmızıya döner).
+- **Gelir:** taban +180/dk ve tutulan noktalar (fabrika tam, diğerleri yarım gelir). Deste başlığında /dk ve bakım indirimi görünür; ayrıntı üzerine gelince.
+- **Bakım:** sahadaki birliklerin toplam değerine göre kademeli: ≤1500 %100, ≤3000 %85, ≤5000 %60, üstü %35.
+- **Kayıp:** düşman imhası değerinin %10'u KP olarak kazanılır. Tamamen yok olan mangaların kartı maliyete göre 60–180 sn sonra döner.
+- **Cepheden çekme:** iade sağlık ve kalan mühimmata göre (en az %20), kart 20 sn sonra döner.
+- **Hedefler:** zafer puanı (bilet) ve azaltılmış gelir verir. İki taraf da bölgedeyse bölge yavaşça tarafsıza kayar.
+- **YZ:** kademeli bakıma göre alır, tavana yaklaşınca biriktirmeden harcar; aynı köprüde iki onarım kamyonu kaybederse o köprüden 240 sn uzak durur.
+
 ## Gemiler için hazırlık
 
 **Devriye Botu** (`DEF.boat`, kart `bot`, 120 KP/OP) satın alınabilir: Deniz sekmesinde ve ordu ekranındaki Deniz Kuvvetleri kategorisinde. Üssü nehrin kendi ucudur (ikmal, onarım, cepheden çekilme). Köprüden geçen kara birlikleriyle itişmez. YZ en fazla iki bot alır ve nehirde devriye gezdirir.
