@@ -37,7 +37,9 @@ function spawnArmy(side,list){const lanes={f:[],m:[],r:[]},sea=[];
     if(S.m.length&&DEF[S.m[0]].naval){sea.push(i);continue}
     lanes[LANE[k]||'m'].push(i)}
   /* gemiler nehrin kendi yarısında kalan kesimlerine, kendi ucundan başlayarak dizilir */
-  const ys=[];for(let y=H-120;y>120&&ys.length<sea.length;y-=110)if(riverX(y)<W/2-40)ys.push(y);
+  /* kıyı haritasında oyuncunun gemileri liman önünde, limandan başlayarak kuzeye-güneye dizilir */
+  const ys=[];if(MAP.port&&!side)for(let j=0;ys.length<sea.length;j++)ys.push(MAP.port.y+(j%2?1:-1)*Math.ceil(j/2)*110);
+  else for(let y=H-120;y>120&&ys.length<sea.length;y-=110)if(riverX(y)<W/2-40)ys.push(y);
   sea.forEach((idx,j)=>{const y=ys[j]??H-120,x=MAP.coast&&!side?coastX(y)*.5:riverX(y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)});
   for(const [ln,ids] of Object.entries(lanes))ids.forEach((idx,j)=>{const y=laneY(side,j,ids.length),x=freeX(MAP.coast&&!side?edgeX(0,y)+LANEX[ln]-140:LANEX[ln],y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)})}
 

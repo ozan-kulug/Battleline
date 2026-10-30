@@ -12,7 +12,7 @@ import {flying,turnTurret} from './units.js';
 import {R,angDiff,clamp,gauss,segInfo} from '../utils/helpers.js';
 import {exitBld} from '../world/buildings.js';
 import {effStance} from '../world/cover.js';
-import {buildingAt,cellAt,coversNear,elevAt,isWater,landX,navSnap,riverAt} from '../world/terrain.js';
+import {buildingAt,cellAt,coversNear,elevAt,isWater,landP,navSnap,riverAt} from '../world/terrain.js';
 
 /* ---------- güncelleme ---------- */
 function terrSpeed(u){if(u.d.naval)return riverAt(u.x,u.y,2)?1:.1;const c=cellAt(u.x,u.y);if(u.d.inf)return c===T.ROAD?1.1:c===T.CONC?1.05:c===T.FOREST?.75:c===T.TOWN?.9:c===T.FORD?.45:c===T.SWAMP?.6:c===T.WATER?.3:1;
@@ -28,8 +28,8 @@ function routeFor(u,dx,dy){if(u.d.air||u.d.naval)return[];if(MAP.coast)return li
   let best=[],bc=1e9;for(const c of CROSS){if(c.t==='bridge'&&state.bridges.some(b=>b.dead&&b.y===c.y))continue;const cx=riverX(c.y),A={x:cx+s1*(RIV.hw+55),y:c.y},B={x:cx-s1*(RIV.hw+55),y:c.y};
     const cost=Math.hypot(A.x-u.x,A.y-u.y)+Math.hypot(B.x-dx,B.y-dy)+(c.t==='ford'?(u.d.inf?80:320):0);if(cost<bc){bc=cost;best=[A,B]}}return best}
 /* bina veya suya sıkışan birliği en yakın serbest noktaya çıkar */
-function unstick(u){if(u.d.air||u.inB||u.inHeli)return;if(u.d.naval){if(!riverAt(u.x,u.y))u.x=navSnap(u.x,u.y);return}if(u.d.inf){const b=buildingAt(u.x,u.y);if(b&&b!==u.enterB){const l=u.x-b.x,r=b.x+b.w-u.x,t=b.y+b.h-u.y,tp=u.y-b.y,m=Math.min(l,r,t,tp);if(m===l)u.x=b.x-4;else if(m===r)u.x=b.x+b.w+4;else if(m===tp)u.y=b.y-4;else u.y=b.y+b.h+4}}
-  if(cellAt(u.x,u.y)===T.WATER)u.x=landX(u.x,u.y,28)}
+function unstick(u){if(u.d.air||u.inB||u.inHeli)return;if(u.d.naval){if(!riverAt(u.x,u.y)){const p=navSnap(u.x,u.y);u.x=p.x;u.y=p.y}return}if(u.d.inf){const b=buildingAt(u.x,u.y);if(b&&b!==u.enterB){const l=u.x-b.x,r=b.x+b.w-u.x,t=b.y+b.h-u.y,tp=u.y-b.y,m=Math.min(l,r,t,tp);if(m===l)u.x=b.x-4;else if(m===r)u.x=b.x+b.w+4;else if(m===tp)u.y=b.y-4;else u.y=b.y+b.h+4}}
+  if(cellAt(u.x,u.y)===T.WATER){const p=landP(u.x,u.y,28);u.x=p.x;u.y=p.y}}
 const outward=(x,y,u)=>shoreD(x,y)>shoreD(u.x,u.y);
 function blockedAt(x,y,u){const b=buildingAt(x,y);if(b&&b!==u.enterB)return true;return isWater(x,y)&&(!isWater(u.x,u.y)||!outward(x,y,u))}
 function moveUnit(u,dt){u.moving=false;if(u.inB||!u.dest)return;

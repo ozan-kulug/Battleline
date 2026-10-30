@@ -3,7 +3,7 @@ import {state} from './state.js';
 import {tr} from './i18n.js';
 import {toW} from './camera.js';
 import {ctx,fctx,fogC,mctx,mmBase,tc} from './canvas.js';
-import {COL,DEF,H,PI,TAU,W,ZK,riverX} from './config.js';
+import {COL,DEF,H,PI,TAU,W,ZK} from './config.js';
 import {cam} from './state.js';
 import {estSig,muzzle} from './systems/combat.js';
 import {dep,deployZone} from './systems/deployment.js';
@@ -192,7 +192,7 @@ function render(){
   for(const d of state.units){if(!d.op||d.side!==0||d.hp<=0||d.gone||!(d.sel||d.op.sel))continue;const o=d.op,far=Math.hypot(o.x-d.x,o.y-d.y)>o.d.ctrl*.85;
     ctx.strokeStyle=far?'rgba(226,88,75,.8)':'rgba(127,212,138,.55)';ctx.lineWidth=lw;ctx.setLineDash([3*lw,5*lw]);ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(d.x,d.y);ctx.stroke();ctx.setLineDash([])}
   {const seen=new Set();for(const o of S){if(!o.d.dronOp||seen.has(o.sq))continue;seen.add(o.sq);ctx.strokeStyle='rgba(127,212,138,.35)';ctx.lineWidth=1.2*lw;ctx.setLineDash([10*lw,8*lw]);ctx.beginPath();ctx.arc(o.x,o.y,o.d.ctrl,0,TAU);ctx.stroke();ctx.setLineDash([])}}
-  for(const b of state.bridges){if(!b.dead&&b.hp>=b.max)continue;const cx=riverX(b.y),bw=70*lw*1.4,bh=4*lw*1.4,yy=b.y-30*lw*1.4;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(cx-bw/2,yy,bw,bh);
+  for(const b of state.bridges){if(!b.dead&&b.hp>=b.max)continue;const cx=b.x,bw=70*lw*1.4,bh=4*lw*1.4,yy=b.y-30*lw*1.4;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(cx-bw/2,yy,bw,bh);
     ctx.fillStyle=b.dead?'#7fd48a':'#e8a838';ctx.fillRect(cx-bw/2,yy,bw*(b.dead?b.rep:b.hp/b.max),bh);if(b.dead){ctx.fillStyle='#e2584b';ctx.textBaseline='bottom';ctx.fillText(tr(b.rep>0?'ONARILIYOR':'YIKIK'),cx,yy-2*lw)}}
   if(state.phase==='deploy')drawDeployTop(z,lw);
   for(let i=state.marks.length-1;i>=0;i--){const m=state.marks[i];if(!m.ping)continue;m.t+=1/60;if(m.t>.7){state.marks.splice(i,1);continue}ctx.strokeStyle=m.c;ctx.globalAlpha=1-m.t/.7;ctx.lineWidth=2*lw;ctx.beginPath();ctx.arc(m.x,m.y,6+m.t*30,0,TAU);ctx.stroke();ctx.globalAlpha=1}

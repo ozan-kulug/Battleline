@@ -96,28 +96,42 @@ const STN={stand:'Ayakta',crouch:'Çömelmiş',prone:'Yatık'};
 const STATEN={travel:'Seyir',deploying:'Mevzileniyor',deployed:'Mevzide',packing:'Toparlanıyor'};
 /* ---------- harita ---------- */
 /* İki harita: 'river' (nehir haritayı ikiye böler; 3 köprü, 2 sığ geçit; merkeze göre simetrik) ve
-   'coast' (oyuncu tarafında deniz ve koy, koya dökülen kısa nehir; YZ tarafı aynı kara). Etkin harita MAP'tedir, setMap ile değişir.
+   'coast' (oyuncu tarafında deniz, koy ve liman; nehir koydan çıkıp haritayı çaprazlama keserek doğu kenara uzanır). Etkin harita MAP'tedir, setMap ile değişir.
+   Kıyı nehri çoklu çizgidir (path): köprüler yolların nehri kestiği yerlerde terrain.js'te kurulur, geçitler (cross) nokta olarak verilir.
    midX: nehir haritasının orta nehri; yol ve arazi yerleşimi her iki haritada buna göre yapılır. */
 const RIV={A:230,P:1750,hw:40};
 const midX=y=>W/2+RIV.A*Math.sin(TAU*(y-H/2)/RIV.P);
 const CROSS_R=[{y:620,t:'bridge'},{y:1060,t:'ford'},{y:1500,t:'bridge'},{y:1940,t:'ford'},{y:2380,t:'bridge'}];
 const MAPS={
  river:{n:'Nehir Hattı',riv:midX,ry:[-Infinity,Infinity],cross:CROSS_R,bobj:[620,2380],coast:null},
- coast:{n:'Kıyı Cephesi',riv:y=>760+70*Math.sin(y/230+1),ry:[-40,1200],cross:[{y:330,t:'ford'},{y:656,t:'bridge'},{y:1000,t:'ford'}],bobj:[656],
+ coast:{n:'Kıyı Cephesi',riv:null,ry:[1,0],cross:[{x:705,y:1000,t:'ford'},{x:1300,y:218,t:'ford'},{x:2230,y:1040,t:'ford'},{x:3080,y:2180,t:'ford'},{x:4050,y:2390,t:'ford'}],bobj:[[714,656]],port:{x:400,y:1730},
+  path:[...[1260,1200,1140,1080,1020,960,900,840,780,720,656].map(y=>[760+70*Math.sin(y/230+1),y]),[740,560],[772,444],[850,320],[936,244],[1154,215],[1445,226],[1700,371],[1918,626],[2137,881],[2319,1209],[2428,1536],[2501,1900],[2683,2082],[2974,2137],[3193,2228],[3375,2410],[3630,2556],[3811,2574],[3957,2410],[4139,2373],[4357,2483],[4576,2665],[4794,2683],[4900,2690]],
   coast:y=>230+45*Math.sin(y/310+.7)+28*Math.sin(y/120)+820*Math.exp(-(((y-1250)/200)**2))},
 };
 const MAP={k:'river',...MAPS.river};
 /* geçitler: etkin haritanınkiler (dizi yerinde güncellenir, içe aktaranlar aynı diziyi görür) */
 const CROSS=[...CROSS_R];
-function setMap(k){if(!MAPS[k])k='river';Object.assign(MAP,{k},MAPS[k]);CROSS.length=0;CROSS.push(...MAP.cross)}
-const riverX=y=>MAP.riv(y);
+function setMap(k){if(!MAPS[k])k='river';const M=MAPS[k];if(M.path&&!M.rp)buildRiver(M);Object.assign(MAP,{k,path:null,rp:null,rb:null,port:null},M);CROSS.length=0;CROSS.push(...MAP.cross)}
+/* çoklu çizgi nehir: Catmull-Rom ile ~30 px aralıklı noktalara yumuşatılır; 160 px kovalara yakın parçalar dizinlenir */
+const RB=160,RBW=Math.ceil(W/RB)+2;
+function buildRiver(M){const P=M.path,rp=[];for(let i=0;i<P.length-1;i++){const p0=P[Math.max(0,i-1)],p1=P[i],p2=P[i+1],p3=P[Math.min(P.length-1,i+2)],n=Math.max(1,Math.ceil(Math.hypot(p2[0]-p1[0],p2[1]-p1[1])/30));
+    for(let k=0;k<n;k++){const t=k/n,t2=t*t,t3=t2*t,f=(a,b,c,d)=>.5*(2*b+(-a+c)*t+(2*a-5*b+4*c-d)*t2+(-a+3*b-3*c+d)*t3);rp.push([f(p0[0],p1[0],p2[0],p3[0]),f(p0[1],p1[1],p2[1],p3[1])])}}
+  rp.push(P[P.length-1]);const rb=new Map(),pad=240;
+  for(let i=0;i<rp.length-1;i++){const [ax,ay]=rp[i],[bx,by]=rp[i+1];for(let gy=Math.floor((Math.min(ay,by)-pad)/RB);gy<=Math.floor((Math.max(ay,by)+pad)/RB);gy++)for(let gx=Math.floor((Math.min(ax,bx)-pad)/RB);gx<=Math.floor((Math.max(ax,bx)+pad)/RB);gx++){const key=(gy+1)*RBW+gx+1;let l=rb.get(key);if(!l)rb.set(key,l=[]);l.push(i)}}
+  M.rp=rp;M.rb=rb}
+/* nehir merkez çizgisindeki en yakın nokta: {x,y,d,nx,ny (noktaya doğru birim normal),tx,ty}; çoklu çizgide ~240 px'ten uzaksa null */
+function rivNear(x,y){if(!MAP.rp){const rx=MAP.riv(y),s=Math.sign(x-rx)||1;return{x:rx,y,d:Math.abs(x-rx),nx:s,ny:0,tx:0,ty:1}}
+  const l=MAP.rb.get((Math.floor(y/RB)+1)*RBW+Math.floor(x/RB)+1);if(!l)return null;let bd=1e18,b=null;
+  for(const i of l){const [ax,ay]=MAP.rp[i],[bx,by]=MAP.rp[i+1],vx=bx-ax,vy=by-ay,L2=vx*vx+vy*vy||1,t=Math.max(0,Math.min(1,((x-ax)*vx+(y-ay)*vy)/L2)),px=ax+vx*t,py=ay+vy*t,d=(x-px)**2+(y-py)**2;if(d<bd){bd=d;b={x:px,y:py,tx:vx,ty:vy}}}
+  const d=Math.sqrt(bd),L=Math.hypot(b.tx,b.ty)||1;b.tx/=L;b.ty/=L;b.d=d;if(d>1e-6){b.nx=(x-b.x)/d;b.ny=(y-b.y)/d}else{b.nx=-b.ty;b.ny=b.tx}return b}
+const riverX=y=>MAP.riv?MAP.riv(y):-1e9;
 const riverOn=y=>y>=MAP.ry[0]&&y<=MAP.ry[1];
 /* kıyı çizgisi (deniz bunun solunda); denizsiz haritada yok */
 const coastX=y=>MAP.coast?MAP.coast(y):-1e9;
 /* tarafın kara kenarı: oyuncu kıyı haritasında sahilden başlar */
 const edgeX=(side,y)=>side?W:Math.max(0,coastX(y));
 /* sudan uzaklık ölçüsü (büyüdükçe karaya doğru): nehir merkezinden ya da kıyıdan */
-const shoreD=(x,y)=>Math.min(riverOn(y)?Math.abs(x-riverX(y)):1e9,MAP.coast?Math.max(0,x-coastX(y)+RIV.hw):1e9);
+const shoreD=(x,y)=>{const n=riverOn(y)||MAP.rp?rivNear(x,y):null;return Math.min(n?n.d:1e9,MAP.coast?Math.max(0,x-coastX(y)+RIV.hw):1e9)};
 /* stratejik bölgeler: ele geçirene gelir ve özel avantaj sağlar */
 const ZK={
  airfield:{n:'Havaalanı',inc:3,v:2,r:165,pts:1,b:'Uçak ikmali %40 hızlı · inen helikopter ikmal alır'},
@@ -172,4 +186,4 @@ const ROLE={inf:'Hat piyadesi · nokta tutar, el bombası atar',at:'Zırh avcıs
  fpv:'Üç kamikaze dron · hedefe dalar',cas:'30 mm top veya roket koşusu',mr:'Lazer güdümlü bomba ve hava-hava füzesi',sead:'Radar avcısı · anti-radyasyon füzesi',ftr:'Hava üstünlüğü · düşman uçağı avlar',
  bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron',bot:'Nehir devriyesi · makineli tüfek, köprü altından geçer'};
 
-export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEF,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SQUADS,STATEN,STN,T,TAU,W,ZK,coastX,edgeX,midX,riverOn,riverX,setMap,shoreD};
+export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEF,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SQUADS,STATEN,STN,T,TAU,W,ZK,coastX,edgeX,midX,rivNear,riverOn,riverX,setMap,shoreD};
