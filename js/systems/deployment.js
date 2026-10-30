@@ -1,6 +1,6 @@
 /* systems/deployment.js — Savaş öncesi konuşlanma: bölgeler, yerleştirme kuralları ve sürükleme önizlemesi (çizim renderer.js'te, girdi ui/deploy.js'te). */
 import {state} from '../state.js';
-import {H,T,W} from '../config.js';
+import {H,MAP,T,W,coastX} from '../config.js';
 import {flying} from './units.js';
 import {buildingAt,cellAt,riverAt} from '../world/terrain.js';
 
@@ -15,10 +15,10 @@ const footR=u=>u.d.inf?6:18;
 /* bir birliğin (x,y) noktasına konamamasının nedeni; uygunsa null. moving: birlikte taşınan birlikler (çakışma sayılmaz) */
 function placeErr(u,x,y,moving){const z=deployZone(u.side);
   /* gemi: bölgede su olmadığı için nehrin kendi yarısındaki kısmına konuşlanır */
-  if(u.d.naval){if(!riverAt(x,y))return'Gemi yalnızca nehre konabilir';if(u.side?x<W/2:x>W/2)return'Nehrin düşman yarısında';}
+  if(u.d.naval){if(!riverAt(x,y))return MAP.coast?'Gemi yalnızca suya konabilir':'Gemi yalnızca nehre konabilir';if(u.side?x<W/2:x>W/2)return'Nehrin düşman yarısında';}
   else if(x<z.x0||x>z.x1||y<z.y0||y>z.y1)return'Konuşlanma bölgesi dışında';
   if(flying(u))return null;
-  if(!u.d.naval){const c=cellAt(x,y);if(c===T.WATER||c===T.FORD)return'Nehir veya sığ geçit üzerine konamaz';if(buildingAt(x,y))return'Bina üzerine konamaz'}
+  if(!u.d.naval){const c=cellAt(x,y);if(c===T.WATER||c===T.FORD)return x<coastX(y)+24?'Denize konamaz':'Nehir veya sığ geçit üzerine konamaz';if(buildingAt(x,y))return'Bina üzerine konamaz'}
   for(const o of state.units){if(o===u||o.side!==u.side||flying(o)||(moving&&moving.has(o)))continue;if(Math.hypot(o.x-x,o.y-y)<footR(o)+footR(u))return'Başka bir birlikle çakışıyor'}
   return null}
 /* aday konumların her biri için hata (veya null) */

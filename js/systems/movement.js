@@ -2,17 +2,17 @@
 import {state} from '../state.js';
 import {toW} from '../camera.js';
 import {tctx} from '../canvas.js';
-import {CROSS,PI,RIV,T,TAU,riverX} from '../config.js';
+import {CROSS,MAP,PI,RIV,T,TAU,riverX,shoreD} from '../config.js';
 import {md} from '../state.js';
 import {canUse,fire,fireIndirect,hurtB,inRange,kill} from './combat.js';
 import {P,breakCover,trackMark} from './effects.js';
-import {findPath} from './pathfinding.js';
+import {findPath,lineFree} from './pathfinding.js';
 import {UH,UHW,buildHash,uhash} from './spatial.js';
 import {flying,turnTurret} from './units.js';
 import {R,angDiff,clamp,gauss,segInfo} from '../utils/helpers.js';
 import {exitBld} from '../world/buildings.js';
 import {effStance} from '../world/cover.js';
-import {buildingAt,cellAt,coversNear,elevAt,isWater,riverAt} from '../world/terrain.js';
+import {buildingAt,cellAt,coversNear,elevAt,isWater,landX,navSnap,riverAt} from '../world/terrain.js';
 
 /* ---------- güncelleme ---------- */
 function terrSpeed(u){if(u.d.naval)return riverAt(u.x,u.y,2)?1:.1;const c=cellAt(u.x,u.y);if(u.d.inf)return c===T.ROAD?1.1:c===T.CONC?1.05:c===T.FOREST?.75:c===T.TOWN?.9:c===T.FORD?.45:c===T.SWAMP?.6:c===T.WATER?.3:1;
@@ -23,13 +23,14 @@ function sqLag(sq){if(sq.lagT===state.time)return sq.lag;sq.lagT=state.time;let 
 /* yokuş yukarı yavaşlar (araçlar piyadeden çok); iniş ve düzlük etkilenmez */
 function slopeMul(u,a){if(u.d.naval)return 1;const de=elevAt(u.x+Math.cos(a)*16,u.y+Math.sin(a)*16)-elevAt(u.x,u.y);return de>0?1-Math.min(u.d.inf?.25:.4,de*(u.d.inf?1.5:2.5)):1}
 /* nehri geçmek gerekiyorsa en uygun köprüyü veya sığ geçidi seç */
-function routeFor(u,dx,dy){if(u.d.air||u.d.naval)return[];const off=u.x-riverX(u.y);if(Math.abs(off)<RIV.hw+10)return[];const s1=Math.sign(off),s2=Math.sign(dx-riverX(dy))||s1;if(s1===s2)return[];
+/* kara rotası: nehir haritasında en uygun geçit; kıyı haritasında (deniz, koy, kısa nehir) düz yol suya değiyorsa A* */
+function routeFor(u,dx,dy){if(u.d.air||u.d.naval)return[];if(MAP.coast)return lineFree(u.x,u.y,dx,dy,u.d.inf?'inf':'veh')?[]:(findPath(u,dx,dy)||[]);const off=u.x-riverX(u.y);if(Math.abs(off)<RIV.hw+10)return[];const s1=Math.sign(off),s2=Math.sign(dx-riverX(dy))||s1;if(s1===s2)return[];
   let best=[],bc=1e9;for(const c of CROSS){if(c.t==='bridge'&&state.bridges.some(b=>b.dead&&b.y===c.y))continue;const cx=riverX(c.y),A={x:cx+s1*(RIV.hw+55),y:c.y},B={x:cx-s1*(RIV.hw+55),y:c.y};
     const cost=Math.hypot(A.x-u.x,A.y-u.y)+Math.hypot(B.x-dx,B.y-dy)+(c.t==='ford'?(u.d.inf?80:320):0);if(cost<bc){bc=cost;best=[A,B]}}return best}
 /* bina veya suya sıkışan birliği en yakın serbest noktaya çıkar */
-function unstick(u){if(u.d.air||u.inB||u.inHeli)return;if(u.d.naval){if(!riverAt(u.x,u.y))u.x=riverX(u.y);return}if(u.d.inf){const b=buildingAt(u.x,u.y);if(b&&b!==u.enterB){const l=u.x-b.x,r=b.x+b.w-u.x,t=b.y+b.h-u.y,tp=u.y-b.y,m=Math.min(l,r,t,tp);if(m===l)u.x=b.x-4;else if(m===r)u.x=b.x+b.w+4;else if(m===tp)u.y=b.y-4;else u.y=b.y+b.h+4}}
-  if(cellAt(u.x,u.y)===T.WATER){const sd=Math.sign(u.x-riverX(u.y))||1;u.x=riverX(u.y)+sd*(RIV.hw+28)}}
-const outward=(x,y,u)=>Math.abs(x-riverX(y))>Math.abs(u.x-riverX(u.y));
+function unstick(u){if(u.d.air||u.inB||u.inHeli)return;if(u.d.naval){if(!riverAt(u.x,u.y))u.x=navSnap(u.x,u.y);return}if(u.d.inf){const b=buildingAt(u.x,u.y);if(b&&b!==u.enterB){const l=u.x-b.x,r=b.x+b.w-u.x,t=b.y+b.h-u.y,tp=u.y-b.y,m=Math.min(l,r,t,tp);if(m===l)u.x=b.x-4;else if(m===r)u.x=b.x+b.w+4;else if(m===tp)u.y=b.y-4;else u.y=b.y+b.h+4}}
+  if(cellAt(u.x,u.y)===T.WATER)u.x=landX(u.x,u.y,28)}
+const outward=(x,y,u)=>shoreD(x,y)>shoreD(u.x,u.y);
 function blockedAt(x,y,u){const b=buildingAt(x,y);if(b&&b!==u.enterB)return true;return isWater(x,y)&&(!isWater(u.x,u.y)||!outward(x,y,u))}
 function moveUnit(u,dt){u.moving=false;if(u.inB||!u.dest)return;
   if(u.d.indirect&&u.st!=='travel'){if(u.st==='deployed'||u.st==='deploying'){u.st='packing';u.stT=u.d.packT}return}
@@ -54,7 +55,7 @@ function moveUnit(u,dt){u.moving=false;if(u.inB||!u.dest)return;
   u.a+=clamp(angDiff(wa,u.a),-u.d.turn*dt,u.d.turn*dt);const al=Math.abs(angDiff(wa,u.a));
   if(u.crush)sp*=.35;
   if(al<.7){const s=Math.min(d,sp*(back?.45:1)*(1-al/.7*.6)*dt)*(back?-1:1),ox=u.x,oy=u.y;u.x+=Math.cos(u.a)*s;u.y+=Math.sin(u.a)*s;
-    if(u.d.naval?!riverAt(u.x,u.y,2):isWater(u.x,u.y)&&(!isWater(ox,oy)||Math.abs(u.x-riverX(u.y))<=Math.abs(ox-riverX(oy)))){u.x=ox;u.y=oy;u.wb=(u.wb||0)+dt;if(u.wb>2.5){u.wb=0;const p=!u.wbTry&&findPath(u,u.dest.x,u.dest.y);if(p&&p.length){u.path=p;u.wbTry=1}else{u.dest=null;u.wbTry=0}}}else u.wb=0}
+    if(u.d.naval?!riverAt(u.x,u.y,2):isWater(u.x,u.y)&&(!isWater(ox,oy)||shoreD(u.x,u.y)<=shoreD(ox,oy))){u.x=ox;u.y=oy;u.wb=(u.wb||0)+dt;if(u.wb>2.5){u.wb=0;const p=!u.wbTry&&findPath(u,u.dest.x,u.dest.y);if(p&&p.length){u.path=p;u.wbTry=1}else{u.dest=null;u.wbTry=0}}}else u.wb=0}
   u.moving=true;if(!u.d.naval)crushCheck(u,dt)}
 function crushCheck(u,dt){const b=buildingAt(u.x,u.y);u.crush=!!b;if(b){hurtB(b,(u.key==='tank'?90:40)*dt);if(R()<dt*6)P({k:'dust',x:u.x,y:u.y,vx:gauss()*10,vy:gauss()*10,r:6,g:22,max:1.5,a:.5})}
   for(const c of coversNear(u.x,u.y)){if(c.r!=null||!isFinite(c.hp))continue;if(segInfo(c,u.x,u.y).d<11){c.hp-=(u.key==='tank'?320:180)*dt;if(c.hp<=0){breakCover(c);break}}}

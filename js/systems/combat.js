@@ -1,7 +1,7 @@
 /* systems/combat.js — Savaş: hedef seçimi, atış, isabet, zırh ve delme, hasar, baskı ve moral, kritik hasar, mürettebat terki, ölüm, bina hasarı. */
 import {state} from '../state.js';
 import {tctx} from '../canvas.js';
-import {AIRMUL,ECON,GREN,H,PI,RANKN,SQUADS,TAU,W,riverX} from '../config.js';
+import {AIRMUL,ECON,GREN,H,MAP,PI,RANKN,RIV,SQUADS,TAU,W,riverOn,riverX} from '../config.js';
 import {P,addFire,bldDamage,charB,chute,crater,explode,igniteB,puff,ricochet,wind} from './effects.js';
 import {addKP,cardCd,flying,mkUnit,rank,unloadHeli} from './units.js';
 import {observed} from './vision.js';
@@ -9,7 +9,7 @@ import {log,updTip} from '../ui/feedback.js';
 import {R,angDiff,clamp,gauss,sideOf} from '../utils/helpers.js';
 import {exitBld,layoutB} from '../world/buildings.js';
 import {braced,coverMult,effStance,splashCov} from '../world/cover.js';
-import {drawRubble,elevAt,scorch} from '../world/terrain.js';
+import {drawRubble,elevAt,navSnap,scorch} from '../world/terrain.js';
 
 /* kinetik (KE) mermi menzille delme gücü kaybeder, kimyasal (HEAT) kaybetmez */
 const apAt=(w,d)=>w.pen==='ke'?w.ap*(1.15-.3*Math.min(1,d/(w.r||400))):w.ap;
@@ -17,7 +17,8 @@ const apAt=(w,d)=>w.pen==='ke'?w.ap*(1.15-.3*Math.min(1,d/(w.r||400))):w.ap;
 function stress(u,amt){if(!amt||flying(u)||u.abandoned)return;if(!u.d.inf)amt*=Math.max(.1,1-.08*(u.d.aF||0));amt*=1-.1*rank(u);
   u.sup=Math.min(100,u.sup+amt);u.supT=state.time;if(amt>=45&&!(u.stunT>0))u.stunT=u.d.inf?2:3}
 function panic(u){if(u.panicT>0||u.d.air||u.abandoned)return;u.panicT=u.d.inf?10:7;if(u.inB)exitBld(u,u.x+(u.side?60:-60),u.y);
-  if(u.d.naval){const y=clamp(u.y+(u.side?-1:1)*280,20,H-20);u.dest={x:riverX(y),y}}else u.dest={x:clamp(u.x+(u.side?1:-1)*280,10,W-10),y:clamp(u.y+gauss()*70,10,H-10)};u.mode='move';u.focus=null;u.dig=-1;u.queue=[];u.board=null;u.crewTo=null;u.enterB=null;u.mission=null;
+  if(u.d.naval&&MAP.coast&&!u.side){const inR=riverOn(u.y)&&Math.abs(u.x-riverX(u.y))<RIV.hw;u.dest=inR?{x:riverX(MAP.ry[1]),y:MAP.ry[1]}:{x:navSnap(Math.max(30,u.x-280),u.y),y:u.y}}
+  else if(u.d.naval){const y=clamp(u.y+(u.side?-1:1)*280,20,H-20);u.dest={x:riverX(y),y}}else u.dest={x:clamp(u.x+(u.side?1:-1)*280,10,W-10),y:clamp(u.y+gauss()*70,10,H-10)};u.mode='move';u.focus=null;u.dig=-1;u.queue=[];u.board=null;u.crewTo=null;u.enterB=null;u.mission=null;
   if(u.side===0)log(`${u.d.n} paniğe kapıldı, geri çekiliyor`,'bad')}
 function crit(t){if(R()>.35)return;const r=R();let m;
   if(r<.25){t.trk=25;m=t.d.naval?'dümen hasar gördü':'paletler koptu'}else if(r<.42){t.tur=12;m='taret sıkıştı'}else if(r<.57){t.opt=20;m='optik hasar gördü'}else if(r<.7){t.eng=true;m='motor hasar gördü'}else if(r<.85){t.fire=8;m='yangın çıktı'}else{t.stunT=4;m='mürettebat sersemledi'}

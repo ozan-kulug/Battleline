@@ -27,4 +27,4 @@ function findPath(u,tx,ty){const mode=navMode(u),veh=mode==='veh',sx=u.x/CS|0,sy
   const out=[];let ax=u.x,ay=u.y,k=0;while(k<pts.length){let j=pts.length-1;while(j>k&&!lineFree(ax,ay,pts[j].x,pts[j].y,mode))j--;out.push(pts[j]);ax=pts[j].x;ay=pts[j].y;k=j+1}
   return out}
 
-export {findPath};
+export {findPath,lineFree};

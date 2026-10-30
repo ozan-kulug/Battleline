@@ -1,6 +1,6 @@
 /* systems/army.js — Savaş öncesi ordu: ordu puanı (OP) hesabı, doğrulama, YZ ordusu ve başlangıç birliklerinin mevcut oluşturma fonksiyonlarıyla sahaya konması. */
 import {state} from '../state.js';
-import {ARMY,COMBAT,DEF,H,SQUADS,W,riverX} from '../config.js';
+import {ARMY,COMBAT,DEF,H,MAP,SQUADS,W,coastX,edgeX,riverX} from '../config.js';
 import {spawnLoaded} from './units.js';
 import {buildingAt,isWater} from '../world/terrain.js';
 
@@ -26,6 +26,9 @@ function autoArmy(budget){const list=[];for(let added=true;added;){added=false;f
 /* başlangıç dizilişi: piyade önde, araçlar ortada, topçu ve ikmal üs içinde (orada ikmal alır) */
 const LANE={inf:'f',at:'f',recon:'f',manpads:'f',mortar:'r',arty:'r',supply:'r',sam:'r'};
 const LANEX={f:360,m:270,r:170};
+/* şerit boyunca j. birliğin y'si; kıyı haritasında oyuncu için koy satırları (sahil konuşlanmaya dar) atlanır */
+function laneY(side,j,n){if(!MAP.coast||side)return Math.round(320+(j+.5)*(H-640)/n);
+  const c=[];for(let y=320;y<=H-320;y+=10)if(coastX(y)<340)c.push(y);return c[Math.floor((j+.5)*c.length/n)]}
 function freeX(x,y){for(const dx of [0,30,-30,60,-60])if(!buildingAt(x+dx,y)&&!isWater(x+dx,y))return x+dx;return x}
 /* seçilen orduyu kurar: kara birlikleri spawnLoaded (takviyelerle aynı yol), uçaklar hava üssüne kalkışa hazır olarak girer */
 function spawnArmy(side,list){const lanes={f:[],m:[],r:[]},sea=[];
@@ -35,7 +38,7 @@ function spawnArmy(side,list){const lanes={f:[],m:[],r:[]},sea=[];
     lanes[LANE[k]||'m'].push(i)}
   /* gemiler nehrin kendi yarısında kalan kesimlerine, kendi ucundan başlayarak dizilir */
   const ys=[];for(let y=H-120;y>120&&ys.length<sea.length;y-=110)if(riverX(y)<W/2-40)ys.push(y);
-  sea.forEach((idx,j)=>{const y=ys[j]??H-120,x=riverX(y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)});
-  for(const [ln,ids] of Object.entries(lanes))ids.forEach((idx,j)=>{const y=Math.round(320+(j+.5)*(H-640)/ids.length),x=freeX(LANEX[ln],y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)})}
+  sea.forEach((idx,j)=>{const y=ys[j]??H-120,x=MAP.coast&&!side?coastX(y)*.5:riverX(y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)});
+  for(const [ln,ids] of Object.entries(lanes))ids.forEach((idx,j)=>{const y=laneY(side,j,ids.length),x=freeX(MAP.coast&&!side?edgeX(0,y)+LANEX[ln]-140:LANEX[ln],y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)})}
 
 export {DEFAULT_ARMY,addBlock,armyCap,armyCost,autoArmy,checkArmy,countOf,spawnArmy,sqOf};

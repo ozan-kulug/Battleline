@@ -1,7 +1,7 @@
 /* world/terrain.js — Harita üretimi ve arazi: ızgara, yükselti, nehir, yollar, binalar, siper hatları; arazinin tampon tuvale çizilmesi; bina ve siper sorguları. */
 import {state} from '../state.js';
 import {mbctx,tc,tctx} from '../canvas.js';
-import {CROSS,CS,GH,GW,H,OBJL,PI,RIV,RL,T,TAU,W,ZK,riverX} from '../config.js';
+import {CROSS,CROSS_R,CS,GH,GW,H,MAP,OBJL,PI,RIV,RL,T,TAU,W,ZK,coastX,edgeX,midX,riverOn,riverX} from '../config.js';
 import {R,clamp,gauss,rng,segInfo} from '../utils/helpers.js';
 
 const grid=new Uint8Array(GW*GH);
@@ -26,7 +26,7 @@ let hills=[];
 let ridges=[];
 let swamps=[];
 function buildObjDefs(){const a=[];for(const o of OBJL){a.push({...o},{k:o.k,x:W-o.x,y:H-o.y})}
-  a.push({k:'city',x:W/2,y:H/2},{k:'bridge',x:riverX(620),y:620},{k:'bridge',x:riverX(2380),y:2380});
+  a.push({k:'city',x:W/2,y:H/2},...MAP.bobj.map(y=>({k:'bridge',x:riverX(y),y})));
   a.sort((p,q)=>p.x-q.x||p.y-q.y);a.forEach((o,i)=>{o.n=String.fromCharCode(65+i);o.r=ZK[o.k].r});return a}
 /* Bitişik siper parçalarını tek bir hat (zincir) olarak birleştir: askerler parçalar arasında kesintisiz dağıtılır */
 function buildChains(){const lin=state.covers.filter(c=>c.r==null),near=(ax,ay,bx,by)=>Math.abs(ax-bx)<2&&Math.abs(ay-by)<2,used=new Set();state.chains=[];
@@ -47,7 +47,7 @@ function genTerrain(){
   const r=rng(1917);grid.fill(0);elev.fill(0);state.fields=[];state.buildings=[];state.covers=[];hills=[];swamps=[];
   const markC=(x,y,rad,t,skip)=>{for(let cy=Math.max(0,(y-rad)/CS|0);cy<=Math.min(GH-1,(y+rad)/CS|0);cy++)for(let cx=Math.max(0,(x-rad)/CS|0);cx<=Math.min(GW-1,(x+rad)/CS|0);cx++){const px=cx*CS+8,py=cy*CS+8;if((px-x)**2+(py-y)**2<=rad*rad){const i=cy*GW+cx;if(skip&&skip(grid[i]))continue;grid[i]=t}}};
   const markR=(x,y,w,h,t)=>{for(let cy=Math.max(0,y/CS|0);cy<Math.min(GH,(y+h)/CS|0);cy++)for(let cx=Math.max(0,x/CS|0);cx<Math.min(GW,(x+w)/CS|0);cx++)grid[cy*GW+cx]=t};
-  const leftOK=(x,y)=>x<riverX(y)-170;
+  const leftOK=(x,y)=>x<midX(y)-170;
   // tepeler (yükselti)
   for(const [x,y,rad,h] of [[1700,1980,340,1.6],[620,1100,270,1],[1480,1220,230,.9],[1950,640,250,1.1],[420,2000,220,.8]])hills.push({x,y,r:rad,h},{x:W-x,y:H-y,r:rad,h});
   // sırtlar (h>0) ve vadiler (h<0): uzun yer şekilleri. Tepe ve sırt yamaçları düzdür (koni): tepeden etek görülür; vadiler içbükeydir [x1,y1,x2,y2,yarı genişlik,yükseklik]
@@ -56,7 +56,7 @@ function genTerrain(){
   for(let cy=0;cy<GH;cy++)for(let cx=0;cx<GW;cx++){const px=cx*CS+8,py=cy*CS+8;let e=0,lo=0;for(const hl of hills){const d=Math.hypot(px-hl.x,py-hl.y)/hl.r;if(d<1){const v=hl.h*(1-d);if(v>e)e=v}}
     for(const rg of ridges){if(px<Math.min(rg.x1,rg.x2)-rg.w||px>Math.max(rg.x1,rg.x2)+rg.w||py<Math.min(rg.y1,rg.y2)-rg.w||py>Math.max(rg.y1,rg.y2)+rg.w)continue;const d=segInfo(rg,px,py).d/rg.w;if(d<1){const v=rg.h>0?rg.h*(1-d):rg.h*(1-d*d);if(v>e)e=v;if(v<lo)lo=v}}
     // nehir vadisi: kıyılar nehre doğru alçalır
-    const rd=Math.abs(px-riverX(py))/300;if(rd<1){const v=-.4*(1-rd*rd);if(v<lo)lo=v}
+    const rd=riverOn(py)?Math.abs(px-riverX(py))/300:1;if(rd<1){const v=-.4*(1-rd*rd);if(v<lo)lo=v}
     elev[cy*GW+cx]=e+lo}
   // tarlalar
   for(let i=0;i<16;i++){const w=170+r()*230,h=120+r()*170,x=260+r()*1700,y=120+r()*2700;if(!leftOK(x+w,y)||!leftOK(x+w,y+h))continue;state.fields.push([x,y,w,h,r()<.5],[W-x-w,H-y-h,w,h,r()<.5]);markR(x,y,w,h,T.FIELD);markR(W-x-w,H-y-h,w,h,T.FIELD)}
@@ -65,7 +65,7 @@ function genTerrain(){
   for(let i=0;i<20;i++)blobs.push([320+r()*1800,140+r()*2720]);
   for(const [bx,by] of blobs){const n=5+r()*8|0;for(let k=0;k<n;k++){const x=bx+(r()-.5)*230,y=by+(r()-.5)*200,rad=45+r()*75;markC(x,y,rad,T.FOREST);markC(W-x,H-y,rad,T.FOREST)}}
   // bataklıklar: nehir kıyısında
-  for(let i=0;i<7;i++){const y=150+r()*2700,sd=r()<.5?-1:1,x=riverX(y)+sd*(RIV.hw+70+r()*160),rad=70+r()*90;swamps.push([x,y,rad],[W-x,H-y,rad]);markC(x,y,rad,T.SWAMP);markC(W-x,H-y,rad,T.SWAMP)}
+  for(let i=0;i<7;i++){const y=150+r()*2700,sd=r()<.5?-1:1,x=riverX(y)+sd*(RIV.hw+70+r()*160),rad=70+r()*90;if(!riverOn(y))continue;swamps.push([x,y,rad],[W-x,H-y,rad]);markC(x,y,rad,T.SWAMP);markC(W-x,H-y,rad,T.SWAMP)}
   for(const c of CROSS)if(c.t==='ford')for(const sd of [-1,1]){const x=riverX(c.y)+sd*(RIV.hw+80);swamps.push([x,c.y,90]);markC(x,c.y,90,T.SWAMP)}
   // köyler ve şehir
   const towns=[[520,1080,200,160],[1600,2650,220,150],[1900,950,180,150]];
@@ -77,16 +77,20 @@ function genTerrain(){
     else if(o.k==='hill')markC(o.x,o.y,120,T.GRASS,t=>t!==T.FOREST);
     markC(o.x,o.y,70,T.GRASS,t=>t!==T.FOREST)}
   // nehir ve geçitler
-  for(let y=0;y<H;y+=4){const x0=riverX(y);for(let x=x0-RIV.hw;x<=x0+RIV.hw;x+=4){const cx=x/CS|0,cy=y/CS|0;if(cx>=0&&cx<GW&&cy>=0&&cy<GH)grid[cy*GW+cx]=T.WATER}}
+  for(let y=0;y<H;y+=4){if(!riverOn(y))continue;const x0=riverX(y);for(let x=x0-RIV.hw;x<=x0+RIV.hw;x+=4){const cx=x/CS|0,cy=y/CS|0;if(cx>=0&&cx<GW&&cy>=0&&cy<GH)grid[cy*GW+cx]=T.WATER}}
   for(const c of CROSS)if(c.t==='ford')for(let y=c.y-45;y<=c.y+45;y+=4){const x0=riverX(y);for(let x=x0-RIV.hw-6;x<=x0+RIV.hw+6;x+=4){const cx=x/CS|0,cy=y/CS|0;if(grid[cy*GW+cx]===T.WATER)grid[cy*GW+cx]=T.FORD}}
+  // deniz (kıyı haritası): kıyının solu su ve alçak
+  if(MAP.coast)for(let cy=0;cy<GH;cy++)for(let cx=0;cx<GW;cx++){const px=cx*CS+8,py=cy*CS+8;if(px<coastX(py)){grid[cy*GW+cx]=T.WATER;elev[cy*GW+cx]=-.6}}
   // yollar, köprüler, şehir sokakları
   ROADS=[];for(const pl of RL)ROADS.push(pl,pl.map(([x,y])=>[W-x,H-y]));
-  for(const c of CROSS)if(c.t==='bridge'){const x0=riverX(c.y);ROADS.push([[x0-RIV.hw-40,c.y],[x0+RIV.hw+40,c.y]])}
+  const BR=new Set();for(const c of CROSS)if(c.t==='bridge'){const x0=riverX(c.y),pl=[[x0-RIV.hw-40,c.y],[x0+RIV.hw+40,c.y]];BR.add(pl);ROADS.push(pl)}
+  /* kıyı haritasında orta nehir yok: nehir haritasının geçit yolları kesintisiz birleşir */
+  if(MAP.coast)for(const c of CROSS_R)ROADS.push([[midX(c.y)-RIV.hw-60,c.y],[midX(c.y)+RIV.hw+60,c.y]]);
   STREETS=[];const cx0=W/2-CW/2,cy0=H/2-CH/2;for(let x=cx0+70;x<cx0+CW;x+=120)STREETS.push([[x,cy0],[x,cy0+CH]]);for(let y=cy0+70;y<cy0+CH;y+=120)STREETS.push([[cx0,y],[cx0+CW,y]]);
   const markLine=(pl,rad,t,skipWater)=>{for(let k=0;k<pl.length-1;k++){const [ax,ay]=pl[k],[bx,by]=pl[k+1],L=Math.hypot(bx-ax,by-ay);for(let d=0;d<=L;d+=6)markC(ax+(bx-ax)*d/L,ay+(by-ay)*d/L,rad,t,skipWater?(q=>q===T.WATER||q===T.FORD):null)}};
   for(const pl of STREETS)markLine(pl,11,T.ROAD,true);
-  for(const pl of ROADS)markLine(pl,13,T.ROAD,false);
-  for(let cy=0;cy<GH;cy++)for(let cx=0;cx<GW;cx++){const x=cx*CS;if((x<200||x>W-216)&&grid[cy*GW+cx]===T.FOREST)grid[cy*GW+cx]=T.GRASS}
+  for(const pl of ROADS)markLine(pl,13,T.ROAD,!!MAP.coast&&!BR.has(pl));
+  for(let cy=0;cy<GH;cy++)for(let cx=0;cx<GW;cx++){const x=cx*CS;if((x<edgeX(0,cy*CS)+200||x>W-216)&&grid[cy*GW+cx]===T.FOREST)grid[cy*GW+cx]=T.GRASS}
   /* köprü kayıtları: yol hücrelerinin altında kalan su hücreleri yıkımda suya döner */
   state.bridges=CROSS.filter(c=>c.t==='bridge').map(c=>{const cells=[];for(let cy=Math.max(0,(c.y-16)/CS|0);cy<=Math.min(GH-1,(c.y+16)/CS|0);cy++)for(let cx=0;cx<GW;cx++){const px=cx*CS+8,py=cy*CS+8;if(Math.abs(px-riverX(py))<=RIV.hw+2)cells.push(cy*GW+cx)}
     return{n:c.y<1000?'Kuzey köprüsü':c.y<2000?'Orta köprü':'Güney köprüsü',y:c.y,hp:1200,max:1200,dead:false,rep:0,cells}});
@@ -96,8 +100,8 @@ function genTerrain(){
   const arc=(cx,cy,rad,a0,a1,n,t='sandbag')=>{const p=[];for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;p.push([cx+Math.cos(a)*rad,cy+Math.sin(a)*rad])}poly(t,p)};
   const trz=(cx,cy,rad,a0,a1,n)=>{const p=[];for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n,rr=rad+(i%2?14:-14);p.push([cx+Math.cos(a)*rr,cy+Math.sin(a)*rr])}poly('trench',p)};
   trz(1700,1980,210,-1.1,1.1,7);trz(1150,1650,175,-1,1,6);trz(1350,620,230,-.9,.9,7);trz(780,2400,470,-.35,.35,4);trz(620,1100,170,-1,1,5);
-  for(const y of [620,1500]){const x0=riverX(y);arc(x0-RIV.hw-80,y,46,-1.2,1.2,3)}
-  {const x0=riverX(620);arc(x0+RIV.hw+80,620,46,PI-1.2,PI+1.2,3)}
+  if(!MAP.coast){for(const y of [620,1500]){const x0=riverX(y);arc(x0-RIV.hw-80,y,46,-1.2,1.2,3)}
+  {const x0=riverX(620);arc(x0+RIV.hw+80,620,46,PI-1.2,PI+1.2,3)}}
   for(const o of OBJL)arc(o.x+(o.k==='airfield'?450:o.k==='factory'?200:o.k==='depot'?160:120),o.y,52,-1.1,1.1,3);
   {const x=1150,y=1650;poly('wall',[[x-150,y-122],[x+40,y-122]]);poly('wall',[[x-150,y+122],[x+40,y+122]]);poly('wall',[[x-152,y-110],[x-152,y+10]])}
   poly('wall',[[W/2-470,H/2-200],[W/2-470,H/2-60]]);poly('wall',[[W/2-470,H/2+60],[W/2-470,H/2+200]]);poly('wall',[[W/2-330,H/2-370],[W/2-210,H/2-370]]);
@@ -172,14 +176,15 @@ function drawTerrain(r){
   // şehir sokakları (asfalt)
   for(const [w,c] of [[24,'rgba(30,30,28,.5)'],[20,'#57564f'],[2,'rgba(220,215,190,.25)']]){tctx.strokeStyle=c;tctx.lineWidth=w;if(w===2)tctx.setLineDash([10,12]);for(const pl of STREETS){tctx.beginPath();pl.forEach(([x,y],i)=>i?tctx.lineTo(x,y):tctx.moveTo(x,y));tctx.stroke()}tctx.setLineDash([])}
   // nehir
-  const bank=sd=>{const p=[];for(let y=-20;y<=H+20;y+=10)p.push([riverX(y)+sd*RIV.hw,y]);return p};
+  const bank=sd=>{const p=[];for(let y=-20;y<=H+20;y+=10)if(riverOn(y))p.push([riverX(y)+sd*RIV.hw,y]);return p};
   const L=bank(-1),Rb=bank(1);tctx.beginPath();L.forEach(([x,y],i)=>i?tctx.lineTo(x,y):tctx.moveTo(x,y));for(let i=Rb.length-1;i>=0;i--)tctx.lineTo(Rb[i][0],Rb[i][1]);tctx.closePath();
   tctx.fillStyle='#3a5560';tctx.fill();tctx.strokeStyle='rgba(66,54,32,.75)';tctx.lineWidth=7;tctx.stroke();
-  tctx.strokeStyle='rgba(200,225,230,.10)';tctx.lineWidth=1.5;tctx.beginPath();for(let i=0;i<700;i++){const y=r()*H,x=riverX(y)+(r()-.5)*RIV.hw*1.6;tctx.moveTo(x,y);tctx.lineTo(x+gauss()*3,y+8+r()*10)}tctx.stroke();
+  tctx.strokeStyle='rgba(200,225,230,.10)';tctx.lineWidth=1.5;tctx.beginPath();for(let i=0;i<700;i++){const y=r()*H,x=riverX(y)+(r()-.5)*RIV.hw*1.6;if(!riverOn(y))continue;tctx.moveTo(x,y);tctx.lineTo(x+gauss()*3,y+8+r()*10)}tctx.stroke();
   for(const c of CROSS)if(c.t==='ford'){tctx.fillStyle='rgba(165,185,170,.35)';tctx.beginPath();for(let y=c.y-45;y<=c.y+45;y+=6)tctx.lineTo(riverX(y)-RIV.hw-2,y);for(let y=c.y+45;y>=c.y-45;y-=6)tctx.lineTo(riverX(y)+RIV.hw+2,y);tctx.closePath();tctx.fill();
     for(let i=0;i<60;i++){const y=c.y+(r()-.5)*86,x=riverX(y)+(r()-.5)*RIV.hw*1.8;tctx.fillStyle='rgba(120,115,95,.7)';tctx.beginPath();tctx.arc(x,y,1.5+r()*2.5,0,TAU);tctx.fill()}}
   // yollar
   for(const [w,c] of [[26,'rgba(40,32,18,.45)'],[19,'#93845f'],[5,'rgba(70,58,36,.25)']]){tctx.strokeStyle=c;tctx.lineWidth=w;for(const pl of ROADS){tctx.beginPath();pl.forEach(([x,y],i)=>i?tctx.lineTo(x,y):tctx.moveTo(x,y));tctx.stroke()}}
+  if(MAP.coast)drawSea(r);
   // köprüler
   for(const c of CROSS)if(c.t==='bridge')drawBridge(c.y);
   // havaalanı pisti
@@ -199,6 +204,11 @@ function contour(lv,seg){for(let cy=0;cy<GH-1;cy++)for(let cx=0;cx<GW-1;cx++){co
   const P=[];if((m&1)!==(m>>1&1))P.push([x+CS*f(a,b),y]);if((m>>1&1)!==(m>>2&1))P.push([x+CS,y+CS*f(b,c)]);if((m>>2&1)!==(m>>3&1))P.push([x+CS*f(d,c),y+CS]);if((m>>3&1)!==(m&1))P.push([x,y+CS*f(a,d)]);
   if(P.length===2)seg(P[0][0],P[0][1],P[1][0],P[1][1]);else if(P.length===4){if(m===5){seg(P[3][0],P[3][1],P[0][0],P[0][1]);seg(P[1][0],P[1][1],P[2][0],P[2][1])}else{seg(P[0][0],P[0][1],P[1][0],P[1][1]);seg(P[2][0],P[2][1],P[3][0],P[3][1])}}}}
 /* köprü çizimi (açılışta ve onarımda); yıkık köprü: su, kopuk uçlar, enkaz */
+/* deniz: dolgu, kıyı çizgisi (nehir ağzında kesik), köpük ve dalga izleri */
+function drawSea(r){const g=tctx;g.beginPath();g.moveTo(-20,-20);for(let y=-20;y<=H+20;y+=8)g.lineTo(coastX(y),y);g.lineTo(-20,H+20);g.closePath();g.fillStyle='#34505c';g.fill();
+  const mouth=y=>riverOn(y)&&Math.abs(coastX(y)-riverX(y))<RIV.hw+6;
+  for(const [w,c,o] of [[7,'rgba(66,54,32,.75)',0],[2,'rgba(225,235,230,.22)',-9]]){g.strokeStyle=c;g.lineWidth=w;g.beginPath();let on=false;for(let y=-20;y<=H+20;y+=8){if(mouth(y)){on=false;continue}const x=coastX(y)+o;if(on)g.lineTo(x,y);else g.moveTo(x,y);on=true}g.stroke()}
+  g.strokeStyle='rgba(200,225,230,.10)';g.lineWidth=1.5;g.beginPath();for(let i=0;i<900;i++){const y=r()*H,x=r()*(coastX(y)-24);g.moveTo(x,y);g.lineTo(x+10+r()*14,y+gauss()*2)}g.stroke()}
 function drawBridge(y){const x0=riverX(y),x1=x0-RIV.hw-24,x2=x0+RIV.hw+24;tctx.fillStyle='rgba(0,0,0,.35)';tctx.fillRect(x1+4,y-14,x2-x1,30);
     tctx.fillStyle='#7a7262';tctx.fillRect(x1,y-15,x2-x1,30);tctx.strokeStyle='#3f3a30';tctx.lineWidth=3;tctx.beginPath();tctx.moveTo(x1,y-15);tctx.lineTo(x2,y-15);tctx.moveTo(x1,y+15);tctx.lineTo(x2,y+15);tctx.stroke();
     tctx.strokeStyle='rgba(0,0,0,.18)';tctx.lineWidth=1;tctx.beginPath();for(let x=x1+6;x<x2;x+=8){tctx.moveTo(x,y-13);tctx.lineTo(x,y+13)}tctx.stroke()}
@@ -212,6 +222,12 @@ function buildingAt(x,y){const cx=x/CS|0,cy=y/CS|0;if(cx<0||cy<0||cx>=GW||cy>=GH
 const isWater=(x,y)=>cellAt(x,y)===T.WATER;
 /* gemiler için: nehir yatağı (köprü ve sığ geçit hücreleri dahil, köprünün altından geçilir) */
 /* m: kıyıdan pay. Hareket gerçek su kenarına kadar (2), yol bulma ortaya yakın (14) kullanır, viraj dönüşünde gemi kıyıya takılmasın */
-const riverAt=(x,y,m=6)=>x>=0&&y>=0&&x<W&&y<H&&Math.abs(x-riverX(y))<RIV.hw-m;
+/* gemiye uygun su: nehir ya da deniz; m: kıyıdan pay */
+const riverAt=(x,y,m=6)=>x>=0&&y>=0&&x<W&&y<H&&((riverOn(y)&&Math.abs(x-riverX(y))<RIV.hw-m)||x<coastX(y)-m);
+/* gemi için aynı satırdaki en yakın su noktası (nehir ya da deniz) */
+function navSnap(x,y){if(riverAt(x,y))return x;const c=[];if(riverOn(y)){const rx=riverX(y);c.push(rx+clamp(x-rx,-(RIV.hw-12),RIV.hw-12))}if(MAP.coast)c.push(Math.min(x,coastX(y)-30));
+  let b=x,bd=1e9;for(const v of c)if(Math.abs(v-x)<bd&&riverAt(v,y,0)){bd=Math.abs(v-x);b=v}return b}
+/* suya düşen kara noktasını kıyıya çıkarır: nehirde ref'in bulunduğu kıyıya, denizde sahile; pad: kıyıdan uzaklık */
+function landX(x,y,pad,ref=x){if(riverOn(y)){const rx=riverX(y);if(Math.abs(x-rx)<RIV.hw+pad){const sd=Math.sign(ref-rx)||1;x=rx+sd*(RIV.hw+pad)}}if(MAP.coast&&x<coastX(y)+pad)x=coastX(y)+pad;return x}
 
-export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawBridge,drawBridgeRuin,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,refreshMini,riverAt,scorch};
+export {bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawBridge,drawBridgeRuin,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,landX,navSnap,OBJ0,refreshMini,riverAt,scorch};

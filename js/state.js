@@ -55,6 +55,7 @@ export const state={
   timers:[],
   AI_SIDES:[1],
   aiDiff:'normal',
+  mapK:'river',
   droneManual:false,
   fastArm:false,
   drag:null,

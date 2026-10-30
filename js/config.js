@@ -95,10 +95,29 @@ const COVN={trench:'Siper hattı',sandbag:'Kum torbası',wall:'Taş duvar',hedge
 const STN={stand:'Ayakta',crouch:'Çömelmiş',prone:'Yatık'};
 const STATEN={travel:'Seyir',deploying:'Mevzileniyor',deployed:'Mevzide',packing:'Toparlanıyor'};
 /* ---------- harita ---------- */
-/* Nehir haritayı ikiye böler; geçitler: 3 köprü, 2 sığ geçit. Harita merkeze göre simetrik. */
+/* İki harita: 'river' (nehir haritayı ikiye böler; 3 köprü, 2 sığ geçit; merkeze göre simetrik) ve
+   'coast' (oyuncu tarafında deniz ve koy, koya dökülen kısa nehir; YZ tarafı aynı kara). Etkin harita MAP'tedir, setMap ile değişir.
+   midX: nehir haritasının orta nehri; yol ve arazi yerleşimi her iki haritada buna göre yapılır. */
 const RIV={A:230,P:1750,hw:40};
-const riverX=y=>W/2+RIV.A*Math.sin(TAU*(y-H/2)/RIV.P);
-const CROSS=[{y:620,t:'bridge'},{y:1060,t:'ford'},{y:1500,t:'bridge'},{y:1940,t:'ford'},{y:2380,t:'bridge'}];
+const midX=y=>W/2+RIV.A*Math.sin(TAU*(y-H/2)/RIV.P);
+const CROSS_R=[{y:620,t:'bridge'},{y:1060,t:'ford'},{y:1500,t:'bridge'},{y:1940,t:'ford'},{y:2380,t:'bridge'}];
+const MAPS={
+ river:{n:'Nehir Hattı',riv:midX,ry:[-Infinity,Infinity],cross:CROSS_R,bobj:[620,2380],coast:null},
+ coast:{n:'Kıyı Cephesi',riv:y=>760+70*Math.sin(y/230+1),ry:[-40,1200],cross:[{y:330,t:'ford'},{y:656,t:'bridge'},{y:1000,t:'ford'}],bobj:[656],
+  coast:y=>230+45*Math.sin(y/310+.7)+28*Math.sin(y/120)+820*Math.exp(-(((y-1250)/200)**2))},
+};
+const MAP={k:'river',...MAPS.river};
+/* geçitler: etkin haritanınkiler (dizi yerinde güncellenir, içe aktaranlar aynı diziyi görür) */
+const CROSS=[...CROSS_R];
+function setMap(k){if(!MAPS[k])k='river';Object.assign(MAP,{k},MAPS[k]);CROSS.length=0;CROSS.push(...MAP.cross)}
+const riverX=y=>MAP.riv(y);
+const riverOn=y=>y>=MAP.ry[0]&&y<=MAP.ry[1];
+/* kıyı çizgisi (deniz bunun solunda); denizsiz haritada yok */
+const coastX=y=>MAP.coast?MAP.coast(y):-1e9;
+/* tarafın kara kenarı: oyuncu kıyı haritasında sahilden başlar */
+const edgeX=(side,y)=>side?W:Math.max(0,coastX(y));
+/* sudan uzaklık ölçüsü (büyüdükçe karaya doğru): nehir merkezinden ya da kıyıdan */
+const shoreD=(x,y)=>Math.min(riverOn(y)?Math.abs(x-riverX(y)):1e9,MAP.coast?Math.max(0,x-coastX(y)+RIV.hw):1e9);
 /* stratejik bölgeler: ele geçirene gelir ve özel avantaj sağlar */
 const ZK={
  airfield:{n:'Havaalanı',inc:3,v:2,r:165,pts:1,b:'Uçak ikmali %40 hızlı · inen helikopter ikmal alır'},
@@ -110,13 +129,13 @@ const ZK={
 };
 const OBJL=[{k:'factory',x:1350,y:620},{k:'depot',x:1150,y:1650},{k:'hill',x:1700,y:1980},{k:'airfield',x:780,y:2400}];
 const RL=[
- [[0,700],[700,660],[1350,620],[riverX(620)-RIV.hw-40,620]],
- [[0,1500],[600,1560],[1150,1650],[1700,1520],[riverX(1500)-RIV.hw-40,1500]],
+ [[0,700],[700,660],[1350,620],[midX(620)-RIV.hw-40,620]],
+ [[0,1500],[600,1560],[1150,1650],[1700,1520],[midX(1500)-RIV.hw-40,1500]],
  [[0,2300],[780,2400],[1400,2320],[1700,1980],[1500,1800],[1150,1650]],
  [[1350,620],[1280,1100],[1150,1650]],
- [[riverX(620)+RIV.hw+40,620],[2950,660],[3350,900],[3650,1350]],
- [[riverX(1060)-RIV.hw-60,1060],[1950,1120],[1700,1520]],
- [[riverX(1060)+RIV.hw+60,1060],[2850,1020],[3100,1020]],
+ [[midX(620)+RIV.hw+40,620],[2950,660],[3350,900],[3650,1350]],
+ [[midX(1060)-RIV.hw-60,1060],[1950,1120],[1700,1520]],
+ [[midX(1060)+RIV.hw+60,1060],[2850,1020],[3100,1020]],
 ];
 const AIDIF={easy:{n:'Kolay',inc:.8,plan:5,coord:.5},normal:{n:'Normal',inc:1,plan:3,coord:1},hard:{n:'Zor',inc:1.25,plan:2,coord:1}};
 /* ---------- maç içi ekonomi (öneri değerleri; tempo görevi buradan ölçekler) ----------
@@ -153,4 +172,4 @@ const ROLE={inf:'Hat piyadesi · nokta tutar, el bombası atar',at:'Zırh avcıs
  fpv:'Üç kamikaze dron · hedefe dalar',cas:'30 mm top veya roket koşusu',mr:'Lazer güdümlü bomba ve hava-hava füzesi',sead:'Radar avcısı · anti-radyasyon füzesi',ftr:'Hava üstünlüğü · düşman uçağı avlar',
  bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron',bot:'Nehir devriyesi · makineli tüfek, köprü altından geçer'};
 
-export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,ECON,COL,COMBAT,COVN,CROSS,CS,DEF,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,OBJL,PAYN,PI,RANKN,RIV,ROLE,RL,SQUADS,STATEN,STN,T,TAU,W,ZK,riverX};
+export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEF,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SQUADS,STATEN,STN,T,TAU,W,ZK,coastX,edgeX,midX,riverOn,riverX,setMap,shoreD};

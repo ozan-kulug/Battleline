@@ -129,7 +129,7 @@ const PH={
  // oyun sonu ve menüler
  'ZAFER':'VICTORY','YENİLGİ':'DEFEAT','YENİDEN SAVAŞ':'FIGHT AGAIN','DEVAM ET':'CONTINUE','ORDU KUR':'BUILD ARMY','HIZLI BAŞLAT':'QUICK START','KONUŞLANMAYA DÖN':'BACK TO DEPLOYMENT','SAVAŞA BAŞLA':'START BATTLE','SAVAŞI BAŞLAT':'START BATTLE',
  'Kızıl kuvvetin direnci kırıldı.':'The Red Force\'s resistance is broken.','Cephe çöktü.':'The front has collapsed.','Siperleri kullan, kanatları koru ve topçunu bir gözcüyle besle.':'Use cover, guard your flanks and give your artillery a spotter.',
- 'DÜŞMAN KOMUTANI':'ENEMY COMMANDER','KAMİKAZE DRONLAR':'KAMIKAZE DRONES','Operatör yönetir':'Operators control','Ben yönetirim':'I control','DURAKLATILDI':'PAUSED',
+ 'DÜŞMAN KOMUTANI':'ENEMY COMMANDER','HARİTA':'MAP','Nehir Hattı':'River Line','Kıyı Cephesi':'Coastal Front','Gemi yalnızca suya konabilir':'Ships can only be placed on water','Denize konamaz':'Cannot be placed in the sea','KAMİKAZE DRONLAR':'KAMIKAZE DRONES','Operatör yönetir':'Operators control','Ben yönetirim':'I control','DURAKLATILDI':'PAUSED',
  // ordu ekranı
  '‹ Geri':'‹ Back','Savaş öncesi kuvvet seçimi':'Pre-battle force selection','Taraflar':'Sides','Sen · komutan':'You · commander','Yapay zekâ':'AI','Rakip yapay zekâdır ve ordusunu aynı bütçeyle kendisi kurar':'The opponent is AI and builds its own army with the same budget',
  'BİRLİK ADI':'UNIT NAME','BÜTÇE':'BUDGET','ORDU PUANI':'ARMY POINTS','Birlik kategorileri':'Unit categories','SEÇİLİ ORDU':'SELECTED ARMY','Harcanan':'Spent','Kalan':'Remaining','Otomatik doldur':'Auto fill','Temizle':'Clear',

@@ -1,7 +1,7 @@
 /* ui/menus.js — Başlangıç/yardım ekranı, zorluk seçimi. */
 import {state} from '../state.js';
 import {lang,setLang,tr} from '../i18n.js';
-import {startMatch} from '../game.js';
+import {newGame,startMatch} from '../game.js';
 import {droneModeToggle} from '../systems/orders.js';
 import {openArmy} from './army-builder.js';
 import {$} from '../utils/helpers.js';
@@ -24,6 +24,11 @@ $('helpBtn').addEventListener('click',dmSync);
 /* dil: seçilince sayfa yeniden yüklenir (sabit metinler açılışta bir kez çevrilir) */
 for(const x of $('langRow').querySelectorAll('[data-lang]'))x.classList.toggle('on',x.dataset.lang===lang);
 $('langRow').addEventListener('click',e=>{const b=e.target.closest('[data-lang]');if(!b||b.dataset.lang===lang)return;setLang(b.dataset.lang);const u=new URL(location.href);u.searchParams.delete('lang');location.href=u.href});
+/* harita: nehir (varsayılan) veya kıyı; ?map=coast ile de açılır, tercih hatırlanır. Savaş sürerken seçim sonraki maça geçer */
+try{state.mapK=new URLSearchParams(location.search).get('map')||localStorage.getItem('cephe-hatti.harita')||'river'}catch(e){}
+const mapSync=()=>{for(const x of $('mapRow').querySelectorAll('[data-map]'))x.classList.toggle('on',x.dataset.map===state.mapK)};mapSync();
+$('mapRow').addEventListener('click',e=>{const b=e.target.closest('[data-map]');if(!b||b.dataset.map===state.mapK)return;state.mapK=b.dataset.map;try{localStorage.setItem('cephe-hatti.harita',state.mapK)}catch(e){}mapSync();
+  if(state.phase!=='deploy'&&(!state.matchOn||state.over))newGame()});
 $('diffRow').addEventListener('click',e=>{const b=e.target.closest('[data-d]');if(!b)return;state.aiDiff=b.dataset.d;for(const x of $('diffRow').querySelectorAll('[data-d]'))x.classList.toggle('on',x===b)});
 $('helpBtn').addEventListener('click',()=>{if(state.over)return;state.running=false;$('ovt').textContent=tr('BATTLELINE');$('goBtn').textContent=tr(state.phase==='deploy'?'KONUŞLANMAYA DÖN':state.matchOn?'DEVAM ET':QUICK?'HIZLI BAŞLAT':'ORDU KUR');$('ovl').hidden=false;$('ov').hidden=false});
 }
