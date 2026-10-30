@@ -45,7 +45,7 @@ Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({a
 Başlangıç ekranındaki HARİTA satırından seçilir (tercih hatırlanır; `?map=coast` ile de açılır). Tanımlar `config.js` içindeki `MAPS` nesnesindedir.
 
 - **Nehir Hattı:** haritayı ikiye bölen nehir, 3 köprü ve 2 sığ geçit; merkeze göre simetrik.
-- **Kıyı Cephesi:** oyuncu tarafında deniz, ortada derin bir koy ve sahilde liman. Nehir koydan çıkıp kuzeye, oradan haritayı çaprazlama keserek şehir merkezinden geçer ve doğu kenara uzanır; yolların nehri kestiği yerlerde köprüler (6) ve 5 sığ geçit vardır. Liman oyuncu gemilerinin üssüdür: takviye gemileri limana gelir, liman çevresinde ikmal alınır. Oyuncunun kara birlikleri sahil şeridinde konuşlanır ve takviyeleri sahile çıkar; gemiler denizde ve nehirde dolaşır. YZ kara tarafından başlar ve gemi almaz. Çıkarma gemisi sonraki aşamadır.
+- **Kıyı Cephesi:** oyuncu tarafında deniz, ortada derin bir koy ve sahilde liman. Nehir koydan çıkıp kuzeye, oradan haritayı çaprazlama keserek şehir merkezinden geçer ve doğu kenara uzanır; yolların nehri kestiği yerlerde köprüler (6) ve 5 sığ geçit vardır. Liman oyuncu gemilerinin üssüdür: takviye gemileri limana gelir, liman çevresinde ikmal alınır. Ordu kurma ekranında en fazla 2 Fırkateyn ve 1 Destroyer seçilebilir: sabit savaş gemileridir (hareket etmez, maç içinde çağrılamaz); baş topu, CIWS (gelen roket/füze/bombayı vurur) ve dikey füze hücreleriyle (24 / 96) kıyıyı ve hava sahasını korurlar. Oyuncunun kara birlikleri sahil şeridinde konuşlanır ve takviyeleri sahile çıkar; gemiler denizde ve nehirde dolaşır. YZ kara tarafından başlar ve gemi almaz. Çıkarma gemisi sonraki aşamadır.
 
 ## Maç içi ekonomi
 
