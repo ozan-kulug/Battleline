@@ -40,6 +40,13 @@ Akış: `ORDU KUR` → `ui/army-builder.js` doğrular → `game.js startMatch({a
 - **Dron Operatör Timi** (`systems/drones.js`): 2 operatör, kişi başı 3 kamikaze dron, 1400 m kontrol menzili. Başlangıç ekranındaki **KAMİKAZE DRONLAR** seçeneği (savaşta panelden de değişir): *Operatör yönetir*: operatör hedefi kendisi seçer (zor durumdaki dostların yanındaki ve ele geçirilmekte olan noktalardaki düşmanlar önce, sonra topçu, tank, zırhlı ve toplu piyade; uçaksavar yakınındaki hedefler düşük öncelikli), aynı anda en fazla 2 dron. *Ben yönetirim*: nokta (.) ile dron kaldırılır, dron boşta kendiliğinden dalmaz, düşmana sağ tık veya saldırı hareketiyle dalar. Operatör ölürse veya dron menzili aşarsa bağlantı kopar. Kullanılmayan dron operatöre dönünce stoka eklenir, stok ikmalle dolar. Yapay zekâ da bu birimi satın alır, cephenin gerisine yerleştirir ve dronlarını otomatik yönetir.
 - **Arazi:** Tepeler, uzun sırtlar, vadiler ve nehir vadisi (`terrain.js` `hills`, `ridges`). Görüş hattı yer şekillerini hesaba katar: iki göz yüksekliği arasındaki çizgiyi aşan sırt görüşü keser (`vision.js los`, yüksek irtifadaki helikopter hariç). Vadide görüş kısalır, tepede artar. Yokuş yukarı hareket yavaşlar. Harita eş yükselti çizgileri ve gölgelendirmeyle çizilir.
 
+## Haritalar
+
+Başlangıç ekranındaki HARİTA satırından seçilir (tercih hatırlanır; `?map=coast` ile de açılır). Tanımlar `config.js` içindeki `MAPS` nesnesindedir.
+
+- **Nehir Hattı:** haritayı ikiye bölen nehir, 3 köprü ve 2 sığ geçit; merkeze göre simetrik.
+- **Kıyı Cephesi:** oyuncu tarafında deniz ve ortada derin bir koy; kuzeyden koya dökülen kısa bir nehir (1 köprü, 2 sığ geçit). Oyuncunun kara birlikleri sahil şeridinde konuşlanır ve takviyeleri sahile çıkar; gemiler denizde ve nehirde dolaşır. YZ kara tarafından başlar ve gemi almaz. Çıkarma gemisi sonraki aşamadır.
+
 ## Maç içi ekonomi
 
 Tüm değerler `config.js` içindeki `ECON` bloğundadır (öneri değerleri; tempo ayarı buradan yapılır).
