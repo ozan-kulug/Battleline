@@ -7,6 +7,7 @@
 .dh{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px}
 .dh span{font-family:var(--disp);font-weight:700;letter-spacing:.12em;color:var(--mute);font-size:12px}
 .dh b{font-family:var(--disp);font-size:20px;color:var(--amber);font-variant-numeric:tabular-nums}
+.dh b.full{color:var(--red)}
 .dh small{color:var(--mute);font-size:11px}
 #deck{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px}
 .card{flex:none;width:82px;background:var(--panel2);border:1px solid var(--line);color:var(--fg);font:inherit;padding:4px 4px 5px;cursor:pointer;position:relative;text-align:left;display:grid;gap:2px;align-content:start}

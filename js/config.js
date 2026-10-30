@@ -119,6 +119,12 @@ const RL=[
  [[riverX(1060)+RIV.hw+60,1060],[2850,1020],[3100,1020]],
 ];
 const AIDIF={easy:{n:'Kolay',inc:.8,plan:5,coord:.5},normal:{n:'Normal',inc:1,plan:3,coord:1},hard:{n:'Zor',inc:1.25,plan:2,coord:1}};
+/* ---------- maç içi ekonomi (öneri değerleri; tempo görevi buradan ölçekler) ----------
+   start: başlangıç KP · cap: rezerv tavanı · base: taban gelir (KP/sn) · objMul: nokta geliri çarpanı (fabrika hariç)
+   upk: sahadaki birlik değeri kademesi → gelir çarpanı · killBounty: düşman imhasında değer payı
+   deadCd: ölen kartın bekleme süresi (sn), deadCdCost maliyet aralığında doğrusal · exfilCd: geri çekilen kart bekleme süresi
+   exfilMin: en az iade oranı · contestDecay: çekişmeli bölgede tarafsıza kayma (puan/sn) · aiMinUpk: YZ bu çarpanın altında acil değilse almaz */
+const ECON={start:400,cap:1500,base:3,objMul:.5,upk:[[1500,1],[3000,.85],[5000,.6],[Infinity,.35]],killBounty:.1,deadCd:[60,180],deadCdCost:[60,340],exfilCd:20,exfilMin:.2,contestDecay:3,aiMinUpk:.6};
 const COMBAT=new Set(['inf','at','ifv','tank','mech']);
 /* ---------- birlik inisiyatifi ----------
    Birlik yalnızca boştayken, emir verilen noktanın (çapa) çevresindeki küçük bir alanda karar verir.
@@ -146,4 +152,4 @@ const ROLE={inf:'Hat piyadesi · nokta tutar, el bombası atar',at:'Zırh avcıs
  fpv:'Üç kamikaze dron · hedefe dalar',cas:'30 mm top veya roket koşusu',mr:'Lazer güdümlü bomba ve hava-hava füzesi',sead:'Radar avcısı · anti-radyasyon füzesi',ftr:'Hava üstünlüğü · düşman uçağı avlar',
  bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron',bot:'Nehir devriyesi · makineli tüfek, köprü altından geçer'};
 
-export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CS,DEF,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,OBJL,PAYN,PI,RANKN,RIV,ROLE,RL,SQUADS,STATEN,STN,T,TAU,W,ZK,riverX};
+export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,ECON,COL,COMBAT,COVN,CROSS,CS,DEF,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,OBJL,PAYN,PI,RANKN,RIV,ROLE,RL,SQUADS,STATEN,STN,T,TAU,W,ZK,riverX};

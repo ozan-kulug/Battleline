@@ -1,10 +1,10 @@
 /* systems/ai.js — Düşman yapay zekâsı: hafıza, nokta değerlendirmesi, görevler, saldırı aşamaları, destek birlikleri, satın alma, hava. */
 import {state} from '../state.js';
-import {AIDIF,COMBAT,H,PI,SQUADS,T,TAU,W,ZK,riverX} from '../config.js';
+import {AIDIF,COMBAT,ECON,H,PI,SQUADS,T,TAU,W,ZK,riverX} from '../config.js';
 import {assignRunFor,launch} from './air.js';
-import {ends,nearEnd,orderRepair} from './bridges.js';
+import {brLoss,ends,nearEnd,orderRepair} from './bridges.js';
 import {orderGroup} from './orders.js';
-import {deploy,flying,giveMove,unloadHeli} from './units.js';
+import {deploy,flying,giveMove,unloadHeli,upkMul} from './units.js';
 import {log} from '../ui/feedback.js';
 import {R,clamp,dist2,gauss} from '../utils/helpers.js';
 import {buildingAt,cellAt,isWater} from '../world/terrain.js';
@@ -134,8 +134,8 @@ function aiPlan(sd){const A=AIS[sd],en=1-sd;evalObjs(sd);
 function aiSupport(sd,sqs,main){const f=AIS[sd].focus;if(!f)return;const st=main&&main.stage?main.stage:{x:behind(sd,f.x,f.r+200),y:f.y};
   for(const q of sqs){if(!q.m.length)continue;const lead=q.m[0];
     if(q.k==='arty'||q.k==='mortar'){for(const u of q.m)placeIndirect(sd,u,f);continue}
-    if(q.k==='supply'){const brT=b=>{const e=ends(b)[sd];return enemyNear(sd,e.x,e.y,450)>40},cd=b=>{(b.aiNext=b.aiNext||[0,0])[sd]=state.time+90};
-      if(lead.repB){const b=lead.repB;if(!b.dead)lead.repB=null;else if(brT(b)){lead.repB=null;cd(b)}else{if(!lead.dest&&!nearEnd(lead,b))orderRepair(lead,b);continue}}
+    if(q.k==='supply'){const brT=b=>{const e=ends(b)[sd];return enemyNear(sd,e.x,e.y,450)>40},cd=b=>{const a=b.aiNext=b.aiNext||[0,0];a[sd]=Math.max(a[sd]||0,state.time+90)};
+      if(lead.repB){const b=lead.repB;if(!b.dead)lead.repB=null;else if(brT(b)){if(lead.hp<lead.d.hp*.75)brLoss(b,sd);lead.repB=null;cd(b)}else{if(!lead.dest&&!nearEnd(lead,b))orderRepair(lead,b);continue}}
       const need=state.units.find(u=>u.side===sd&&!u.abandoned&&!u.d.supply&&!u.sees.length&&dist2(u,lead)<1100&&((u.d.veh&&u.hp<u.d.hp*.6)||(u.d.indirect&&u.ammo[0].he<5)));
       if(!need){const db=state.bridges.find(b=>b.dead&&state.time>=((b.aiNext||[])[sd]||0)&&!brT(b)&&!state.units.some(u=>u.side===sd&&u.repB===b));if(db){orderRepair(lead,db);cd(db);continue}}
       if(need)sqGo(q,need.x-fwd(sd)*40,need.y,'move','n'+need.id);else if(state.time-(q.goT||0)>25)sqGo(q,behind(sd,st.x,180),st.y+gauss()*60,'move','s'+Math.round(st.x/120)+'_'+Math.round(st.y/120));continue}
@@ -171,7 +171,7 @@ function aiBuy(sd){if(state.pending[sd].length>=3)return;const A=AIS[sd],en=1-sd
   const eAir=state.units.filter(u=>u.side===en&&flying(u)&&state.vis[sd].has(u.id)).length+state.airbase[en].filter(e=>e.st==='air').length,ePlanes=state.airbase[en].some(e=>e.st!=='lost'),eRadar=state.units.some(u=>u.side===en&&u.d.radar&&u.radarOn&&state.vis[sd].has(u.id));
   const ourAT=cnt('at')*2+cnt('tank')*2+cnt('heliA')*2+cnt('fpv'),ourAA=cnt('manpads')+cnt('shorad')*2+cnt('sam')*2,ourInf=cnt('inf')+cnt('mech'),veh=state.units.filter(u=>u.side===sd&&u.d.veh&&!u.abandoned).length;
   const urgent=A.tasks.some(t=>t.type==='defend'&&t.def>80);
-  let v=0;for(const u of state.units)if(u.side===sd&&!u.abandoned)v+=u.val||0;const upk=Math.max(.35,1-v/9000);if(upk<.55&&!urgent)return;
+  let v=0;for(const u of state.units)if(u.side===sd&&!u.abandoned)v+=u.val||0;const upk=upkMul(v);if(upk<ECON.aiMinUpk&&!urgent)return;
   const kw={inf:2+Math.max(0,6-ourInf)*.8+eInf*.04,mech:1.1+(ourInf<4?.6:0),at:.4+Math.max(0,eArm*1.5-ourAT)*.6,recon:cnt('recon')<1?2.2:cnt('recon')<2?.5:0,
     mortar:cnt('mortar')<1?1.6:cnt('mortar')<2?.5+eDug*.08:.1,supply:cnt('supply')<Math.min(2,Math.ceil(veh/3))?1.4:0,ifv:1.1+eInf*.03,tank:1+Math.max(0,eArm-cnt('tank'))*.5+(A.posture==='agg'?.5:0),
     arty:cnt('arty')<1?1.2+eDug*.06:cnt('arty')<2?.5+(eInd?.3:0):0,manpads:Math.max(0,eAir*1.2-ourAA)*.7+(eAir?.2:0),shorad:Math.max(0,eAir*1.5-ourAA)*.6+(eAir?.3:0),sam:cnt('sam')<1&&ePlanes?.9:0,
@@ -186,7 +186,7 @@ function aiBuy(sd){if(state.pending[sd].length>=3)return;const A=AIS[sd],en=1-sd
   const sc=SQUADS.map((S,i)=>({i,s:state.avail[sd][i]>0?(kw[S.k]||0)*adj(S.k)/Math.pow(S.cost,.35)*(.85+R()*.3):0})).filter(o=>o.s>0).sort((a,b)=>b.s-a.s);if(!sc.length)return;
   const best=sc[0].i;if(state.money[sd]>=SQUADS[best].cost){deploy(sd,best);A.save=null;return}
   if(A.save!==best){A.save=best;A.saveT=state.time}
-  if(urgent||state.time-A.saveT>35){const alt=sc.slice(0,6).find(o=>state.money[sd]>=SQUADS[o.i].cost);if(alt){deploy(sd,alt.i);A.saveT=state.time}}}
+  if(urgent||state.time-A.saveT>35||state.money[sd]>=ECON.cap*.9){const alt=sc.slice(0,6).find(o=>state.money[sd]>=SQUADS[o.i].cost);if(alt){deploy(sd,alt.i);A.saveT=state.time}}}
 function aiAir(sd){const A=AIS[sd],en=1-sd,ev=state.units.filter(u=>u.side===en&&state.vis[sd].has(u.id)),eAir=ev.filter(flying),eRadar=state.units.filter(u=>u.side===en&&u.d.radar&&u.radarOn);
   const eAA=ev.filter(u=>u.d.w.some(w=>w.aaOnly||w.k==='flak')),grd=ev.filter(u=>!flying(u)&&!u.abandoned);
   const cluster=pref=>{let best=null,bs=0;for(const e of grd){if(eAA.some(a=>Math.hypot(a.x-e.x,a.y-e.y)<750)&&R()<.85)continue;let s=0;for(const o of grd)if(Math.abs(o.x-e.x)<120&&Math.hypot(o.x-e.x,o.y-e.y)<120)s+=o.d.inf?1:2;if(pref&&!e.d.inf)s+=3;if(s>bs){bs=s;best=e}}return bs>=3?best:null};

@@ -26,11 +26,13 @@ const ends=b=>{const s=span(b);return[{x:s.x0-30,y:b.y},{x:s.x1+30,y:b.y}]};
 const nearEnd=(u,b)=>ends(b).some(e=>Math.hypot(u.x-e.x,u.y-e.y)<70);
 /* kamyon nehrin kendi tarafındaki köprü başına gider ve onarıma başlar */
 function orderRepair(u,b){const e=ends(b),p=u.x<riverX(u.y)?e[0]:e[1];giveMove(u,p.x,p.y,'move');u.repB=b}
+/* aynı köprüde 2 kamyon kaybı (ölü ya da pusudan ağır hasarlı dönüş): YZ o köprüden 240 sn uzak durur */
+function brLoss(b,side){const l=b.loss=b.loss||[0,0];if(++l[side]>=2){(b.aiNext=b.aiNext||[0,0])[side]=state.time+240;l[side]=0}}
 function updBridges(dt){for(const b of state.bridges){if(!b.dead)continue;let n=0;
-  for(const u of state.units){if(u.repB!==b)continue;if(u.hp<=0||u.abandoned||u.gone){u.repB=null;continue}if(!u.dest&&!u.moving&&nearEnd(u,b))n++}
+  for(const u of state.units){if(u.repB!==b)continue;if(u.hp<=0||u.abandoned||u.gone){if(u.hp<=0)brLoss(b,u.side);u.repB=null;continue}if(!u.dest&&!u.moving&&nearEnd(u,b))n++}
   if(n){b.rep+=dt*Math.min(3,n)/REPAIR_T;if(b.rep>=1)restoreBridge(b)}}}
 function restoreBridge(b){b.dead=false;b.hp=b.max;b.rep=0;for(const i of b.cells)grid[i]=T.ROAD;drawBridge(b.y);state.mmDirty=true;
   for(const u of state.units){if(u.repB===b)u.repB=null;if(!u.d.air&&!u.d.naval)u.pathFor=null}
   log(`${b.n} onarıldı`,'good')}
 
-export {bridgeAt,destroyBridge,ends,hitBridge,nearEnd,orderRepair,updBridges};
+export {brLoss,bridgeAt,destroyBridge,ends,hitBridge,nearEnd,orderRepair,updBridges};

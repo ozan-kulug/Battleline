@@ -39,7 +39,7 @@ const PAT=[
  [/Hassas vuruş: (\d+) hedef/g,'Precision strike: $1 targets'],
  [/havada (\d+)/g,'$1 airborne'],
  [/Bakım gideri −%(\d+)/g,'Upkeep −$1%'],
- [/Düşman imhası değerinin %20'si ayrıca/g,'plus 20% of destroyed enemy value'],
+ [/Düşman imhası değerinin %(\d+)'(?:si|u|ü|ı) ayrıca/g,'plus $1% of destroyed enemy value'],
  [/%(\d+)/g,'$1%'],
 ];
 /* sözlük: Türkçe → İngilizce. Büyük/küçük harf biçimleri (FABRİKA, ana muharebe tankı) otomatik eklenir */
@@ -106,7 +106,7 @@ const PH={
  'Sis perdesi (':'Smoke screen (','Dron kaldır (':'Launch drone (','Yönetim: oyuncu':'Control: player','Yönetim: operatör':'Control: operator',
  // hava üssü ve deste
  'HAVA ÜSSÜ':'AIRBASE','Hazırlanıyor':'Preparing','Kalkışa hazır':'Ready for takeoff','Havada':'Airborne','İkmalde':'Rearming','Kayıp':'Lost','Saldırı koşusu':'Attack run','Takipte':'Chasing','yakıt':'fuel',
- 'Yolda:':'En route:','KARA':'GROUND','HAVA SAVUNMA':'AIR DEFENSE','HAVA':'AIR','DENİZ':'NAVY','hava üssüne gelir.':'arrives at the airbase.','(içinde)':'(inside)','Taban':'Base','Düşman imhası değerinin %20\'si ayrıca':'plus 20% of destroyed enemy value',
+ 'Yolda:':'En route:','KARA':'GROUND','HAVA SAVUNMA':'AIR DEFENSE','HAVA':'AIR','DENİZ':'NAVY','hava üssüne gelir.':'arrives at the airbase.','(içinde)':'(inside)','Taban':'Base','Rezerv tavanı':'Reserve cap','Düşman imhası değerinin %20\'si ayrıca':'plus 20% of destroyed enemy value',
  // ipuçları
  'DOĞRUDAN KONTROL —':'DIRECT CONTROL —','WASD sür, fareyle nişan al, sol tık ana silah':'WASD to drive, aim with mouse, left click main weapon',', sağ tık ikincil':', right click secondary','V veya Esc ile çık':'exit with V or Esc',
  'ATEŞ GÖREVİ — hedef noktaya tıkla · sağ tık iptal':'FIRE MISSION — click the target point · right click cancels',

@@ -2,7 +2,7 @@
 import {state} from '../state.js';
 import {tr} from '../i18n.js';
 import {clampCam} from '../camera.js';
-import {DEF,SQUADS,ZK} from '../config.js';
+import {DEF,ECON,SQUADS,ZK} from '../config.js';
 import {cam} from '../state.js';
 import {launch} from '../systems/air.js';
 import {droneModeToggle,sel} from '../systems/orders.js';
@@ -10,13 +10,13 @@ import {cards} from './deck.js';
 import {ACT,selButtons,selInfo} from './panels.js';
 import {$} from '../utils/helpers.js';
 
-function buildObjUI(){$('objs').innerHTML=tr(state.objs.map(o=>`<div class="ob" id="ob${o.n}" title="${o.n} · ${ZK[o.k].n}: +${ZK[o.k].inc} KP/sn · ${ZK[o.k].b}"><svg viewBox="0 0 36 36"><rect x="1" y="1" width="34" height="34" fill="none" stroke-width="3" pathLength="100" stroke-dasharray="0 100"/></svg><span>${o.n}</span></div>`).join(''))}
+function buildObjUI(){$('objs').innerHTML=tr(state.objs.map(o=>`<div class="ob" id="ob${o.n}" title="${o.n} · ${ZK[o.k].n}: +${Math.round(ZK[o.k].inc*(o.k==='factory'?1:ECON.objMul)*60)} KP/dk · ${ZK[o.k].b}"><svg viewBox="0 0 36 36"><rect x="1" y="1" width="34" height="34" fill="none" stroke-width="3" pathLength="100" stroke-dasharray="0 100"/></svg><span>${o.n}</span></div>`).join(''))}
 const ABST={prep:'Hazırlanıyor',ready:'Kalkışa hazır',air:'Havada',rearm:'İkmalde',lost:'Kayıp'};
 function updAB(){const list=state.airbase[0].filter(e=>e.st!=='lost'),el=$('abp');el.hidden=!list.length;if(!list.length)return;
   const h=list.map(e=>{const d=DEF[e.key],u=e.u;let st=ABST[e.st];if(e.st==='prep'||e.st==='rearm')st+=` · ${Math.ceil(e.t)} sn`;if(e.st==='air'&&u)st=(u.rtb?'Üsse dönüyor':u.run?'Saldırı koşusu':u.strikes.length?'Hassas vuruş':u.chase?'Takipte':'Devriyede')+` · yakıt %${Math.round(u.fuel/d.fuel*100)}`;
     return `<div class="abr${e.st==='air'?' air':''}" data-sel="${e.id}"><b>${d.n}</b><small>${st}</small>${e.st==='ready'?`<button class="btn" type="button" data-ab="${e.id}">Kalkış</button>`:''}</div>`}).join('');
   const l=$('abl');if(l.dataset.h!==h){l.innerHTML=tr(h);l.dataset.h=h}}
-function updUI(){{const b=$('dmBtn'),has=state.units.some(u=>u.side===0&&(u.d.dronOp||u.d.fpv)&&u.hp>0&&!u.gone);b.hidden=!has;if(has){const t=tr(state.droneManual?'Dronlar: Oyuncu':'Dronlar: Operatör');if(b.textContent!==t)b.textContent=t;b.classList.toggle('on',state.droneManual)}}$('kp').textContent=tr(`${Math.floor(state.money[0])} KP`);updAB();
+function updUI(){{const b=$('dmBtn'),has=state.units.some(u=>u.side===0&&(u.d.dronOp||u.d.fpv)&&u.hp>0&&!u.gone);b.hidden=!has;if(has){const t=tr(state.droneManual?'Dronlar: Oyuncu':'Dronlar: Operatör');if(b.textContent!==t)b.textContent=t;b.classList.toggle('on',state.droneManual)}}$('kp').textContent=tr(`${Math.floor(state.money[0])} / ${ECON.cap} KP`);$('kp').classList.toggle('full',state.money[0]>=ECON.cap-.5);updAB();
   $('eta').textContent=tr(state.pending[0].length?'Yolda: '+state.pending[0].map(q=>`${SQUADS[q.idx].n} ${Math.ceil(q.t)} sn`).join(' · '):'');
   for(const [b,S] of cards){const ix=SQUADS.indexOf(S),av=state.avail[0][ix],ok=state.money[0]>=S.cost&&av>0;b.querySelector('.av').textContent=`×${av}`;b.setAttribute('aria-disabled',ok?'false':'true');b.querySelector('.fill').style.width=Math.min(100,state.money[0]/S.cost*100)+'%'}
   for(const i of [0,1]){$('tk'+i).textContent=Math.ceil(state.tickets[i]);$('tb'+i).style.width=state.tickets[i]/500*100+'%'}
