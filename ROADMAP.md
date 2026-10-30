@@ -61,6 +61,7 @@ Ayrıntı ve test sonuçları: [PROJECT_NOTEBOOK.md](PROJECT_NOTEBOOK.md) · Kur
 | Oyun adını Battleline yapma (iki dilde) | Done | Kod: Claude · Test: Antigravity | `a97ec15`; `<title>` (`Battleline`) ve `#ovt` (`BATTLELINE`) açılış ile `?` yardım ekranında TR/EN Chrome testinde doğrulandı |
 | Ekonomi 1. aşama (Broken Arrow'dan uyarlama) | Done | Kod: Claude · Test: Antigravity | 7 senaryo + 24 maçlık süre karşılaştırması ve 4 düzeltmenin (`economy.js:32` uçak bakımı tek sayım, `hud.js:13` `#objs` `KP/dk` ipucu, `units.js:33` `mech`/`heliT` `noCard`, `ai.js:137-138` + `bridges.js:30` pusudan hasarlı dönen 2. kamyonda `240 sn` kaçınma ve `Math.max` koruması) yeniden doğrulaması Chrome'da %100 geçti (notebook §5). Maç süresi ayarı tempo görevine devredildi |
 | Ekonomi 2. aşama: fiziksel ikmal stoğu ve ikmal noktası | Planned | — | Kamyon sınırlı stok taşır, harcanan mühimmat/onarım stoktan düşer, yere ikmal noktası bırakılır (vurulursa patlar); üs ve İkmal Deposu sınırsız kalır. Sayılar tasarımda belirlenecek. |
+| Bilet sistemini kapatma, bölge kaybıyla yenilgi | To verify | Kod: Claude · Test: Antigravity | Kullanıcı isteği (2026-10-30): `ECON.tickets:false` ile bilet düşüşü (kayıp `val/6`, nokta farkı) kapalı; düşman tüm noktaları tutunca taraf yenilir (tarafsız nokta varken maç sürer). Üst şerit sayaçları tutulan nokta sayısını (`3/7`) gösterir. Doğrulanacak: tüm noktaları alınca ZAFER, kaybedince YENİLGİ; kayıplar sayacı düşürmüyor; sayaç/çubuk TR/EN; YZ duruşu (`ai.js:94`) bilet eşitken nokta farkına göre çalışıyor. |
 
 ## Yakın vadeli hedefler
 

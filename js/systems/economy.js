@@ -31,7 +31,7 @@ function perSecond(){const h=[0,0];for(const o of state.objs)if(o.owner>=0)h[o.o
   /* bakım gideri: cephedeki birliklerin değeri kademelere göre geliri düşürür (ECON.upk) */
   const upk=[0,1].map(sd=>{let v=0;for(const u of state.units)if(u.side===sd&&!u.abandoned)v+=u.val||0;return upkMul(v)});
   const net=[inc[0]*upk[0],inc[1]*upk[1]];addKP(0,net[0]);addKP(1,net[1]*AIDIF[state.aiDiff].inc);
-  if(pts[0]>pts[1])state.tickets[1]=Math.max(0,state.tickets[1]-(pts[0]-pts[1])*.5);else if(pts[1]>pts[0])state.tickets[0]=Math.max(0,state.tickets[0]-(pts[1]-pts[0])*.5);
+  if(!ECON.tickets);else if(pts[0]>pts[1])state.tickets[1]=Math.max(0,state.tickets[1]-(pts[0]-pts[1])*.5);else if(pts[1]>pts[0])state.tickets[0]=Math.max(0,state.tickets[0]-(pts[1]-pts[0])*.5);
   {const bk=Math.round((1-upk[0])*100);$('inc').textContent=tr(`+${Math.round(net[0]*60)}/dk`+(bk?` (−%${bk})`:''));
   $('inc').title=tr(`Taban +${ECON.base*60}/dk`+Object.entries(brk).map(([n,v])=>` · ${n} +${Math.round(v*60)}/dk`).join('')+` · Bakım gideri −%${bk} · Rezerv tavanı ${ECON.cap} KP · Düşman imhası değerinin %${Math.round(ECON.killBounty*100)}'u ayrıca`)}
   for(const o of state.objs){if(o.owner<0)continue;if(o.k==='depot')for(const u of state.units)if(u.side===o.owner&&!flying(u)&&Math.hypot(u.x-o.x,u.y-o.y)<300)resupply(u,1.2);
@@ -39,6 +39,8 @@ function perSecond(){const h=[0,0];for(const o of state.objs)if(o.owner>=0)h[o.o
   for(let i=state.retQ.length-1;i>=0;i--)if(state.time>=state.retQ[i].t){const q=state.retQ.splice(i,1)[0];state.avail[q.side][q.idx]++;if(q.side===0)log(`${SQUADS[q.idx].n} kartı yeniden kullanılabilir`,'')}
   for(const s of state.units){if(!s.d.supply)continue;for(const u of state.units)if(u.side===s.side&&u!==s&&!flying(u)&&(u.x-s.x)**2+(u.y-s.y)**2<130*130)resupply(u,u.d.heli?3:1)}
   for(const u of state.units)if(inBase(u)&&!flying(u))resupply(u,u.d.heli?4:1.5);
-  if(!state.over&&(state.tickets[0]<=0||state.tickets[1]<=0))endGame(state.tickets[1]<=0)}
+  if(state.over)return;
+  if(ECON.tickets){if(state.tickets[0]<=0||state.tickets[1]<=0)endGame(state.tickets[1]<=0);return}
+  const n=state.objs.length;if(h[0]===n)endGame(true);else if(h[1]===n)endGame(false)}
 
 export {nearSupply,perSecond,updObjs};

@@ -19,7 +19,8 @@ function updAB(){const list=state.airbase[0].filter(e=>e.st!=='lost'),el=$('abp'
 function updUI(){{const b=$('dmBtn'),has=state.units.some(u=>u.side===0&&(u.d.dronOp||u.d.fpv)&&u.hp>0&&!u.gone);b.hidden=!has;if(has){const t=tr(state.droneManual?'Dronlar: Oyuncu':'Dronlar: Operatör');if(b.textContent!==t)b.textContent=t;b.classList.toggle('on',state.droneManual)}}$('kp').textContent=tr(`${Math.floor(state.money[0])} / ${ECON.cap} KP`);$('kp').classList.toggle('full',state.money[0]>=ECON.cap-.5);updAB();
   $('eta').textContent=tr(state.pending[0].length?'Yolda: '+state.pending[0].map(q=>`${SQUADS[q.idx].n} ${Math.ceil(q.t)} sn`).join(' · '):'');
   for(const [b,S] of cards){const ix=SQUADS.indexOf(S),av=state.avail[0][ix],ok=state.money[0]>=S.cost&&av>0;b.querySelector('.av').textContent=`×${av}`;b.setAttribute('aria-disabled',ok?'false':'true');b.querySelector('.fill').style.width=Math.min(100,state.money[0]/S.cost*100)+'%'}
-  for(const i of [0,1]){$('tk'+i).textContent=Math.ceil(state.tickets[i]);$('tb'+i).style.width=state.tickets[i]/500*100+'%'}
+  for(const i of [0,1]){if(ECON.tickets){$('tk'+i).textContent=Math.ceil(state.tickets[i]);$('tb'+i).style.width=state.tickets[i]/500*100+'%';continue}
+    const n=state.objs.length,h=state.objs.filter(o=>o.owner===i).length;$('tk'+i).textContent=`${h}/${n}`;$('tb'+i).style.width=h/n*100+'%'}
   for(const o of state.objs){const el=$('ob'+o.n);if(!el)continue;el.style.color=o.owner===0?'var(--blue)':o.owner===1?'var(--red)':'var(--fg)';
     const r=el.querySelector('rect');r.setAttribute('stroke',o.own>=0?'#62a6e6':'#e2584b');r.setAttribute('stroke-dasharray',`${Math.abs(o.own)} 100`)}
   const s=sel();$('selp').classList.toggle('empty',!s.length);

@@ -99,7 +99,7 @@ function kill(t){if(t.dead)return;t.dead=1;t.hp=0;
   {const k=state.curSrc!=null&&state.units.find(x=>x.id===state.curSrc);if(k&&k.side!==t.side&&!t.abandoned){const r0=rank(k);k.xp+=t.val;if(rank(k)>r0&&k.side===0)log(`${k.d.n} terfi etti: ${RANKN[rank(k)]}`,'good')}}
   if(t.sq)for(const m of t.sq.m)if(m!==t&&m.hp>0&&Math.hypot(m.x-t.x,m.y-t.y)<220)stress(m,22);
   if(!t.d.inf&&!flying(t))for(const m of state.units)if(m.side===t.side&&m!==t&&Math.hypot(m.x-t.x,m.y-t.y)<90)stress(m,18);if(t.inB){const b=t.inB;b.occ=b.occ.filter(x=>x!==t);layoutB(b);t.inB=null}
-  state.tickets[t.side]=Math.max(0,state.tickets[t.side]-t.val/6);if(!t.abandoned)addKP(1-t.side,t.val*ECON.killBounty);
+  if(ECON.tickets)state.tickets[t.side]=Math.max(0,state.tickets[t.side]-t.val/6);if(!t.abandoned)addKP(1-t.side,t.val*ECON.killBounty);
   if(t.sq&&!t.sq.ret&&!t.sq.noCard&&!t.sq.m.some(m=>m!==t&&m.hp>0&&!m.gone)){t.sq.ret=1;const ix=SQUADS.findIndex(S=>S.k===t.sq.k);if(ix>=0)state.retQ.push({side:t.side,idx:ix,t:state.time+cardCd(SQUADS[ix].cost)})}state.stats.lost[t.side]++;state.stats.kills[1-t.side]++;
   if(t.cargo&&t.cargo.length){const cg=t.cargo,air=flying(t);t.cargo=[];cg.forEach((c,i)=>{c.inHeli=null;const a=i/cg.length*TAU;c.x=t.x+Math.cos(a)*20;c.y=t.y+Math.sin(a)*20;if(air||R()<.5)kill(c);else{state.units.push(c);c.sup=90;c.supT=state.time}})}
   if(t.ab){t.ab.st='lost';t.ab.u=null}

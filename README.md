@@ -49,7 +49,7 @@ Tüm değerler `config.js` içindeki `ECON` bloğundadır (öneri değerleri; te
 - **Bakım:** sahadaki birliklerin toplam değerine göre kademeli: ≤1500 %100, ≤3000 %85, ≤5000 %60, üstü %35.
 - **Kayıp:** düşman imhası değerinin %10'u KP olarak kazanılır. Tamamen yok olan mangaların kartı maliyete göre 60–180 sn sonra döner.
 - **Cepheden çekme:** iade sağlık ve kalan mühimmata göre (en az %20), kart 20 sn sonra döner.
-- **Hedefler:** zafer puanı (bilet) ve azaltılmış gelir verir. İki taraf da bölgedeyse bölge yavaşça tarafsıza kayar.
+- **Hedefler:** azaltılmış gelir verir. Bilet sistemi şimdilik kapalı (`ECON.tickets`): düşman tüm noktaları tutunca taraf yenilir; üst şeritte tutulan nokta sayısı görünür. İki taraf da bölgedeyse bölge yavaşça tarafsıza kayar.
 - **YZ:** kademeli bakıma göre alır, tavana yaklaşınca biriktirmeden harcar; aynı köprüde iki onarım kamyonu kaybederse o köprüden 240 sn uzak durur.
 
 ## Gemiler için hazırlık

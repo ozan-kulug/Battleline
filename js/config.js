@@ -124,7 +124,8 @@ const AIDIF={easy:{n:'Kolay',inc:.8,plan:5,coord:.5},normal:{n:'Normal',inc:1,pl
    upk: sahadaki birlik değeri kademesi → gelir çarpanı · killBounty: düşman imhasında değer payı
    deadCd: ölen kartın bekleme süresi (sn), deadCdCost maliyet aralığında doğrusal · exfilCd: geri çekilen kart bekleme süresi
    exfilMin: en az iade oranı · contestDecay: çekişmeli bölgede tarafsıza kayma (puan/sn) · aiMinUpk: YZ bu çarpanın altında acil değilse almaz */
-const ECON={start:400,cap:1500,base:3,objMul:.5,upk:[[1500,1],[3000,.85],[5000,.6],[Infinity,.35]],killBounty:.1,deadCd:[60,180],deadCdCost:[60,340],exfilCd:20,exfilMin:.2,contestDecay:3,aiMinUpk:.6};
+/* tickets:false → bilet sistemi kapalı; bir taraf, düşman tüm noktaları tutunca yenilir */
+const ECON={tickets:false,start:400,cap:1500,base:3,objMul:.5,upk:[[1500,1],[3000,.85],[5000,.6],[Infinity,.35]],killBounty:.1,deadCd:[60,180],deadCdCost:[60,340],exfilCd:20,exfilMin:.2,contestDecay:3,aiMinUpk:.6};
 const COMBAT=new Set(['inf','at','ifv','tank','mech']);
 /* ---------- birlik inisiyatifi ----------
    Birlik yalnızca boştayken, emir verilen noktanın (çapa) çevresindeki küçük bir alanda karar verir.
