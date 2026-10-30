@@ -1,5 +1,5 @@
 /* systems/pathfinding.js — Izgara üzerinde A* yol bulma. */
-import {CS,GH,GW,MAP,RIV,T,coastX,rivNear} from '../config.js';
+import {CS,DEEP_M,GH,GW,MAP,RIV,T,coastX,rivNear,seaOnly} from '../config.js';
 import {clamp} from '../utils/helpers.js';
 import {buildingAt,cellAt,grid,riverAt} from '../world/terrain.js';
 
@@ -9,9 +9,10 @@ const navOpen=new Float32Array(GW*GH);
 const navFrom=new Int32Array(GW*GH);
 const navStamp=new Int32Array(GW*GH);
 let navGen=1;
-const navMode=u=>u.d.naval?'sea':u.d.inf?'inf':'veh';
-function navFree(cx,cy,mode){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;if(mode==='sea')return riverAt(cx*CS+8,cy*CS+8,14);const i=cy*GW+cx;if(grid[i]===T.WATER)return false;if(mode==='inf'){const b=buildingAt(cx*CS+8,cy*CS+8);if(b)return false}return true}
-function lineFree(ax,ay,bx,by,mode){const L=Math.hypot(bx-ax,by-ay),n=Math.ceil(L/8),px=L?-(by-ay)/L:0,py=L?(bx-ax)/L:0;for(let k=1;k<n;k++){const x=ax+(bx-ax)*k/n,y=ay+(by-ay)*k/n;if(mode==='sea'){if(!riverAt(x,y,14))return false;continue}if(cellAt(x,y)===T.WATER)return false;if(mode==='veh'&&(cellAt(x+px*10,y+py*10)===T.WATER||cellAt(x-px*10,y-py*10)===T.WATER))return false;if(mode==='inf'&&buildingAt(x,y))return false}return true}
+/* deep: yalnız-deniz gemisi (açık deniz, kıyıdan DEEP_M uzak) */
+const navMode=u=>u.d.naval?(seaOnly(u.d)?'deep':'sea'):u.d.inf?'inf':'veh';
+function navFree(cx,cy,mode){if(cx<0||cy<0||cx>=GW||cy>=GH)return false;if(mode==='sea')return riverAt(cx*CS+8,cy*CS+8,14);if(mode==='deep')return cx*CS+8<coastX(cy*CS+8)-DEEP_M;const i=cy*GW+cx;if(grid[i]===T.WATER)return false;if(mode==='inf'){const b=buildingAt(cx*CS+8,cy*CS+8);if(b)return false}return true}
+function lineFree(ax,ay,bx,by,mode){const L=Math.hypot(bx-ax,by-ay),n=Math.ceil(L/8),px=L?-(by-ay)/L:0,py=L?(bx-ax)/L:0;for(let k=1;k<n;k++){const x=ax+(bx-ax)*k/n,y=ay+(by-ay)*k/n;if(mode==='sea'){if(!riverAt(x,y,14))return false;continue}if(mode==='deep'){if(x<0||x>=coastX(y)-DEEP_M)return false;continue}if(cellAt(x,y)===T.WATER)return false;if(mode==='veh'&&(cellAt(x+px*10,y+py*10)===T.WATER||cellAt(x-px*10,y-py*10)===T.WATER))return false;if(mode==='inf'&&buildingAt(x,y))return false}return true}
 /* kıyı haritasında uzun, kıvrımlı nehir A* sınırını aşar: nehirdeki uç(lar) için rota merkez çizgisini izler,
    denizdeki kısım (ağız rp[0] koyun içinde) A* ile bulunur */
 const rivIdx=(x,y)=>{const n=rivNear(x,y);if(!n||n.d>=RIV.hw||x<coastX(y))return -1;let bi=0,bd=1e18;MAP.rp.forEach((p,i)=>{const d=(p[0]-x)**2+(p[1]-y)**2;if(d<bd){bd=d;bi=i}});return bi};
@@ -29,7 +30,7 @@ function gridPath(u,tx,ty){const mode=navMode(u),veh=mode==='veh',sx=u.x/CS|0,sy
   navStamp[si]=navGen;navOpen[si]=0;navFrom[si]=-1;push(si,H8(sx,sy));let it=0;
   while(heap.length&&it++<14000){const [,i]=pop();if(i===gi)break;const cx=i%GW,cy=i/GW|0,g0=navOpen[i];
     for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){if(!dx&&!dy)continue;const nx=cx+dx,ny=cy+dy;if(!navFree(nx,ny,mode))continue;if(dx&&dy&&(!navFree(cx+dx,cy,mode)||!navFree(cx,cy+dy,mode)))continue;
-      const ni=ny*GW+nx,t=grid[ni],cost=(dx&&dy?1.414:1)*(mode==='sea'?1:t===T.ROAD?.8:t===T.FOREST&&veh?1.8:t===T.SWAMP?1.6:t===T.FORD?1.5:1),g=g0+cost;
+      const ni=ny*GW+nx,t=grid[ni],cost=(dx&&dy?1.414:1)*(mode==='sea'||mode==='deep'?1:t===T.ROAD?.8:t===T.FOREST&&veh?1.8:t===T.SWAMP?1.6:t===T.FORD?1.5:1),g=g0+cost;
       if(navStamp[ni]===navGen&&navOpen[ni]<=g)continue;navStamp[ni]=navGen;navOpen[ni]=g;navFrom[ni]=i;push(ni,g+H8(nx,ny))}}
   if(navStamp[gi]!==navGen)return null;
   const pts=[];for(let i=gi;i!==-1&&i!==si;i=navFrom[i])pts.push({x:(i%GW)*CS+8,y:(i/GW|0)*CS+8});pts.reverse();

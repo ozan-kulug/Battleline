@@ -1,6 +1,6 @@
 /* systems/projectiles.js — Mermi, füze ve bomba uçuşu ile çarpma sonuçları. */
 import {state} from '../state.js';
-import {T} from '../config.js';
+import {T,bodyR} from '../config.js';
 import {recentImp} from '../state.js';
 import {hitBridge} from './bridges.js';
 import {damage,hurtB,splashDmg,suppress} from './combat.js';
@@ -19,7 +19,16 @@ function updMissile(p,dt,i){p.life-=dt;const t=p.tgt;state.curSrc=p.from;
     if(!p.lost&&t&&t.hp>0){let pk=p.w.pk;if(t.burn)pk*=.85;if(p.mk==='sam'&&t.alt==='low')pk*=.85;if(R()<pk){explode(t.x,t.y,.6);damage(t,p.w,p.x,p.y,1)}else explode(p.x+gauss()*20,p.y+gauss()*20,.3)}
     else explode(p.x,p.y,.3);return}
   p.a=Math.atan2(dy,dx);p.x+=dx/d*st;p.y+=dy/d*st}
-function updProj(dt){for(let i=state.proj.length-1;i>=0;i--){const p=state.proj[i];
+/* gemi yakın savunması (CIWS): her top, bu gemiye doğru gelen en yakın düşman roket, füze, bomba ya da mermisiyle uğraşır;
+   vurursa mermi havada patlar, ıskalarsa (p.pd) diğer toplar yine deneyebilir. Her angajman 0,7 sn sürer */
+const PD_K=new Set(['rpg','atgm','rocket','arock','gun','arty','mortar','bomb','lgb','msl']);
+function pointDefense(dt){for(const u of state.units){const n=u.d.ciws;if(!n||u.hp<=0||u.abandoned)continue;const cd=u.pdCd||(u.pdCd=[]),near=bodyR(u.d)+60;
+  for(let m=0;m<n;m++){cd[m]=(cd[m]||0)-dt;if(cd[m]>0)continue;let bi=-1,bd=u.d.ciwsR;
+    for(let i=0;i<state.proj.length;i++){const p=state.proj[i];if(p.side===u.side||!PD_K.has(p.k)||(p.pd||0)>=n)continue;const tx=p.k==='msl'?p.ax:p.tx,ty=p.k==='msl'?p.ay:p.ty;
+      if(Math.hypot(tx-u.x,ty-u.y)>near)continue;const d=Math.hypot(p.x-u.x,p.y-u.y);if(d<bd){bd=d;bi=i}}
+    if(bi<0)continue;const p=state.proj[bi];cd[m]=.7;u.flash=.05;state.parts.push({x:u.x,y:u.y,vx:(p.x-u.x)*2,vy:(p.y-u.y)*2,life:0,max:.3,r:1.2,g:1,col:'rgba(255,210,120,.9)'});
+    if(R()<u.d.ciwsPk){state.proj.splice(bi,1);explode(p.x,p.y,.35)}else p.pd=(p.pd||0)+1}}}
+function updProj(dt){pointDefense(dt);for(let i=state.proj.length-1;i>=0;i--){const p=state.proj[i];
   if(p.k==='msl'){updMissile(p,dt,i);continue}
   if(p.k==='atgm'&&p.hit&&p.src){const s=p.src,t=p.tgt;if(s.hp<=0||s.gone||s.sup>70||s.stunT>0||s.panicT>0||(t&&!los(s.x,s.y,t.x,t.y,s.inB?s.inB.i:-1,t.inB?t.inB.i:-1,s.d.heli&&s.alt==='high',s.d.heli&&s.alt==='high'))){p.hit=false;p.tx+=gauss()*34;p.ty+=gauss()*34}}
   if(p.hit&&p.tgt&&p.tgt.hp>0){p.tx=p.tgt.x;p.ty=p.tgt.y}

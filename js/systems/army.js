@@ -1,6 +1,6 @@
 /* systems/army.js — Savaş öncesi ordu: ordu puanı (OP) hesabı, doğrulama, YZ ordusu ve başlangıç birliklerinin mevcut oluşturma fonksiyonlarıyla sahaya konması. */
 import {state} from '../state.js';
-import {ARMY,COMBAT,DEF,H,MAP,SQUADS,W,coastX,edgeX,riverX} from '../config.js';
+import {ARMY,COMBAT,DEF,H,MAP,SQUADS,W,coastX,edgeX,riverX,seaOnly} from '../config.js';
 import {spawnLoaded} from './units.js';
 import {buildingAt,isWater} from '../world/terrain.js';
 
@@ -14,13 +14,15 @@ const armyCap=k=>{const S=sqOf(k);return S?Math.min(ARMY.cap,S.av):0};
 const armyCost=list=>list.reduce((a,k)=>a+(sqOf(k)?.cost||0),0);
 const countOf=(list,k)=>list.reduce((a,x)=>a+(x===k),0);
 /* eklemeyi engelleyen neden (yoksa null) */
-function addBlock(list,k,budget){const S=sqOf(k);if(!S)return'Bilinmeyen birlik';const c=armyCap(k);if(countOf(list,k)>=c)return`${S.n}: en fazla ${c} adet alınabilir`;
+/* yalnız-deniz gemisi (fırkateyn, destroyer) denizi olan haritada alınabilir */
+const needSea=S=>!!S&&S.m.length>0&&seaOnly(DEF[S.m[0]])&&!MAP.coast;
+function addBlock(list,k,budget){const S=sqOf(k);if(!S)return'Bilinmeyen birlik';if(needSea(S))return`${S.n}: yalnızca Kıyı Cephesi haritasında`;const c=armyCap(k);if(countOf(list,k)>=c)return`${S.n}: en fazla ${c} adet alınabilir`;
   const left=budget-armyCost(list);if(S.cost>left)return`Bütçe yetmiyor: ${S.n} ${S.cost} OP, kalan ${Math.max(0,left)} OP`;return null}
 function checkArmy(list,budget){const err=[],cost=armyCost(list);
   if(!list.length)err.push('Ordu boş: en az bir birlik seç');
   else if(!list.some(k=>COMBAT.has(k)))err.push('En az bir muharebe birliği gerekli: piyade, tanksavar, ZMA, mekanize piyade veya tank');
   if(cost>budget)err.push(`Bütçe ${cost-budget} OP aşıldı: birlik çıkar veya bütçeyi yükselt`);
-  for(const k of new Set(list)){const S=sqOf(k);if(!S)err.push(`Bilinmeyen birlik: ${k}`);else if(countOf(list,k)>armyCap(k))err.push(`${S.n}: en fazla ${armyCap(k)} adet`)}
+  for(const k of new Set(list)){const S=sqOf(k);if(needSea(S))err.push(`${S.n}: yalnızca Kıyı Cephesi haritasında`);if(!S)err.push(`Bilinmeyen birlik: ${k}`);else if(countOf(list,k)>armyCap(k))err.push(`${S.n}: en fazla ${armyCap(k)} adet`)}
   return{ok:!err.length,cost,err}}
 function autoArmy(budget){const list=[];for(let added=true;added;){added=false;for(const k of AI_TEMPLATE)if(!addBlock(list,k,budget)){list.push(k);added=true}}return list}
 /* başlangıç dizilişi: piyade önde, araçlar ortada, topçu ve ikmal üs içinde (orada ikmal alır) */
@@ -34,7 +36,7 @@ function freeX(x,y){for(const dx of [0,30,-30,60,-60])if(!buildingAt(x+dx,y)&&!i
 function spawnArmy(side,list){const lanes={f:[],m:[],r:[]},sea=[];
   for(const k of list){const i=sqIdx(k);if(i<0)continue;const S=SQUADS[i];
     if(S.plane){state.airbase[side].push({id:state.abid++,key:S.plane,side,st:'ready',t:0,u:null});continue}
-    if(S.m.length&&DEF[S.m[0]].naval){sea.push(i);continue}
+    if(S.m.length&&DEF[S.m[0]].naval){if(MAP.coast||!seaOnly(DEF[S.m[0]]))sea.push(i);continue}
     lanes[LANE[k]||'m'].push(i)}
   /* gemiler nehrin kendi yarısında kalan kesimlerine, kendi ucundan başlayarak dizilir */
   /* kıyı haritasında oyuncunun gemileri liman önünde, limandan başlayarak kuzeye-güneye dizilir */

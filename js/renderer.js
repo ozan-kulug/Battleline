@@ -3,7 +3,7 @@ import {state} from './state.js';
 import {tr} from './i18n.js';
 import {toW} from './camera.js';
 import {ctx,fctx,fogC,mctx,mmBase,tc} from './canvas.js';
-import {COL,DEF,H,PI,TAU,W,ZK} from './config.js';
+import {COL,DEF,H,PI,TAU,W,ZK,bodyR,shipC} from './config.js';
 import {cam} from './state.js';
 import {estSig,muzzle} from './systems/combat.js';
 import {dep,deployZone} from './systems/deployment.js';
@@ -86,12 +86,23 @@ function drawDrone(c,u,x,y,s,sh){const col=COL[u.side],f=u.d.fpv;c.save();c.tran
     c.strokeStyle='rgba(30,30,30,.45)';c.lineWidth=.8;const ra=state.time*40;for(const [px,py] of [[-L,-L],[L,L],[-L,L],[L,-L]]){c.beginPath();c.arc(px,py,f?3:3.8,0,TAU);c.stroke();c.beginPath();c.moveTo(px+Math.cos(ra)*3.5,py+Math.sin(ra)*3.5);c.lineTo(px-Math.cos(ra)*3.5,py-Math.sin(ra)*3.5);c.stroke()}}
   c.restore()}
 /* gemi (hazırlık): sivri burunlu gövde, taret, kıç dalgası */
-function drawShip(c,u,x,y,s){const col=COL[u.abandoned?2:u.side],L=34,Wd=12;c.save();c.translate(x,y);c.scale(s,s);c.rotate(u.a);
+/* gemi: devriye botu çizimi (34×12) gövde sınıfının boyuna ve enine ölçeklenir */
+function drawShip(c,u,x,y,s){const sc=shipC(u.d);if(sc.nav==='sea'){drawBigShip(c,u,x,y,s,sc);return}const col=COL[u.abandoned?2:u.side],L=34,Wd=12;c.save();c.translate(x,y);c.scale(s,s);c.rotate(u.a);c.scale(sc.L/L,sc.B/Wd);
   if(u.moving){c.strokeStyle='rgba(225,235,235,.45)';c.lineWidth=1.4;c.beginPath();c.moveTo(-L/2-2,-Wd/2);c.lineTo(-L/2-14,-Wd/2-6);c.moveTo(-L/2-2,Wd/2);c.lineTo(-L/2-14,Wd/2+6);c.stroke()}
   c.fillStyle='rgba(0,0,0,.3)';c.beginPath();c.ellipse(2,3,L/2,Wd/2,0,0,TAU);c.fill();
   c.fillStyle=col.hull;c.strokeStyle=col.dark;c.lineWidth=1.1;c.beginPath();c.moveTo(L/2+4,0);c.lineTo(L/2-8,-Wd/2);c.lineTo(-L/2,-Wd/2+1);c.lineTo(-L/2,Wd/2-1);c.lineTo(L/2-8,Wd/2);c.closePath();c.fill();c.stroke();
   c.fillStyle=col.tur;c.fillRect(-8,-3.5,10,7);if(!u.noTur){c.save();c.translate(8,0);c.rotate(u.ta-u.a);c.fillStyle=col.dark;c.fillRect(0,-1,11,2);c.fillStyle=col.tur;c.beginPath();c.arc(0,0,3.2,0,TAU);c.fill();c.restore()}
   if(u.flash>0){c.fillStyle='#ffd27a';c.beginPath();c.arc(21,0,2.5,0,TAU);c.fill()}c.restore()}
+/* büyük gemi: sivri baş, köprü üstü ve direk, dikey füze hücreleri (VLS), kıçta CIWS, başta dönen top */
+function drawBigShip(c,u,x,y,s,sc){const col=COL[u.abandoned?2:u.side],L=sc.L,B=sc.B,h=L/2;c.save();c.translate(x,y);c.scale(s,s);c.rotate(u.a);
+  c.fillStyle='rgba(0,0,0,.3)';c.beginPath();c.ellipse(3,4,h,B/2,0,0,TAU);c.fill();
+  c.fillStyle=col.hull;c.strokeStyle=col.dark;c.lineWidth=1.3;c.beginPath();c.moveTo(h+6,0);c.lineTo(h-L*.2,-B/2);c.lineTo(-h,-B/2+1.5);c.lineTo(-h,B/2-1.5);c.lineTo(h-L*.2,B/2);c.closePath();c.fill();c.stroke();
+  c.fillStyle=col.tur;c.fillRect(-L*.16,-B*.3,L*.28,B*.6);c.strokeStyle=col.dark;c.lineWidth=.8;c.strokeRect(-L*.16,-B*.3,L*.28,B*.6);
+  c.fillStyle=col.dark;c.beginPath();c.arc(-L*.02,0,B*.14,0,TAU);c.fill();
+  const vls=(x0,nx)=>{c.fillStyle=col.dark;for(let i=0;i<nx;i++)for(const yy of [-B*.18,B*.06])c.fillRect(x0+i*3.2,yy,2.4,B*.12)};vls(L*.16,u.d.ciws>1?5:3);if(u.d.ciws>1)vls(-L*.4,4);
+  c.fillStyle=col.lt;for(let k=0;k<u.d.ciws;k++){c.beginPath();c.arc(-L*.24,(k?1:-1)*(u.d.ciws>1?B*.22:0),2.2,0,TAU);c.fill()}
+  c.save();c.translate(L*.36,0);c.rotate(u.ta-u.a);c.fillStyle=col.dark;c.fillRect(0,-1.2,L*.12,2.4);c.fillStyle=col.tur;c.beginPath();c.arc(0,0,B*.2,0,TAU);c.fill();c.restore();
+  if(u.flash>0){c.fillStyle='#ffd27a';c.beginPath();c.arc(L*.36+L*.13,0,2.8,0,TAU);c.fill()}c.restore()}
 function drawUnit(c,u,x,y,s){if(u.d.naval){drawShip(c,u,x,y,s);return}if(u.d.plane)drawPlane(c,u,x,y,s);else if(u.d.drone)drawDrone(c,u,x,y,s);else if(u.d.heli)drawHeli(c,u,x,y,s);else if(u.d.inf)drawSoldier(c,u,x,y,s);else drawVeh(c,u,x,y,s)}
 function render(){
   ctx.setTransform(state.DPR,0,0,state.DPR,0,0);ctx.fillStyle='#10130e';ctx.fillRect(0,0,state.VW,state.VH);
@@ -120,7 +131,7 @@ function render(){
     const cx=ms.reduce((a,m)=>a+m.x,0)/ms.length,cy=ms.reduce((a,m)=>a+m.y,0)/ms.length,r=Math.max(...ms.map(m=>Math.hypot(m.x-cx,m.y-cy)))+11;
     ctx.strokeStyle='rgba(232,168,56,.55)';ctx.lineWidth=1.3/z;ctx.setLineDash([5/z,4/z]);ctx.beginPath();ctx.arc(cx,cy,r,0,TAU);ctx.stroke();ctx.setLineDash([])}}
   for(const u of state.units){if(u.d.air||(u.side===1&&!state.vis[0].has(u.id)))continue;
-    if(u.sel){ctx.strokeStyle='#e8a838';ctx.lineWidth=1.4/z;ctx.beginPath();ctx.arc(u.x,u.y,u.d.inf?7:24,0,TAU);ctx.stroke()}
+    if(u.sel){ctx.strokeStyle='#e8a838';ctx.lineWidth=1.4/z;ctx.beginPath();ctx.arc(u.x,u.y,u.d.inf?7:bodyR(u.d)+4,0,TAU);ctx.stroke()}
     drawUnit(ctx,u,u.x,u.y,u.inB?.85:1)}
   ctx.lineCap='round';
   const SKY={msl:1,agun:1,arock:1,bomb:1,lgb:1};
@@ -177,9 +188,9 @@ function render(){
   ctx.textBaseline='top';
   if(z>.5)for(const u of state.units){if(u.side!==0||!u.cov||u.moving)continue;const c=u.cov;ctx.strokeStyle='rgba(127,212,138,.9)';ctx.lineWidth=1.6*lw;ctx.beginPath();
     if(c.r!=null||c.t==='trench')ctx.arc(u.x,u.y,6.5,0,TAU);else{const s=segInfo(c,u.x,u.y),a=Math.atan2(s.py-u.y,s.px-u.x);ctx.arc(u.x,u.y,7,a-1.1,a+1.1)}ctx.stroke()}
-  for(const u of state.units){if(u.side===1&&!state.vis[0].has(u.id))continue;const yo=u.d.inf?8:19;const hpF=u.hp/u.d.hp,sc=1/Math.max(z,.6);
+  for(const u of state.units){if(u.side===1&&!state.vis[0].has(u.id))continue;const yo=u.d.inf?8:bodyR(u.d)-1;const hpF=u.hp/u.d.hp,sc=1/Math.max(z,.6);
     if(u.d.plane&&u.sel){const bw=26*sc,bh=2.2*sc;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(u.x-bw/2,u.y-yo-bh*5,bw,bh);ctx.fillStyle=u.fuel<u.d.fuel*.25?'#e2584b':'#e8a838';ctx.fillRect(u.x-bw/2,u.y-yo-bh*5,bw*u.fuel/u.d.fuel,bh)}
-    if(((u.d.veh||u.d.air)&&hpF<1)||u.sel){const bw=(u.d.inf?12:26)*sc,bh=2.6*sc;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(u.x-bw/2,u.y-yo-bh*2.5,bw,bh);ctx.fillStyle=hpF>.5?COL[u.side].ring:hpF>.25?'#e8a838':'#e2584b';ctx.fillRect(u.x-bw/2,u.y-yo-bh*2.5,bw*hpF,bh)}
+    if(((u.d.veh||u.d.air)&&hpF<1)||u.sel){const bw=(u.d.inf?12:bodyR(u.d)+6)*sc,bh=2.6*sc;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(u.x-bw/2,u.y-yo-bh*2.5,bw,bh);ctx.fillStyle=hpF>.5?COL[u.side].ring:hpF>.25?'#e8a838':'#e2584b';ctx.fillRect(u.x-bw/2,u.y-yo-bh*2.5,bw*hpF,bh)}
     {const rk=rank(u);if(rk&&(u.sel||(!u.d.inf&&z>.6))){ctx.strokeStyle='#e8a838';ctx.lineWidth=1.2*sc;for(let i=0;i<rk;i++){const cx=u.x+(u.d.inf?9:16)*sc,cy=u.y-yo-2*sc+i*3*sc;ctx.beginPath();ctx.moveTo(cx-2.5*sc,cy+1.5*sc);ctx.lineTo(cx,cy);ctx.lineTo(cx+2.5*sc,cy+1.5*sc);ctx.stroke()}}}
     if(u.side===0&&u.th&&state.time-u.th.t<2.8&&z>.45){const al=Math.min(1,(2.8-(state.time-u.th.t))*1.5);ctx.globalAlpha=al;ctx.fillStyle='#7fd48a';ctx.font=`600 ${9.5/Math.max(z,.6)}px "JetBrains Mono",monospace`;ctx.fillText(tr(u.th.s),u.x,u.y-yo-(u.d.inf?18:14)*sc-(state.time-u.th.t)*4);ctx.font=`600 ${fsz}px "JetBrains Mono",monospace`;ctx.globalAlpha=1}
     if(u.panicT>0){ctx.fillStyle=`rgba(226,88,75,${.6+.4*Math.sin(state.time*14)})`;ctx.font=`800 ${12*sc}px "Saira Condensed",sans-serif`;ctx.fillText(tr('!'),u.x,u.y-yo-16*sc);ctx.font=`600 ${fsz}px "JetBrains Mono",monospace`}
@@ -223,7 +234,7 @@ function drawDeployTop(z,lw){const d=dep.drag,moving=d&&d.k==='move'&&d.cand?new
   if(d&&d.k==='move'&&d.cand&&d.moved){const ok=d.bad.every(b=>!b);
     for(let i=0;i<d.cand.length;i++){const c=d.cand[i],o=d.us[i];ctx.strokeStyle=ok?'rgba(127,212,138,.35)':'rgba(226,88,75,.35)';ctx.lineWidth=lw;ctx.setLineDash([3*lw,4*lw]);ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(c.x,c.y);ctx.stroke();ctx.setLineDash([]);
       ctx.globalAlpha=.6;drawUnit(ctx,{...c.u,x:c.x,y:c.y},c.x,c.y,1);ctx.globalAlpha=1;
-      ctx.strokeStyle=d.bad[i]?'#e2584b':'#7fd48a';ctx.lineWidth=2*lw;ctx.beginPath();ctx.arc(c.x,c.y,c.u.d.inf?8:24,0,TAU);ctx.stroke()}
+      ctx.strokeStyle=d.bad[i]?'#e2584b':'#7fd48a';ctx.lineWidth=2*lw;ctx.beginPath();ctx.arc(c.x,c.y,c.u.d.inf?8:bodyR(c.u.d)+4,0,TAU);ctx.stroke()}
     const b=d.bad.find(Boolean),c0=d.cand[0];if(b){const fz=11/Math.max(z,.5);ctx.font=`700 ${fz}px "JetBrains Mono",monospace`;ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillStyle='#e2584b';ctx.fillText(tr(b),c0.x,c0.y-(c0.u.d.inf?12:30))}}
   if(d&&d.k==='face'&&d.ang!=null){arrowFrom(d.c.x,d.c.y,d.ang,80/Math.max(z,.5),'#e8a838',2.5*lw);for(const u of d.us)arrowFrom(u.x,u.y,d.ang,u.d.inf?16:40,'rgba(232,168,56,.8)',1.5*lw)}}
 function drawMini(){if(state.mmDirty){refreshMini();state.mmDirty=false}mctx.drawImage(mmBase,0,0);const sx=220/W,sy=138/H;

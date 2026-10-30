@@ -2,7 +2,7 @@
 import {state} from '../state.js';
 import {toW} from '../camera.js';
 import {tctx} from '../canvas.js';
-import {CROSS,MAP,PI,RIV,T,TAU,riverX,shoreD} from '../config.js';
+import {CROSS,MAP,PI,RIV,T,TAU,bodyR,riverX,shoreD} from '../config.js';
 import {md} from '../state.js';
 import {canUse,fire,fireIndirect,hurtB,inRange,kill} from './combat.js';
 import {P,breakCover,trackMark} from './effects.js';
@@ -12,10 +12,10 @@ import {flying,turnTurret} from './units.js';
 import {R,angDiff,clamp,gauss,segInfo} from '../utils/helpers.js';
 import {exitBld} from '../world/buildings.js';
 import {effStance} from '../world/cover.js';
-import {buildingAt,cellAt,coversNear,elevAt,isWater,landP,navSnap,riverAt} from '../world/terrain.js';
+import {buildingAt,cellAt,coversNear,elevAt,isWater,landP,navSnap,shipAt} from '../world/terrain.js';
 
 /* ---------- güncelleme ---------- */
-function terrSpeed(u){if(u.d.naval)return riverAt(u.x,u.y,2)?1:.1;const c=cellAt(u.x,u.y);if(u.d.inf)return c===T.ROAD?1.1:c===T.CONC?1.05:c===T.FOREST?.75:c===T.TOWN?.9:c===T.FORD?.45:c===T.SWAMP?.6:c===T.WATER?.3:1;
+function terrSpeed(u){if(u.d.naval)return shipAt(u.d,u.x,u.y,2)?1:.1;const c=cellAt(u.x,u.y);if(u.d.inf)return c===T.ROAD?1.1:c===T.CONC?1.05:c===T.FOREST?.75:c===T.TOWN?.9:c===T.FORD?.45:c===T.SWAMP?.6:c===T.WATER?.3:1;
   return c===T.ROAD?1.35:c===T.CONC?1.3:c===T.FOREST?.45:c===T.TOWN?.75:c===T.FIELD?.85:c===T.FORD?.4:c===T.SWAMP?.3:c===T.WATER?.2:1}
 /* manga birlikte yürür: hedefine en uzak (en geride kalan) üyenin kalan yolu; ondan çok önde olan asker yavaşlayıp bekler */
 function sqLag(sq){if(sq.lagT===state.time)return sq.lag;sq.lagT=state.time;let mx=0;
@@ -28,7 +28,7 @@ function routeFor(u,dx,dy){if(u.d.air||u.d.naval)return[];if(MAP.coast)return li
   let best=[],bc=1e9;for(const c of CROSS){if(c.t==='bridge'&&state.bridges.some(b=>b.dead&&b.y===c.y))continue;const cx=riverX(c.y),A={x:cx+s1*(RIV.hw+55),y:c.y},B={x:cx-s1*(RIV.hw+55),y:c.y};
     const cost=Math.hypot(A.x-u.x,A.y-u.y)+Math.hypot(B.x-dx,B.y-dy)+(c.t==='ford'?(u.d.inf?80:320):0);if(cost<bc){bc=cost;best=[A,B]}}return best}
 /* bina veya suya sıkışan birliği en yakın serbest noktaya çıkar */
-function unstick(u){if(u.d.air||u.inB||u.inHeli)return;if(u.d.naval){if(!riverAt(u.x,u.y)){const p=navSnap(u.x,u.y);u.x=p.x;u.y=p.y}return}if(u.d.inf){const b=buildingAt(u.x,u.y);if(b&&b!==u.enterB){const l=u.x-b.x,r=b.x+b.w-u.x,t=b.y+b.h-u.y,tp=u.y-b.y,m=Math.min(l,r,t,tp);if(m===l)u.x=b.x-4;else if(m===r)u.x=b.x+b.w+4;else if(m===tp)u.y=b.y-4;else u.y=b.y+b.h+4}}
+function unstick(u){if(u.d.air||u.inB||u.inHeli)return;if(u.d.naval){if(!shipAt(u.d,u.x,u.y)){const p=navSnap(u.x,u.y,u.d);u.x=p.x;u.y=p.y}return}if(u.d.inf){const b=buildingAt(u.x,u.y);if(b&&b!==u.enterB){const l=u.x-b.x,r=b.x+b.w-u.x,t=b.y+b.h-u.y,tp=u.y-b.y,m=Math.min(l,r,t,tp);if(m===l)u.x=b.x-4;else if(m===r)u.x=b.x+b.w+4;else if(m===tp)u.y=b.y-4;else u.y=b.y+b.h+4}}
   if(cellAt(u.x,u.y)===T.WATER){const p=landP(u.x,u.y,28);u.x=p.x;u.y=p.y}}
 const outward=(x,y,u)=>shoreD(x,y)>shoreD(u.x,u.y);
 function blockedAt(x,y,u){const b=buildingAt(x,y);if(b&&b!==u.enterB)return true;return isWater(x,y)&&(!isWater(u.x,u.y)||!outward(x,y,u))}
@@ -55,7 +55,7 @@ function moveUnit(u,dt){u.moving=false;if(u.inB||!u.dest)return;
   u.a+=clamp(angDiff(wa,u.a),-u.d.turn*dt,u.d.turn*dt);const al=Math.abs(angDiff(wa,u.a));
   if(u.crush)sp*=.35;
   if(al<.7){const s=Math.min(d,sp*(back?.45:1)*(1-al/.7*.6)*dt)*(back?-1:1),ox=u.x,oy=u.y;u.x+=Math.cos(u.a)*s;u.y+=Math.sin(u.a)*s;
-    if(u.d.naval?!riverAt(u.x,u.y,2):isWater(u.x,u.y)&&(!isWater(ox,oy)||shoreD(u.x,u.y)<=shoreD(ox,oy))){u.x=ox;u.y=oy;u.wb=(u.wb||0)+dt;if(u.wb>2.5){u.wb=0;const p=!u.wbTry&&findPath(u,u.dest.x,u.dest.y);if(p&&p.length){u.path=p;u.wbTry=1}else{u.dest=null;u.wbTry=0}}}else u.wb=0}
+    if(u.d.naval?!shipAt(u.d,u.x,u.y,2):isWater(u.x,u.y)&&(!isWater(ox,oy)||shoreD(u.x,u.y)<=shoreD(ox,oy))){u.x=ox;u.y=oy;u.wb=(u.wb||0)+dt;if(u.wb>2.5){u.wb=0;const p=!u.wbTry&&findPath(u,u.dest.x,u.dest.y);if(p&&p.length){u.path=p;u.wbTry=1}else{u.dest=null;u.wbTry=0}}}else u.wb=0}
   u.moving=true;if(!u.d.naval)crushCheck(u,dt)}
 function crushCheck(u,dt){const b=buildingAt(u.x,u.y);u.crush=!!b;if(b){hurtB(b,(u.key==='tank'?90:40)*dt);if(R()<dt*6)P({k:'dust',x:u.x,y:u.y,vx:gauss()*10,vy:gauss()*10,r:6,g:22,max:1.5,a:.5})}
   for(const c of coversNear(u.x,u.y)){if(c.r!=null||!isFinite(c.hp))continue;if(segInfo(c,u.x,u.y).d<11){c.hp-=(u.key==='tank'?320:180)*dt;if(c.hp<=0){breakCover(c);break}}}
@@ -67,7 +67,7 @@ function dcControl(u,dt){u.moving=false;const k=state.keys,mw=toW(state.mouse.x,
       const sp=u.d.sp*terrSpeed(u)*(st==='prone'?.22:st==='crouch'?.55:1)*(u.sup>65?.35:1)*dt;const nx=u.x+vx/l*sp,ny=u.y+vy/l*sp;
       if(!blockedAt(nx,ny,u)){u.x=nx;u.y=ny}u.a=Math.atan2(vy,vx);u.moving=true;u.dig=-1}}
   else if(!(u.d.indirect&&u.st!=='travel')){const turn=(k.KeyD?1:0)-(k.KeyA?1:0);u.a+=turn*u.d.turn*dt;const f=(k.KeyW?1:0)-(k.KeyS?.5:0);
-    if(f&&u.trk<=0){const sp=u.d.sp*terrSpeed(u)*(u.crush?.35:1)*f*dt,ox=u.x,oy=u.y;u.x+=Math.cos(u.a)*sp;u.y+=Math.sin(u.a)*sp;if(u.d.naval?!riverAt(u.x,u.y,2):isWater(u.x,u.y)&&!isWater(ox,oy)){u.x=ox;u.y=oy}u.moving=true;if(!u.d.naval)crushCheck(u,dt)}else if(turn)u.moving=true}
+    if(f&&u.trk<=0){const sp=u.d.sp*terrSpeed(u)*(u.crush?.35:1)*f*dt,ox=u.x,oy=u.y;u.x+=Math.cos(u.a)*sp;u.y+=Math.sin(u.a)*sp;if(u.d.naval?!shipAt(u.d,u.x,u.y,2):isWater(u.x,u.y)&&!isWater(ox,oy)){u.x=ox;u.y=oy}u.moving=true;if(!u.d.naval)crushCheck(u,dt)}else if(turn)u.moving=true}
   u.dest=null;
   if(!(u.d.indirect&&u.key==='arty'&&u.st!=='deployed'))turnTurret(u,Math.atan2(mw.y-u.y,mw.x-u.x),dt);
   if(md[0])tryManual(u,0,mw);if(md[2]&&u.d.w[1])tryManual(u,1,mw)}
@@ -77,16 +77,17 @@ function tryManual(u,i,mw){const w=u.d.w[i];if(!w||u.cd[i]>0)return;
   if(w.stat&&u.moving)return;if(!canUse(u,i))return;
   const ang=Math.atan2(mw.y-u.y,mw.x-u.x);if(u.d.veh&&Math.abs(angDiff(ang,u.ta))>.08)return;
   let px=mw.x,py=mw.y;const d=Math.hypot(px-u.x,py-u.y);if(d>w.r){px=u.x+Math.cos(ang)*w.r;py=u.y+Math.sin(ang)*w.r}
-  let t=null,bd=1e9;for(const e of state.units){if(e.side===u.side)continue;const dd=Math.hypot(e.x-px,e.y-py),lim=e.d.inf?14:24;if(dd<lim&&dd<bd){bd=dd;t=e}}
+  let t=null,bd=1e9;for(const e of state.units){if(e.side===u.side)continue;const dd=Math.hypot(e.x-px,e.y-py),lim=e.d.inf?14:bodyR(e.d)+4;if(dd<lim&&dd<bd){bd=dd;t=e}}
   fire(u,i,t,px,py,true)}
 function separate(){buildHash();for(const a of state.units){if(a.inB||a.inHeli||flying(a))continue;const cx=(a.x/UH|0),cy=(a.y/UH|0);for(let yy=cy-1;yy<=cy+1;yy++)for(let xx=cx-1;xx<=cx+1;xx++){const l=uhash.get((yy+1)*UHW+xx+1);if(l)for(const b of l){if(b.id<=a.id||b.inB||flying(b))continue;
-  const dx=b.x-a.x,dy=b.y-a.y,ra=a.d.inf?5:20,rb=b.d.inf?5:20,m=ra+rb,d2=dx*dx+dy*dy;if(d2>=m*m||d2<.01)continue;
+  const dx=b.x-a.x,dy=b.y-a.y,ra=bodyR(a.d),rb=bodyR(b.d),m=ra+rb,d2=dx*dx+dy*dy;if(d2>=m*m||d2<.01)continue;
   if(!a.d.naval!==!b.d.naval)continue;
   if(a.side!==b.side&&a.d.inf!==b.d.inf){const v=a.d.inf?b:a,s=a.d.inf?a:b;if(v.moving&&!v.d.supply&&!v.abandoned){state.curSrc=v.id;s.hp=0;kill(s);continue}}
   const d=Math.sqrt(d2),p=(m-d)*.25,ux=dx/d,uy=dy/d;
   if(a.d.inf&&!b.d.inf){b.x+=ux*p*.2;b.y+=uy*p*.2;a.x-=ux*p*1.8;a.y-=uy*p*1.8}else if(b.d.inf&&!a.d.inf){a.x-=ux*p*.2;a.y-=uy*p*.2;b.x+=ux*p*1.8;b.y+=uy*p*1.8}
   else if(a.side===b.side&&a.moving!==b.moving)continue;
   else{const aa=anchored(a),ab=anchored(b),ka=aa&&!ab?0:ab&&!aa?2:aa&&ab?.1:1,kb=ab&&!aa?0:aa&&!ab?2:aa&&ab?.1:1;a.x-=ux*p*ka;a.y-=uy*p*ka;b.x+=ux*p*kb;b.y+=uy*p*kb}}}}}
-const anchored=u=>u.d.inf&&!u.dest&&!u.moving&&!!u.cov;
+/* yerinden itilmeyenler: siperdeki duran piyade ve sabit gemi */
+const anchored=u=>!!u.d.fixed||(u.d.inf&&!u.dest&&!u.moving&&!!u.cov);
 
 export {dcControl,moveUnit,separate,unstick};

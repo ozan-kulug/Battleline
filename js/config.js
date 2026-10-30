@@ -38,9 +38,22 @@ const DEF={
  fpv:{n:'Kamikaze Dron',tag:'KMK',hp:15,sp:115,vis:300,aF:0,aS:0,aR:0,ts:6,air:1,heli:1,drone:1,uav:1,fpv:1,bat:110,flares:0,w:[]},
  /* dron operatörü: kamikaze dron fırlatır ve yönetir; drones: başlangıç stoku (kişi başı), ctrl: kontrol menzili (aşılırsa bağlantı kopar) */
  dop:{n:'Dron Operatörü',tag:'DOP',hp:20,sp:32,vis:420,inf:1,dronOp:1,drones:3,ctrl:1400,w:[{n:'Karabina',r:240,dmg:8,ap:0,rl:1.1,acc:.4,k:'rifle',sup:4}]},
- /* gemiler için hazırlık: naval:1 olan birlik yalnızca nehirde yüzer (köprü altından geçer), karaya çıkamaz.
-    Yeni gemi sınıfı: DEF'e naval:1 birlik, SQUADS sonuna {k,n,cost,m:[...],cat:'deniz'}, AVE ve ROLE'a birer satır. */
- boat:{n:'Devriye Botu',tag:'BOT',hp:160,sp:64,vis:480,aF:2,aS:2,aR:1,turn:1.6,ts:2.5,veh:1,naval:1,w:[{n:'12,7 mm makineli',r:360,dmg:8,ap:1,rl:.18,acc:.3,k:'mg',sup:10}]},
+ /* gemiler: naval:1 olan birlik karaya çıkamaz; ship: SHIPC sınıfı (seyir alanı ve gövde boyutu; yoksa 'patrol').
+    Yeni gemi: DEF'e naval:1 ve ship ile birlik, SQUADS sonuna {k,n,cost,m:[...],cat:'deniz'}, AVE ve ROLE'a birer satır. */
+ boat:{n:'Devriye Botu',tag:'BOT',hp:160,sp:64,vis:480,aF:2,aS:2,aR:1,turn:1.6,ts:2.5,veh:1,naval:1,ship:'patrol',w:[{n:'12,7 mm makineli',r:360,dmg:8,ap:1,rl:.18,acc:.3,k:'mg',sup:10}]},
+ /* büyük gemiler: hareket etmez (fixed), yalnızca ordu kurma ekranında alınır (SQUADS pre) ve açık denize konuşlanır; radarlı (SEAD hedefi olur).
+    ciws: yakın savunma topu sayısı; ciwsR menzil, ciwsPk vuruş olasılığı: gemiye gelen roket, füze, bomba ve mermileri havada vurur (projectiles.js pointDefense) */
+ frigate:{n:'Fırkateyn',tag:'FRK',hp:1400,sp:0,vis:950,aF:4,aS:4,aR:3,turn:0,ts:1.2,veh:1,naval:1,ship:'frigate',fixed:1,radar:1,ciws:1,ciwsR:380,ciwsPk:.5,w:[
+   {n:'76 mm baş topu',r:1150,dmg:50,ap:6,rl:1.4,acc:.5,k:'gun',pen:'ke',ammo:320,soft:1,splash:32,sup:40},
+   {n:'Yakın savunma topu',r:380,dmg:10,ap:2,rl:.06,acc:.35,k:'flak',pen:'ke',ammo:1500,sup:8},
+   {n:'Kısa menzilli füze',k:'irm',aaOnly:1,rLow:800,rHigh:800,dmg:110,pk:.66,rl:3,ammo:8,msp:700},
+   {n:'Orta menzilli füze (24 hücre)',k:'sam',aaOnly:1,rLow:900,rHigh:2100,dmg:140,pk:.72,rl:3.5,ammo:24,msp:820,needRadar:1}]},
+ destroyer:{n:'Destroyer',tag:'DST',hp:2300,sp:0,vis:1150,aF:5,aS:5,aR:4,turn:0,ts:1,veh:1,naval:1,ship:'destroyer',fixed:1,radar:1,ciws:2,ciwsR:460,ciwsPk:.6,w:[
+   {n:'127 mm baş topu',r:1400,dmg:95,ap:9,rl:3,acc:.5,k:'gun',pen:'ke',ammo:400,soft:1,splash:55,sup:55},
+   {n:'Yakın savunma topu',r:460,dmg:11,ap:2,rl:.05,acc:.38,k:'flak',pen:'ke',ammo:1500,sup:8},
+   {n:'Yakın savunma topu',r:460,dmg:11,ap:2,rl:.05,acc:.38,k:'flak',pen:'ke',ammo:1500,sup:8},
+   {n:'Gelişmiş kısa menzilli füze',k:'irm',aaOnly:1,rLow:1100,rHigh:1100,dmg:120,pk:.78,rl:2,ammo:16,msp:760},
+   {n:'Uzun menzilli füze (96 hücre)',k:'sam',aaOnly:1,rLow:950,rHigh:2700,dmg:150,pk:.8,rl:2.5,ammo:96,msp:900,needRadar:1}]},
  bmb:{n:'Stratejik Bombardıman',tag:'BMB',hp:280,sp:165,turn:.55,vis:0,air:1,plane:1,highOnly:1,fuel:170,flares:10,rearm:90,pay:{carpet:1},w:[]},
 };
 const SQUADS=[
@@ -71,6 +84,9 @@ const SQUADS=[
  {k:'dronop',n:'Dron Operatör Timi',cost:130,m:['dop','dop'],cat:'kara'},
  /* gemiler (cat:'deniz'): deste ve ordu ekranında Deniz sekmesi/kategorisi otomatik görünür */
  {k:'bot',n:'Devriye Botu',cost:120,m:['boat'],cat:'deniz'},
+ /* pre: yalnızca ordu kurma ekranında alınır, maç içi destede yoktur */
+ {k:'frig',n:'Fırkateyn',cost:380,m:['frigate'],cat:'deniz',pre:1},
+ {k:'dest',n:'Destroyer',cost:620,m:['destroyer'],cat:'deniz',pre:1},
 ];
 /* uçak mühimmatı */
 const AW={
@@ -88,11 +104,20 @@ const PAYN={gun:'30 mm top (geçiş)',rockets:'Roket salvosu',lgb:'Lazer güdüm
 const AIRMUL={rifle:.15,mg:.45,snipe:.2,auto:.9,flak:1,gun:.6,rpg:.8,atgm:.9,rocket:.5};
 const RANKN=['Acemi','Tecrübeli','Kıdemli','Elit'];
 const FMN={free:'Serbest ateş',ret:'Sadece karşılık',hold:'Ateş kes'};
-const AVE={inf:[14,5],mech:[8,10],at:[8,6],recon:[6,5],mortar:[5,7],supply:[5,8],ifv:[8,10],tank:[8,14],arty:[4,16],manpads:[8,6],shorad:[5,12],sam:[3,14],heliA:[5,10],heliT:[5,10],cas:[4,0],mr:[3,0],sead:[3,0],ftr:[4,0],bmb:[2,0],rec:[3,0],tb2:[3,0],uav:[6,6],fpv:[6,6],dronop:[5,7],bot:[3,8]};
+const AVE={inf:[14,5],mech:[8,10],at:[8,6],recon:[6,5],mortar:[5,7],supply:[5,8],ifv:[8,10],tank:[8,14],arty:[4,16],manpads:[8,6],shorad:[5,12],sam:[3,14],heliA:[5,10],heliT:[5,10],cas:[4,0],mr:[3,0],sead:[3,0],ftr:[4,0],bmb:[2,0],rec:[3,0],tb2:[3,0],uav:[6,6],fpv:[6,6],dronop:[5,7],bot:[3,8],frig:[2,0],dest:[1,0]};
 SQUADS.forEach(S=>{S.av=AVE[S.k][0];S.eta=AVE[S.k][1]});
 const GREN={n:'El bombası',dmg:40,ap:1,splash:34,soft:1,sup:50,k:'gren'};
 const COVN={trench:'Siper hattı',sandbag:'Kum torbası',wall:'Taş duvar',hedge:'Çit',fox:'Tüfekçi çukuru',rubble:'Enkaz',wreck:'Araç enkazı'};
 const STN={stand:'Ayakta',crouch:'Çömelmiş',prone:'Yatık'};
+/* gemi sınıfları — nav: 'all' nehir ve deniz (köprü altından geçer) | 'sea' yalnız açık deniz (nehre ve nehir ağzına girmez, nehir haritasında kullanılamaz);
+   L/B: gövde boyu/eni (px): çizim, çarpışma, seçim ve isabet dağılımı buna göre */
+const SHIPC={patrol:{n:'Devriye',nav:'all',L:34,B:12},frigate:{n:'Fırkateyn',nav:'sea',L:74,B:16},destroyer:{n:'Destroyer',nav:'sea',L:98,B:20}};
+const shipC=d=>SHIPC[d.ship]||SHIPC.patrol;
+const seaOnly=d=>!!d.naval&&shipC(d).nav==='sea';
+/* birliğin gövde yarıçapı: piyade 5, araç 20, gemi boyuna göre (devriye botu 20) */
+const bodyR=d=>d.inf?5:d.naval?Math.max(20,shipC(d).L/2+3):20;
+/* yalnız-deniz gemileri için yol bulma kıyı payı: en geniş gövdeye göre */
+const DEEP_M=14+Math.max(...Object.values(SHIPC).filter(c=>c.nav==='sea').map(c=>c.B))/2;
 const STATEN={travel:'Seyir',deploying:'Mevzileniyor',deployed:'Mevzide',packing:'Toparlanıyor'};
 /* ---------- harita ---------- */
 /* İki harita: 'river' (nehir haritayı ikiye böler; 3 köprü, 2 sığ geçit; merkeze göre simetrik) ve
@@ -184,6 +209,6 @@ const ROLE={inf:'Hat piyadesi · nokta tutar, el bombası atar',at:'Zırh avcıs
  tank:'Ağır zırh · cephenin ana vurucu gücü',ifv:'Piyade desteği · 25 mm top, sis perdesi',mech:'ZMA ve içinde tam piyade mangası',mortar:'Hafif dolaylı ateş · çabuk mevzilenir',arty:'Ağır dolaylı ateş · çok uzun menzil',
  manpads:'Omuzdan füze · alçak uçan hedefler',shorad:'Uçaksavar topu ve kızılötesi füze',sam:'Radarlı uzun menzil · ARM hedefi olur',heliA:'Tanksavar füzesi, roket ve top',heliT:'Nakliye helikopteri ve içinde piyade mangası',
  fpv:'Üç kamikaze dron · hedefe dalar',cas:'30 mm top veya roket koşusu',mr:'Lazer güdümlü bomba ve hava-hava füzesi',sead:'Radar avcısı · anti-radyasyon füzesi',ftr:'Hava üstünlüğü · düşman uçağı avlar',
- bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron',bot:'Nehir devriyesi · makineli tüfek, köprü altından geçer'};
+ bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron',bot:'Nehir devriyesi · makineli tüfek, köprü altından geçer',frig:'Sabit savaş gemisi · 76 mm top, CIWS, 24 hücre füze',dest:'Sabit savaş gemisi · 127 mm top, 2× CIWS, 96 hücre füze'};
 
-export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEF,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SQUADS,STATEN,STN,T,TAU,W,ZK,coastX,edgeX,midX,rivNear,riverOn,riverX,setMap,shoreD};
+export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEEP_M,DEF,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SHIPC,SQUADS,STATEN,STN,T,TAU,W,ZK,bodyR,coastX,edgeX,midX,rivNear,riverOn,riverX,seaOnly,setMap,shipC,shoreD};

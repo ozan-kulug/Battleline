@@ -1,10 +1,10 @@
 /* systems/units.js — Birlik ve manga oluşturma, takviye çağırma ve gelişi, nakliyeden indirme, temel hareket emri. */
 import {state} from '../state.js';
-import {DEF,ECON,H,MAP,PI,SQUADS,TAU,W,coastX,edgeX,riverX} from '../config.js';
+import {DEF,ECON,H,MAP,PI,SQUADS,TAU,W,coastX,edgeX,riverX,seaOnly} from '../config.js';
 import {log} from '../ui/feedback.js';
 import {R,angDiff,clamp,gauss} from '../utils/helpers.js';
 import {exitBld} from '../world/buildings.js';
-import {isWater,landP,navSnap,riverAt} from '../world/terrain.js';
+import {isWater,landP,navSnap,shipAt} from '../world/terrain.js';
 
 const flying=u=>u.d.air&&u.alt!=='landed';
 const addKP=(s,v)=>{state.money[s]=Math.min(ECON.cap,state.money[s]+v)};
@@ -25,7 +25,7 @@ function mkUnit(side,key,x,y,sq,val){const d=DEF[key];const u={id:state.uid++,si
 function spawnSquad(side,idx,cx,cy,dx,dy){const S=SQUADS[idx],sq={id:state.sqid++,side,k:S.k,n:S.n,m:[],orderT:0,obj:null,dug:0};state.squads.set(sq.id,sq);
   const val=S.cost/S.m.length;S.m.forEach((k,i)=>{const off=(i-(S.m.length-1)/2)*16;const u=mkUnit(side,k,cx+(side?1:-1)*(i%2)*12,cy+off,sq,val);
     if(dx!=null)u.dest={x:dx+(R()-.5)*16,y:dy+off};sq.m.push(u)});return sq}
-function deploy(side,idx){const S=SQUADS[idx];if(!S||(side&&MAP.coast&&S.m.length&&DEF[S.m[0]].naval)||state.money[side]<S.cost||state.avail[side][idx]<1)return false;state.money[side]-=S.cost;state.avail[side][idx]--;
+function deploy(side,idx){const S=SQUADS[idx];if(!S||S.pre||(side&&MAP.coast&&S.m.length&&DEF[S.m[0]].naval)||(!MAP.coast&&S.m.length&&seaOnly(DEF[S.m[0]]))||state.money[side]<S.cost||state.avail[side][idx]<1)return false;state.money[side]-=S.cost;state.avail[side][idx]--;
   if(S.plane){state.airbase[side].push({id:state.abid++,key:S.plane,side,st:'prep',t:10,u:null});if(side===0)log(`${S.n} hava üssüne ulaştı, hazırlanıyor`,'good');return true}
   state.pending[side].push({idx,t:S.eta});if(side===0)log(`${S.n} çağrıldı, ${S.eta} sn içinde cephede`,'');return true}
 /* manga + taşıdığı piyade (nakliye helikopteri ve mekanize piyade içinde bir piyade mangasıyla gelir) */
@@ -38,10 +38,10 @@ function arrive(side,idx){const S=SQUADS[idx];
   else{const lane=[700,1500,2300][R()*3|0]+gauss()*80;spawnLoaded(side,idx,side?W+30:edgeX(0,lane)-30,lane,side?W-200-R()*40:edgeX(0,lane)+200+R()*40,lane)}
   if(side===0)log(`${S.n} cepheye ulaştı`,'good');return true}
 /* üs: kara birliği kendi kenarında (kıyıda sahilde); oyuncunun gemisi kıyı haritasında liman çevresinde */
-const inBase=u=>u.d.naval?(MAP.port&&!u.side?Math.hypot(u.x-MAP.port.x,u.y-MAP.port.y)<320:u.side?u.y<260:u.y>H-260):u.side?u.x>W-230:u.x<edgeX(0,u.y)+230;
+const inBase=u=>u.d.fixed?false:u.d.naval?(MAP.port&&!u.side?Math.hypot(u.x-MAP.port.x,u.y-MAP.port.y)<320:u.side?u.y<260:u.y>H-260):u.side?u.x>W-230:u.x<edgeX(0,u.y)+230;
 function unloadHeli(h){const n=h.cargo.length;h.cargo.forEach((c,i)=>{const a=i/n*TAU;c.x=h.x+Math.cos(a)*24;c.y=h.y+Math.sin(a)*24;c.inHeli=null;c.dest=null;c.a=c.ta=a;state.units.push(c)});
   if(n&&h.side===0)log(`${h.d.n}: ${n} asker indirildi`,'good');h.cargo=[];h.unloadReq=false}
 function turnTurret(u,want,dt){if(u.d.inf){u.ta+=clamp(angDiff(want,u.ta),-8*dt,8*dt);return}if(u.tur>0)return;const ts=(u.d.ts||u.d.trav||1)*dt;u.ta+=clamp(angDiff(want,u.ta),-ts,ts)}
-function giveMove(u,x,y,mode){if(u.panicT>0)return;u.exfil=false;u.amv=false;u.ordT=state.time;u.faceA=null;if(u.d.naval){if(!riverAt(x,y))({x,y}=navSnap(x,y))}else if(!u.d.air&&isWater(x,y))({x,y}=landP(x,y,24,u.x,u.y));u.queue=[];u.crewTo=null;u.board=null;u.repB=null;if(u.inB)exitBld(u,x,y);u.dest={x:clamp(x,8,W-8),y:clamp(y,8,H-8)};u.anchor={x:u.dest.x,y:u.dest.y};u.mode=mode;u.focus=null;u.enterB=null;u.dig=-1;if(u.d.indirect)u.mission=null}
+function giveMove(u,x,y,mode){if(u.panicT>0||u.d.fixed)return;u.exfil=false;u.amv=false;u.ordT=state.time;u.faceA=null;if(u.d.naval){if(!shipAt(u.d,x,y))({x,y}=navSnap(x,y,u.d))}else if(!u.d.air&&isWater(x,y))({x,y}=landP(x,y,24,u.x,u.y));u.queue=[];u.crewTo=null;u.board=null;u.repB=null;if(u.inB)exitBld(u,x,y);u.dest={x:clamp(x,8,W-8),y:clamp(y,8,H-8)};u.anchor={x:u.dest.x,y:u.dest.y};u.mode=mode;u.focus=null;u.enterB=null;u.dig=-1;if(u.d.indirect)u.mission=null}
 
 export {addKP,arrive,cardCd,deploy,flying,upkMul,giveMove,inBase,mkUnit,rank,setFM,spawnLoaded,spawnSquad,turnTurret,unloadHeli};

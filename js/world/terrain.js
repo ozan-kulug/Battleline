@@ -1,7 +1,7 @@
 /* world/terrain.js — Harita üretimi ve arazi: ızgara, yükselti, nehir, yollar, binalar, siper hatları; arazinin tampon tuvale çizilmesi; bina ve siper sorguları. */
 import {state} from '../state.js';
 import {mbctx,tc,tctx} from '../canvas.js';
-import {CROSS,CROSS_R,CS,GH,GW,H,MAP,OBJL,PI,RIV,RL,T,TAU,W,ZK,coastX,edgeX,midX,rivNear,riverOn,riverX} from '../config.js';
+import {CROSS,CROSS_R,CS,GH,GW,H,MAP,OBJL,PI,RIV,RL,T,TAU,W,ZK,coastX,edgeX,midX,rivNear,riverOn,riverX,seaOnly,shipC} from '../config.js';
 import {R,clamp,gauss,rng,segInfo} from '../utils/helpers.js';
 
 const grid=new Uint8Array(GW*GH);
@@ -256,10 +256,12 @@ const isWater=(x,y)=>cellAt(x,y)===T.WATER;
 /* gemiye uygun su: nehir ya da deniz; m: kıyıdan pay */
 const riverAt=(x,y,m=6)=>{if(x<0||y<0||x>=W||y>=H)return false;if(x<coastX(y)-m)return true;if(MAP.rp){const n=rivNear(x,y);return!!n&&n.d<RIV.hw-m}return riverOn(y)&&Math.abs(x-riverX(y))<RIV.hw-m};
 const rivNearAt=(x,y)=>MAP.rp||riverOn(y)?rivNear(x,y):null;
-/* gemi için en yakın su noktası {x,y}: nehrin merkezine doğru ya da denize */
-function navSnap(x,y){if(riverAt(x,y))return{x,y};const c=[],n=rivNearAt(x,y);if(n){const k=Math.min(n.d,RIV.hw-12);c.push({x:n.x+n.nx*k,y:n.y+n.ny*k})}if(MAP.coast)c.push({x:Math.min(x,coastX(y)-30),y});
+/* d gemisine uygun su: yalnız-deniz sınıfı açık denizde, gövde yarı eni kadar kıyıdan uzak; diğerleri riverAt */
+const shipAt=(d,x,y,m=6)=>d&&seaOnly(d)?x>=0&&y>=0&&y<H&&x<coastX(y)-m-shipC(d).B/2:riverAt(x,y,m);
+/* gemi için en yakın su noktası {x,y}: nehrin merkezine doğru ya da denize; d verilirse gemi sınıfına göre */
+function navSnap(x,y,d){if(shipAt(d,x,y))return{x,y};if(d&&seaOnly(d)){const p={x:Math.min(x,coastX(y)-30-shipC(d).B/2),y};return shipAt(d,p.x,p.y,0)?p:{x,y}}const c=[],n=rivNearAt(x,y);if(n){const k=Math.min(n.d,RIV.hw-12);c.push({x:n.x+n.nx*k,y:n.y+n.ny*k})}if(MAP.coast)c.push({x:Math.min(x,coastX(y)-30),y});
   let b={x,y},bd=1e9;for(const p of c){const d=Math.hypot(p.x-x,p.y-y);if(d<bd&&riverAt(p.x,p.y,0)){bd=d;b=p}}return b}
 /* suya düşen kara noktasını kıyıya çıkarır {x,y}: nehirde ref'in bulunduğu kıyıya, denizde sahile; pad: kıyıdan uzaklık */
 function landP(x,y,pad,rx=x,ry=y){const n=rivNearAt(x,y);if(n&&n.d<RIV.hw+pad){const s=Math.sign((rx-n.x)*n.nx+(ry-n.y)*n.ny)||1;x=n.x+n.nx*s*(RIV.hw+pad);y=n.y+n.ny*s*(RIV.hw+pad)}if(MAP.coast&&x<coastX(y)+pad)x=coastX(y)+pad;return{x,y}}
 
-export {bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawBridge,drawBridgeRuin,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,landP,navSnap,OBJ0,refreshMini,riverAt,scorch};
+export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawBridge,drawBridgeRuin,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,landP,navSnap,refreshMini,riverAt,scorch,shipAt};

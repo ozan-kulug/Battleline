@@ -1,7 +1,7 @@
 /* systems/combat.js — Savaş: hedef seçimi, atış, isabet, zırh ve delme, hasar, baskı ve moral, kritik hasar, mürettebat terki, ölüm, bina hasarı. */
 import {state} from '../state.js';
 import {tctx} from '../canvas.js';
-import {AIRMUL,ECON,GREN,H,MAP,PI,RANKN,RIV,SQUADS,TAU,W,coastX,rivNear,riverX} from '../config.js';
+import {AIRMUL,ECON,GREN,H,MAP,PI,RANKN,RIV,SQUADS,TAU,W,bodyR,coastX,rivNear,riverX,shipC} from '../config.js';
 import {P,addFire,bldDamage,charB,chute,crater,explode,igniteB,puff,ricochet,wind} from './effects.js';
 import {addKP,cardCd,flying,mkUnit,rank,unloadHeli} from './units.js';
 import {observed} from './vision.js';
@@ -16,9 +16,9 @@ const apAt=(w,d)=>w.pen==='ke'?w.ap*(1.15-.3*Math.min(1,d/(w.r||400))):w.ap;
 /* stres: zırh baskıyı azaltır, tecrübe dayanıklılığı artırır; ani büyük stres sersemletir */
 function stress(u,amt){if(!amt||flying(u)||u.abandoned)return;if(!u.d.inf)amt*=Math.max(.1,1-.08*(u.d.aF||0));amt*=1-.1*rank(u);
   u.sup=Math.min(100,u.sup+amt);u.supT=state.time;if(amt>=45&&!(u.stunT>0))u.stunT=u.d.inf?2:3}
-function panic(u){if(u.panicT>0||u.d.air||u.abandoned)return;u.panicT=u.d.inf?10:7;if(u.inB)exitBld(u,u.x+(u.side?60:-60),u.y);
+function panic(u){if(u.panicT>0||u.d.air||u.abandoned||u.d.fixed)return;u.panicT=u.d.inf?10:7;if(u.inB)exitBld(u,u.x+(u.side?60:-60),u.y);
   /* kıyı haritasında oyuncunun gemisi: nehirdeyse koydaki nehir ağzına, denizdeyse batıya kaçar */
-  if(u.d.naval&&MAP.coast&&!u.side){const n=rivNear(u.x,u.y),inR=n&&n.d<RIV.hw&&u.x>coastX(u.y);u.dest=inR?{x:MAP.rp[0][0],y:MAP.rp[0][1]}:navSnap(Math.max(30,u.x-280),u.y)}
+  if(u.d.naval&&MAP.coast&&!u.side){const n=rivNear(u.x,u.y),inR=n&&n.d<RIV.hw&&u.x>coastX(u.y);u.dest=inR?{x:MAP.rp[0][0],y:MAP.rp[0][1]}:navSnap(Math.max(30,u.x-280),u.y,u.d)}
   else if(u.d.naval){const y=clamp(u.y+(u.side?-1:1)*280,20,H-20);u.dest={x:riverX(y),y}}else u.dest={x:clamp(u.x+(u.side?1:-1)*280,10,W-10),y:clamp(u.y+gauss()*70,10,H-10)};u.mode='move';u.focus=null;u.dig=-1;u.queue=[];u.board=null;u.crewTo=null;u.enterB=null;u.mission=null;
   if(u.side===0)log(`${u.d.n} paniğe kapıldı, geri çekiliyor`,'bad')}
 function crit(t){if(R()>.35)return;const r=R();let m;
@@ -59,7 +59,7 @@ function pickTarget(u,w,i){if(!canUse(u,i))return null;let best=null,bs=1e9;
     else{const ef=eff(w,e,u.x,u.y);if(ef<.04)continue;s=d/(ef+.05)}
     if(e===u.lts[i])s*=.6;if(u.focus===e)s=-1;if(s<bs){bs=s;best=e}}return best}
 function shooterMod(u,w){let m=1+.07*rank(u);if(u.moving)m*=u.d.inf?(u.mode==='fast'?.3:.5):(u.d.stab||.55);if(!u.d.inf)m*=1-u.sup/220;if(u.d.inf){const st=effStance(u);m*=st==='prone'?(w.proneBonus||1.25):st==='crouch'?1.1:1;m*=1-u.sup/130;if(u.inB||braced(u))m*=1.15}return m}
-function muzzle(u){const l=u.d.inf?6:u.key==='tank'?32:u.key==='ifv'?22:20;return[u.x+Math.cos(u.ta)*l,u.y+Math.sin(u.ta)*l]}
+function muzzle(u){const l=u.d.inf?6:u.d.fixed?shipC(u.d).L*.36:u.key==='tank'?32:u.key==='ifv'?22:20;return[u.x+Math.cos(u.ta)*l,u.y+Math.sin(u.ta)*l]}
 function fire(u,i,t,px,py,manual){const w=u.d.w[i];if(!canUse(u,i))return false;if(u.ammo[i]!==Infinity)u.ammo[i]--;
   u.cd[i]=w.rl*(.9+R()*.2)*(1-.06*rank(u))*(u.d.inf?1:1+u.sup/150);u.reveal=w.k==='snipe'?1.2:2.5;u.flash=.08;const [ox,oy]=muzzle(u);if(t){t.shotAtT=state.time;t.lastShot={x:u.x,y:u.y,t:state.time}}
   let hit=false,tx=px,ty=py;
@@ -68,7 +68,7 @@ function fire(u,i,t,px,py,manual){const w=u.d.w[i];if(!canUse(u,i))return false;
     if(t.vcov&&!flying(t)&&sideOf(t.vcov,u.x,u.y)!==sideOf(t.vcov,t.x,t.y))p*=.6;
     if(!u.d.air&&elevAt(u.x,u.y)>elevAt(t.x,t.y)+.4)p*=1.12;
     if(flying(t))p*=(t.moving?.45:.8)*(w.k==='flak'?1.5:1)*(t.d.drone?.4:1);else if(!t.d.inf)p=Math.min(.95,p*1.35);if(t.moving)p*=.85;if(manual)p*=1.1;hit=R()<p;
-    if(hit){tx=t.x;ty=t.y}else{const s=t.d.inf?16:26;tx=t.x+gauss()*s;ty=t.y+gauss()*s}}
+    if(hit){tx=t.x;ty=t.y}else{const s=t.d.inf?16:bodyR(t.d)+6;tx=t.x+gauss()*s;ty=t.y+gauss()*s}}
   else{const d=Math.hypot(px-u.x,py-u.y),s=4+d*.02;tx=px+gauss()*s;ty=py+gauss()*s}
   const sp={rifle:1700,mg:1700,snipe:2400,auto:1500,gun:1900,rpg:520,atgm:420,rocket:700,flak:1400}[w.k]||1500;
   state.proj.push({k:w.k,x:ox,y:oy,sx:ox,sy:oy,tx,ty,t:0,T:Math.max(.03,Math.hypot(tx-ox,ty-oy)/sp),w,side:u.side,from:u.id,src:u,tgt:t,hit,ox:u.x,oy:u.y});
@@ -102,7 +102,7 @@ function kill(t){if(t.dead)return;t.dead=1;t.hp=0;
   if(t.sq)for(const m of t.sq.m)if(m!==t&&m.hp>0&&Math.hypot(m.x-t.x,m.y-t.y)<220)stress(m,22);
   if(!t.d.inf&&!flying(t))for(const m of state.units)if(m.side===t.side&&m!==t&&Math.hypot(m.x-t.x,m.y-t.y)<90)stress(m,18);if(t.inB){const b=t.inB;b.occ=b.occ.filter(x=>x!==t);layoutB(b);t.inB=null}
   if(ECON.tickets)state.tickets[t.side]=Math.max(0,state.tickets[t.side]-t.val/6);if(!t.abandoned)addKP(1-t.side,t.val*ECON.killBounty);
-  if(t.sq&&!t.sq.ret&&!t.sq.noCard&&!t.sq.m.some(m=>m!==t&&m.hp>0&&!m.gone)){t.sq.ret=1;const ix=SQUADS.findIndex(S=>S.k===t.sq.k);if(ix>=0)state.retQ.push({side:t.side,idx:ix,t:state.time+cardCd(SQUADS[ix].cost)})}state.stats.lost[t.side]++;state.stats.kills[1-t.side]++;
+  if(t.sq&&!t.sq.ret&&!t.sq.noCard&&!t.sq.m.some(m=>m!==t&&m.hp>0&&!m.gone)){t.sq.ret=1;const ix=SQUADS.findIndex(S=>S.k===t.sq.k);if(ix>=0&&!SQUADS[ix].pre)state.retQ.push({side:t.side,idx:ix,t:state.time+cardCd(SQUADS[ix].cost)})}state.stats.lost[t.side]++;state.stats.kills[1-t.side]++;
   if(t.cargo&&t.cargo.length){const cg=t.cargo,air=flying(t);t.cargo=[];cg.forEach((c,i)=>{c.inHeli=null;const a=i/cg.length*TAU;c.x=t.x+Math.cos(a)*20;c.y=t.y+Math.sin(a)*20;if(air||R()<.5)kill(c);else{state.units.push(c);c.sup=90;c.supT=state.time}})}
   if(t.ab){t.ab.st='lost';t.ab.u=null}
   if(flying(t)){explode(t.x,t.y,1.1);const cx=t.x+Math.cos(t.a)*70,cy=t.y+Math.sin(t.a)*70;state.timers.push({t:state.time+.6,f:()=>{explode(cx,cy,1.4,{dcol:'#3a3a36'});crater(cx,cy,22);addFire(cx,cy,16,25+R()*15,1.1)}});if(t.d.plane)chute(t);

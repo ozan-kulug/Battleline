@@ -1,6 +1,6 @@
 /* systems/orders.js — Oyuncu ve yapay zekâ emirleri: seçim, dizilimler, siper yerleşimi, hareket/saldırı/ateş görevi, uçak ve helikopter komutları, mod anahtarları. */
 import {state} from '../state.js';
-import {ECON,FORMN,H,MAP,PI,SQUADS,TAU,W,edgeX,riverX} from '../config.js';
+import {ECON,FORMN,H,MAP,PI,SQUADS,TAU,W,bodyR,edgeX,riverX} from '../config.js';
 import {cam,recentImp} from '../state.js';
 import {assignRunFor,strikeKey} from './air.js';
 import {bridgeAt,orderRepair} from './bridges.js';
@@ -130,8 +130,8 @@ function setPrecArm(v){state.precArm=v&&sel().some(u=>u.d.plane&&(u.pay.lgb>=1||
 function setMission(u,x,y,n){const w=u.d.w[0],d=Math.hypot(x-u.x,y-u.y);if(d>w.r||d<w.min)return false;u.mission={x,y,shell:u.shell,n,fired:0};u.dest=null;return true}
 function assignMission(x,y){const s=sel().filter(u=>u.d.indirect);let ok=0,bad=0;for(const u of s)setMission(u,x,y,state.salvo)?ok++:bad++;
   if(ok)state.marks.push({ping:1,x,y,t:0,c:'#e8a838'});if(bad)log(`${bad} topçu birimi için hedef menzil dışında`,'bad')}
-function hitUnit(wx,wy,side){let best=null,bd=1e9;for(const u of state.units){if(u.side!==side||u.abandoned)continue;if(side===1&&!state.vis[0].has(u.id))continue;const d=Math.hypot(u.x-wx,u.y-wy),r=(u.d.inf?8:22)+5/cam.z;if(d<r&&d<bd){bd=d;best=u}}return best}
-function exfilSel(){for(const u of sel()){if(u.d.plane)continue;if(u.d.naval&&MAP.coast&&!u.side)giveMove(u,20,u.y,'fast');else if(u.d.naval){const y=u.side?20:H-20;giveMove(u,riverX(y),y,'fast')}else giveMove(u,u.side?W-10:edgeX(0,u.y)+10,u.y,'fast');u.exfil=true}}
+function hitUnit(wx,wy,side){let best=null,bd=1e9;for(const u of state.units){if(u.side!==side||u.abandoned)continue;if(side===1&&!state.vis[0].has(u.id))continue;const d=Math.hypot(u.x-wx,u.y-wy),r=(u.d.inf?8:bodyR(u.d)+2)+5/cam.z;if(d<r&&d<bd){bd=d;best=u}}return best}
+function exfilSel(){for(const u of sel()){if(u.d.plane||u.d.fixed)continue;if(u.d.naval&&MAP.coast&&!u.side)giveMove(u,20,u.y,'fast');else if(u.d.naval){const y=u.side?20:H-20;giveMove(u,riverX(y),y,'fast')}else giveMove(u,u.side?W-10:edgeX(0,u.y)+10,u.y,'fast');u.exfil=true}}
 /* kalan mühimmat oranı (0–1); mühimmatsız birlik 1 sayılır */
 const ammoFrac=u=>{let s=0,n=0;u.d.w.forEach((w,i)=>{if(typeof w.ammo==='number'){s+=u.ammo[i]/w.ammo;n++}else if(w.ammo&&typeof w.ammo==='object'){let a=0,b=0;for(const k in w.ammo){a+=u.ammo[i][k];b+=w.ammo[k]}s+=a/b;n++}});return n?s/n:1};
 function exfilOut(u){let v=Math.max(ECON.exfilMin,.5*u.hp/u.d.hp*(.5+.5*ammoFrac(u)))*(u.val||0);if(u.cargo)for(const c of u.cargo){v+=.5*c.val;c.gone=true;if(c.sq&&!c.sq.m.some(m=>m.hp>0&&!m.gone&&m!==c)){c.sq.ret=1;const ix=SQUADS.findIndex(S=>S.k===c.sq.k);if(ix>=0&&!c.sq.noCard)state.retQ.push({side:c.side,idx:ix,t:state.time+ECON.exfilCd})}}
