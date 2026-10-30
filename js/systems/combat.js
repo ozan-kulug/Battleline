@@ -59,7 +59,7 @@ function pickTarget(u,w,i){if(!canUse(u,i))return null;let best=null,bs=1e9;
     else{const ef=eff(w,e,u.x,u.y);if(ef<.04)continue;s=d/(ef+.05)}
     if(e===u.lts[i])s*=.6;if(u.focus===e)s=-1;if(s<bs){bs=s;best=e}}return best}
 function shooterMod(u,w){let m=1+.07*rank(u);if(u.moving)m*=u.d.inf?(u.mode==='fast'?.3:.5):(u.d.stab||.55);if(!u.d.inf)m*=1-u.sup/220;if(u.d.inf){const st=effStance(u);m*=st==='prone'?(w.proneBonus||1.25):st==='crouch'?1.1:1;m*=1-u.sup/130;if(u.inB||braced(u))m*=1.15}return m}
-function muzzle(u){const l=u.d.inf?6:u.d.fixed?shipC(u.d).L*.36:u.key==='tank'?32:u.key==='ifv'?22:20;return[u.x+Math.cos(u.ta)*l,u.y+Math.sin(u.ta)*l]}
+function muzzle(u){const l=u.d.inf?6:u.d.fixed?shipC(u.d).L*.45:u.key==='tank'?32:u.key==='ifv'?22:20;return[u.x+Math.cos(u.ta)*l,u.y+Math.sin(u.ta)*l]}
 function fire(u,i,t,px,py,manual){const w=u.d.w[i];if(!canUse(u,i))return false;if(u.ammo[i]!==Infinity)u.ammo[i]--;
   u.cd[i]=w.rl*(.9+R()*.2)*(1-.06*rank(u))*(u.d.inf?1:1+u.sup/150);u.reveal=w.k==='snipe'?1.2:2.5;u.flash=.08;const [ox,oy]=muzzle(u);if(t){t.shotAtT=state.time;t.lastShot={x:u.x,y:u.y,t:state.time}}
   let hit=false,tx=px,ty=py;

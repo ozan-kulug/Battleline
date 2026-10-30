@@ -32,7 +32,7 @@ function place(){if($('dep').hidden)return;const bar=$('depBar'),r=$('depR');bar
   r.style.top=t+'px';r.style.bottom='auto';r.style.maxHeight=Math.max(90,innerHeight-t-res)+'px'}
 /* seçili grubu merkezi çevresinde döndürür (konum ve yön); bir birim bile geçersiz düşerse hiçbiri değişmez */
 function rotate(step){const s=movable();if(!s.length)return;const c=cent(s),co=Math.cos(step),si=Math.sin(step);
-  const cands=s.map(u=>({u,x:c.x+(u.x-c.x)*co-(u.y-c.y)*si,y:c.y+(u.x-c.x)*si+(u.y-c.y)*co})),err=placeErrs(cands).find(Boolean);
+  const cands=s.map(u=>({u,x:c.x+(u.x-c.x)*co-(u.y-c.y)*si,y:c.y+(u.x-c.x)*si+(u.y-c.y)*co,a:(u.faceA??u.a)+step})),err=placeErrs(cands).find(Boolean);
   if(err){say(`Döndürülemedi: ${err}`);return}for(const k of cands){k.u.x=k.x;k.u.y=k.y;setFace([k.u],(k.u.faceA??k.u.a)+step)}after()}
 function roster(){const rows=[];
   for(const sq of state.squads.values()){if(sq.side!==0||!sq.m.length||sq.m[0].inHeli)continue;const ms=sq.m.filter(u=>u.hp>0);if(!ms.length)continue;

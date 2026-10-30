@@ -93,16 +93,38 @@ function drawShip(c,u,x,y,s){const sc=shipC(u.d);if(sc.nav==='sea'){drawBigShip(
   c.fillStyle=col.hull;c.strokeStyle=col.dark;c.lineWidth=1.1;c.beginPath();c.moveTo(L/2+4,0);c.lineTo(L/2-8,-Wd/2);c.lineTo(-L/2,-Wd/2+1);c.lineTo(-L/2,Wd/2-1);c.lineTo(L/2-8,Wd/2);c.closePath();c.fill();c.stroke();
   c.fillStyle=col.tur;c.fillRect(-8,-3.5,10,7);if(!u.noTur){c.save();c.translate(8,0);c.rotate(u.ta-u.a);c.fillStyle=col.dark;c.fillRect(0,-1,11,2);c.fillStyle=col.tur;c.beginPath();c.arc(0,0,3.2,0,TAU);c.fill();c.restore()}
   if(u.flash>0){c.fillStyle='#ffd27a';c.beginPath();c.arc(21,0,2.5,0,TAU);c.fill()}c.restore()}
-/* büyük gemi: sivri baş, köprü üstü ve direk, dikey füze hücreleri (VLS), kıçta CIWS, başta dönen top */
-function drawBigShip(c,u,x,y,s,sc){const col=COL[u.abandoned?2:u.side],L=sc.L,B=sc.B,h=L/2;c.save();c.translate(x,y);c.scale(s,s);c.rotate(u.a);
-  c.fillStyle='rgba(0,0,0,.3)';c.beginPath();c.ellipse(3,4,h,B/2,0,0,TAU);c.fill();
-  c.fillStyle=col.hull;c.strokeStyle=col.dark;c.lineWidth=1.3;c.beginPath();c.moveTo(h+6,0);c.lineTo(h-L*.2,-B/2);c.lineTo(-h,-B/2+1.5);c.lineTo(-h,B/2-1.5);c.lineTo(h-L*.2,B/2);c.closePath();c.fill();c.stroke();
-  c.fillStyle=col.tur;c.fillRect(-L*.16,-B*.3,L*.28,B*.6);c.strokeStyle=col.dark;c.lineWidth=.8;c.strokeRect(-L*.16,-B*.3,L*.28,B*.6);
-  c.fillStyle=col.dark;c.beginPath();c.arc(-L*.02,0,B*.14,0,TAU);c.fill();
-  const vls=(x0,nx)=>{c.fillStyle=col.dark;for(let i=0;i<nx;i++)for(const yy of [-B*.18,B*.06])c.fillRect(x0+i*3.2,yy,2.4,B*.12)};vls(L*.16,u.d.ciws>1?5:3);if(u.d.ciws>1)vls(-L*.4,4);
-  c.fillStyle=col.lt;for(let k=0;k<u.d.ciws;k++){c.beginPath();c.arc(-L*.24,(k?1:-1)*(u.d.ciws>1?B*.22:0),2.2,0,TAU);c.fill()}
-  c.save();c.translate(L*.36,0);c.rotate(u.ta-u.a);c.fillStyle=col.dark;c.fillRect(0,-1.2,L*.12,2.4);c.fillStyle=col.tur;c.beginPath();c.arc(0,0,B*.2,0,TAU);c.fill();c.restore();
-  if(u.flash>0){c.fillStyle='#ffd27a';c.beginPath();c.arc(L*.36+L*.13,0,2.8,0,TAU);c.fill()}c.restore()}
+/* büyük gemi (baş +x): en önde dönen baş topu, arkasında dikey füze hücreleri (VLS; hücre sayısı füze sayısına eşit),
+   ortada köprü üstü, direk, radar panelleri ve baca, CIWS kuleleri (siyah), kıçta hangar ve helikopter pisti */
+function drawBigShip(c,u,x,y,s,sc){const col=COL[u.abandoned?2:u.side],L=sc.L,B=sc.B,h=L/2,big=u.d.ciws>1;c.save();c.translate(x,y);c.scale(s,s);c.rotate(u.a);
+  const hull=()=>{c.beginPath();c.moveTo(h+12,0);c.quadraticCurveTo(h-L*.04,-B*.42,h-L*.16,-B/2);c.lineTo(-h+L*.03,-B/2);c.lineTo(-h,-B*.4);c.lineTo(-h,B*.4);c.lineTo(-h+L*.03,B/2);c.lineTo(h-L*.16,B/2);c.quadraticCurveTo(h-L*.04,B*.42,h+12,0);c.closePath()};
+  c.fillStyle='rgba(0,0,0,.32)';c.save();c.translate(6,8);hull();c.fill();c.restore();
+  c.strokeStyle='rgba(225,235,235,.35)';c.lineWidth=3;c.beginPath();c.moveTo(h+12,0);c.lineTo(h-8,-B*.62);c.moveTo(h+12,0);c.lineTo(h-8,B*.62);c.stroke();
+  c.fillStyle=col.hull;c.strokeStyle=col.dark;c.lineWidth=2.4;hull();c.fill();c.stroke();
+  c.fillStyle='rgba(255,255,255,.06)';c.beginPath();c.moveTo(h+8,0);c.lineTo(-h+4,-B*.36);c.lineTo(-h+4,B*.36);c.closePath();c.fill();
+  c.strokeStyle='rgba(0,0,0,.25)';c.lineWidth=1;c.beginPath();c.moveTo(-h+4,0);c.lineTo(h-L*.06,0);c.stroke();
+  /* VLS: kırmızımsı panel üstünde koyu hücreler */
+  const vls=(x0,w,rows,cols)=>{const hh=B*.12*rows,y0=-hh/2;c.fillStyle='#6b3b34';c.fillRect(x0-1.5,y0-1.5,w+3,hh+3);c.strokeStyle='#2a1513';c.lineWidth=1;c.strokeRect(x0-1.5,y0-1.5,w+3,hh+3);
+    const cw=w/cols,ch=hh/rows;c.fillStyle='#1e1a19';for(let i=0;i<cols;i++)for(let j=0;j<rows;j++)c.fillRect(x0+i*cw+cw*.18,y0+j*ch+ch*.18,cw*.64,ch*.64)};
+  const ciws=(cx,cy)=>{c.fillStyle='#1d2023';c.beginPath();c.arc(cx,cy,B*.1,0,TAU);c.fill();c.fillStyle='#3a3f44';c.beginPath();c.arc(cx-B*.025,cy-B*.025,B*.05,0,TAU);c.fill();c.fillStyle='#111';c.fillRect(cx,cy-1,B*.16,2)};
+  if(big){vls(h-L*.27,L*.09,4,8);vls(-L*.27,L*.08,8,8)}else vls(h-L*.27,L*.1,3,8);
+  if(big)ciws(h-L*.31,0);
+  /* köprü üstü, pencereler, direk, radar panelleri, baca */
+  const sx0=-L*.16,sx1=L*.13;c.fillStyle=col.tur;c.strokeStyle=col.dark;c.lineWidth=1.6;c.fillRect(sx0,-B*.34,sx1-sx0,B*.68);c.strokeRect(sx0,-B*.34,sx1-sx0,B*.68);
+  c.fillStyle='rgba(255,255,255,.12)';c.fillRect(sx0+3,-B*.28,sx1-sx0-6,B*.56);
+  c.fillStyle='#1c2a33';c.fillRect(sx1-4,-B*.3,3,B*.6);
+  if(big){c.fillStyle='#2f4250';for(const [px,py] of [[sx1-10,-B*.3],[sx1-10,B*.3],[sx0+L*.1,-B*.3],[sx0+L*.1,B*.3]]){c.beginPath();c.arc(px,py,B*.07,0,TAU);c.fill()}}
+  c.fillStyle=col.dark;c.beginPath();c.arc(L*.03,0,B*.1,0,TAU);c.fill();c.strokeStyle=col.dark;c.lineWidth=1.4;c.beginPath();c.moveTo(L*.03,-B*.24);c.lineTo(L*.03,B*.24);c.stroke();
+  c.fillStyle='#2b2f33';c.fillRect(-L*.1,-B*.12,L*.05,B*.24);c.fillStyle='#111';c.fillRect(-L*.09,-B*.07,L*.03,B*.14);
+  /* kıç: CIWS, hangar, helikopter pisti */
+  ciws(-L*.2,big?-B*.18:0);if(big)ciws(-L*.2,B*.18);
+  const hx0=-L*.37,hx1=-L*.28;c.fillStyle=col.tur;c.strokeStyle=col.dark;c.lineWidth=1.4;c.fillRect(hx0,-B*.3,hx1-hx0,B*.6);c.strokeRect(hx0,-B*.3,hx1-hx0,B*.6);
+  const px0=-h+3,px1=hx0-2,pc=(px0+px1)/2,pr=Math.min(px1-px0,B*.8)/2;c.fillStyle='#4a5157';c.fillRect(px0,-B*.42,px1-px0,B*.84);
+  c.strokeStyle='rgba(240,240,230,.85)';c.lineWidth=1.6;c.beginPath();c.arc(pc,0,pr*.8,0,TAU);c.stroke();c.strokeRect(px0+2,-B*.4,px1-px0-4,B*.8);
+  c.lineWidth=2.2;c.beginPath();c.moveTo(pc-pr*.3,-pr*.35);c.lineTo(pc-pr*.3,pr*.35);c.moveTo(pc+pr*.3,-pr*.35);c.lineTo(pc+pr*.3,pr*.35);c.moveTo(pc-pr*.3,0);c.lineTo(pc+pr*.3,0);c.stroke();
+  /* baş topu: en önde, hedefe döner */
+  c.save();c.translate(h-L*.09,0);c.rotate(u.ta-u.a);c.fillStyle=col.dark;c.fillRect(0,-1.8,L*.1,3.6);c.fillStyle=col.tur;c.strokeStyle=col.dark;c.lineWidth=1.4;c.beginPath();c.arc(0,0,B*.17,0,TAU);c.fill();c.stroke();
+  if(u.flash>0){c.fillStyle='#ffd27a';c.beginPath();c.arc(L*.1+4,0,4.5,0,TAU);c.fill()}c.restore();
+  c.restore()}
 function drawUnit(c,u,x,y,s){if(u.d.naval){drawShip(c,u,x,y,s);return}if(u.d.plane)drawPlane(c,u,x,y,s);else if(u.d.drone)drawDrone(c,u,x,y,s);else if(u.d.heli)drawHeli(c,u,x,y,s);else if(u.d.inf)drawSoldier(c,u,x,y,s);else drawVeh(c,u,x,y,s)}
 function render(){
   ctx.setTransform(state.DPR,0,0,state.DPR,0,0);ctx.fillStyle='#10130e';ctx.fillRect(0,0,state.VW,state.VH);

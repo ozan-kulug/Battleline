@@ -1,6 +1,6 @@
 /* systems/army.js — Savaş öncesi ordu: ordu puanı (OP) hesabı, doğrulama, YZ ordusu ve başlangıç birliklerinin mevcut oluşturma fonksiyonlarıyla sahaya konması. */
 import {state} from '../state.js';
-import {ARMY,COMBAT,DEF,H,MAP,SQUADS,W,coastX,edgeX,riverX,seaOnly} from '../config.js';
+import {ARMY,COMBAT,DEF,H,MAP,SQUADS,W,coastX,edgeX,riverX,seaOnly,shipC} from '../config.js';
 import {spawnLoaded} from './units.js';
 import {buildingAt,isWater} from '../world/terrain.js';
 
@@ -40,9 +40,12 @@ function spawnArmy(side,list){const lanes={f:[],m:[],r:[]},sea=[];
     lanes[LANE[k]||'m'].push(i)}
   /* gemiler nehrin kendi yarısında kalan kesimlerine, kendi ucundan başlayarak dizilir */
   /* kıyı haritasında oyuncunun gemileri liman önünde, limandan başlayarak kuzeye-güneye dizilir */
-  const ys=[];if(MAP.port&&!side)for(let j=0;ys.length<sea.length;j++)ys.push(MAP.port.y+(j%2?1:-1)*Math.ceil(j/2)*110);
-  else for(let y=H-120;y>120&&ys.length<sea.length;y-=110)if(riverX(y)<W/2-40)ys.push(y);
-  sea.forEach((idx,j)=>{const y=ys[j]??H-120,x=MAP.coast&&!side?coastX(y)*.5:riverX(y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)});
+  /* kıyıda gemiler kıyıya paralel (baş kuzeye) dizilir: büyükler önce, iskelelerin güneyinden başlayıp güneye-kuzeye, aralık gövde boyuna göre; x gövde boyunca en dar deniz şeridinin ortası */
+  if(MAP.port&&!side){const Ls=idx=>shipC(DEF[SQUADS[idx].m[0]]).L,P=MAP.port.y;let up=P-170,dn=P+170;
+    [...sea].sort((a,b)=>Ls(b)-Ls(a)).forEach((idx,j)=>{const L=Ls(idx);let y;if(j%2===0){y=dn+30+L/2;dn=y+L/2}else{y=up-30-L/2;up=y-L/2}
+      const x=Math.min(...[-.5,-.25,0,.25,.5].map(t=>coastX(y+t*L)))*.5;spawnLoaded(side,idx,x,y)})}
+  else{const ys=[];for(let y=H-120;y>120&&ys.length<sea.length;y-=110)if(riverX(y)<W/2-40)ys.push(y);
+  sea.forEach((idx,j)=>{const y=ys[j]??H-120,x=riverX(y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)})}
   for(const [ln,ids] of Object.entries(lanes))ids.forEach((idx,j)=>{const y=laneY(side,j,ids.length),x=freeX(MAP.coast&&!side?edgeX(0,y)+LANEX[ln]-140:LANEX[ln],y);spawnLoaded(side,idx,side?W-x:x,side?H-y:y)})}
 
 export {DEFAULT_ARMY,addBlock,armyCap,armyCost,autoArmy,checkArmy,countOf,spawnArmy,sqOf};

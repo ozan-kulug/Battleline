@@ -21,7 +21,7 @@ function newGame(opts={}){
   if(opts.armies)for(const s of [0,1])spawnArmy(s,opts.armies[s]);
   else for(const s of [0,1]){const bx=s?W-280:280;
     for(const [idx,y] of [[0,800],[0,1500],[2,1150],[0,2200],[5,1850]]){const yy=s?H-y:y;spawnSquad(s,idx,s?bx:edgeX(0,yy)+bx,yy)}}
-  for(const u of state.units){u.a=u.ta=u.side?PI:0}
+  for(const u of state.units){u.a=u.ta=u.side?PI:0;if(u.d.fixed)u.a=-PI/2}
   cam.z=state.VW<700?.45:.62;cam.x=0;cam.y=H/2-state.VH/2/cam.z;clampCam();buildObjUI();
 }
 

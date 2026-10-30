@@ -111,11 +111,11 @@ const COVN={trench:'Siper hattı',sandbag:'Kum torbası',wall:'Taş duvar',hedge
 const STN={stand:'Ayakta',crouch:'Çömelmiş',prone:'Yatık'};
 /* gemi sınıfları — nav: 'all' nehir ve deniz (köprü altından geçer) | 'sea' yalnız açık deniz (nehre ve nehir ağzına girmez, nehir haritasında kullanılamaz);
    L/B: gövde boyu/eni (px): çizim, çarpışma, seçim ve isabet dağılımı buna göre */
-const SHIPC={patrol:{n:'Devriye',nav:'all',L:34,B:12},frigate:{n:'Fırkateyn',nav:'sea',L:74,B:16},destroyer:{n:'Destroyer',nav:'sea',L:98,B:20}};
+const SHIPC={patrol:{n:'Devriye',nav:'all',L:34,B:12},frigate:{n:'Fırkateyn',nav:'sea',L:222,B:48},destroyer:{n:'Destroyer',nav:'sea',L:294,B:60}};
 const shipC=d=>SHIPC[d.ship]||SHIPC.patrol;
 const seaOnly=d=>!!d.naval&&shipC(d).nav==='sea';
-/* birliğin gövde yarıçapı: piyade 5, araç 20, gemi boyuna göre (devriye botu 20) */
-const bodyR=d=>d.inf?5:d.naval?Math.max(20,shipC(d).L/2+3):20;
+/* birliğin gövde yarıçapı (çarpışma, seçim, isabet dağılımı): piyade 5, araç 20, gemi boyunun ~%30'u (devriye botu 20) */
+const bodyR=d=>d.inf?5:d.naval?Math.max(20,shipC(d).L*.3):20;
 /* yalnız-deniz gemileri için yol bulma kıyı payı: en geniş gövdeye göre */
 const DEEP_M=14+Math.max(...Object.values(SHIPC).filter(c=>c.nav==='sea').map(c=>c.B))/2;
 const STATEN={travel:'Seyir',deploying:'Mevzileniyor',deployed:'Mevzide',packing:'Toparlanıyor'};
