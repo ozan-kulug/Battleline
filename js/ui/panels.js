@@ -1,8 +1,8 @@
 /* ui/panels.js — Seçim paneli: birlik bilgisi ve emir düğmeleri. */
 import {state} from '../state.js';
-import {COVN,FINE,FMN,FORMN,INITN,PAYN,RANKN,STATEN,STN} from '../config.js';
+import {COVN,FINE,FMN,FORMN,INITN,MAP,PAYN,RANKN,STATEN,STN,STRIKE} from '../config.js';
 import {leash} from '../systems/initiative.js';
-import {altSel,autoSel,burnSel,dcToggle,deploySel,digSel,droneLaunchSel,droneModeToggle,exfilSel,exitSel,holdSel,landSel,radarSel,rtbSel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel,wpnSel} from '../systems/orders.js';
+import {altSel,autoSel,burnSel,dcToggle,deploySel,digSel,droneLaunchSel,droneModeToggle,exfilSel,exitSel,holdSel,landSel,radarSel,rtbSel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,setStrikeArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel,wpnSel} from '../systems/orders.js';
 import {rank} from '../systems/units.js';
 import {effStance} from '../world/cover.js';
 import {elevAt} from '../world/terrain.js';
@@ -91,11 +91,14 @@ function selButtons(s){if(!s.length)return'';const any=f=>s.some(f),all=f=>s.eve
   he=he.filter(u=>!u.d.drone);if(he.length){const b=[btn('alt',he.every(u=>u.alt==='high')?'İrtifa: yüksek':'İrtifa: alçak','Y'),btn('land',he.every(u=>u.alt==='landed')?'Kalkış':'İniş','L')];
     if(he.some(u=>u.d.cap))b.push(btn('unload',`İndir (${he.reduce((a,u)=>a+(u.cargo?u.cargo.length:0),0)})`,'U'));h+=grpH('HELİ',b)}
   const tr=s.filter(u=>u.d.cap&&!u.d.heli&&u.cargo.length);if(tr.length)h+=grpH('NAKLİYE',[btn('unload',`İndir (${tr.reduce((a,u)=>a+u.cargo.length,0)})`,'U')]);
+  /* destroyer: ücretli füze saldırıları (ad, KP bedeli, ipucunda görev) */
+  if(MAP.coast&&s.some(u=>u.side===0&&u.d.strike))h+=grpH('FÜZE SALDIRISI',Object.entries(STRIKE).map(([k,m])=>`<button class="btn${state.strikeArm===k?' on':''}" data-a="sk-${k}" type="button" title="${m.b}">${m.n} · ${m.cost} KP</button>`));
   if(rd.length)h+=grpH('RADAR',[btn('radar',rd.every(u=>u.radarOn||u.radarT>0)?'Radarı kapat':'Radarı aç','Y',rd.every(u=>u.radarOn))]);
   if(any(u=>u.d.smokeL))h+=grpH('ARAÇ',[btn('smoke',`Sis perdesi (${Math.floor(s.filter(u=>u.d.smokeL).reduce((a,u)=>a+u.smokeL,0))})`,'R')]);
   return h}
 const ACT={form:setFormSel,init:setInitSel,atk:()=>setArm(!state.attackArm),stop:stopSel,hold:holdSel,dc:dcToggle,'st-stand':()=>stanceSel('stand'),'st-crouch':()=>stanceSel('crouch'),'st-prone':()=>stanceSel('prone'),'st-auto':()=>stanceSel(null),
   dig:digSel,exit:exitSel,fast:()=>setFastArm(!state.fastArm),deploy:deploySel,mission:()=>setMissionArm(!state.missionArm),shell:shellSel,salvo:()=>{state.salvo=state.salvo===1?3:state.salvo===3?6:1},auto:autoSel,smoke:smokeSel,
   run:()=>setRunArm(!state.runArm),prec:()=>setPrecArm(!state.precArm),wpn:wpnSel,alt:altSel,burn:burnSel,rtb:rtbSel,exfil:exfilSel,land:landSel,unload:unloadSel,radar:radarSel,dlaunch:droneLaunchSel,dmode:droneModeToggle};
+for(const k in STRIKE)ACT['sk-'+k]=()=>setStrikeArm(state.strikeArm===k?null:k);
 
 export {ACT,selButtons,selInfo};

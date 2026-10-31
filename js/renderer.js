@@ -3,7 +3,7 @@ import {state} from './state.js';
 import {tr} from './i18n.js';
 import {toW} from './camera.js';
 import {ctx,fctx,fogC,mctx,mmBase,tc} from './canvas.js';
-import {COL,DEF,H,PI,TAU,W,ZK,bodyR,shipC} from './config.js';
+import {COL,DEF,H,PI,STRIKE,TAU,W,ZK,bodyR,shipC} from './config.js';
 import {cam} from './state.js';
 import {estSig,muzzle} from './systems/combat.js';
 import {dep,deployZone} from './systems/deployment.js';
@@ -49,6 +49,7 @@ function drawVeh(c,u,x,y,s){const col=COL[u.abandoned?2:u.side],k=u.key;c.save()
     c.strokeStyle='rgba(0,0,0,.35)';c.beginPath();for(let i=1;i<3;i++){c.moveTo(-L/2+i*L*.22,-Wd/2);c.lineTo(-L/2+i*L*.22,Wd/2)}c.stroke();
     c.fillStyle=col.hull;c.fillRect(L/2-L*.3,-Wd/2+1,L*.3,Wd-2);c.strokeStyle=col.dark;c.strokeRect(L/2-L*.3,-Wd/2+1,L*.3,Wd-2);
     c.fillStyle=col.lt;c.fillRect(L/2-4,-Wd/2+3,2,Wd-6)}
+  else if(k==='hfa'){c.fillStyle=col.dark;c.fillRect(-L/2+2,-Wd/2+1,L*.45,Wd-2);c.fillStyle='#2a2d30';for(let i=0;i<3;i++)for(const yy of [-Wd/4,Wd/4-1])c.fillRect(-L/2+4+i*4,yy-1,2.6,2.6)}
   else if(k==='arty'){c.fillStyle=col.dark;for(const yy of [-Wd/2-1,Wd/2-3]){c.fillRect(-L/2+3,yy,6,4);c.fillRect(L/2-12,yy,6,4);c.fillRect(-2,yy,6,4)}
     c.fillStyle=col.hull;c.fillRect(-L/2,-Wd/2,L,Wd);c.fillStyle=col.tur;c.fillRect(L/2-10,-Wd/2+1,10,Wd-2);c.strokeStyle=col.dark;c.lineWidth=1.2;c.strokeRect(-L/2,-Wd/2,L,Wd);
     const dep=u.st==='deployed'||u.st==='deploying'||u.st==='packing';
@@ -177,7 +178,7 @@ function render(){
   for(const [id,g] of ghosts){if(state.vis[0].has(id))continue;const age=state.time-g.t;ctx.globalAlpha=.42*(1-age/30);drawUnit(ctx,g.u,g.x,g.y,1);ctx.globalAlpha=Math.min(.8,1-age/30);ctx.fillStyle='#e2584b';ctx.font=`700 ${11/Math.max(z,.5)}px "Saira Condensed",sans-serif`;ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(tr('?'),g.x,g.y-(g.u.d.inf?11:24)/Math.max(z,.7));ctx.globalAlpha=1}
   // hava: uçaklar, helikopterler, füzeler, bombalar
   for(const p of state.proj){if(!SKY[p.k])continue;
-    if(p.k==='msl'){const a=p.a||0;ctx.strokeStyle='rgba(240,240,232,.95)';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(p.x-Math.cos(a)*9,p.y-Math.sin(a)*9);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.fillStyle='#ffd27a';ctx.beginPath();ctx.arc(p.x-Math.cos(a)*9,p.y-Math.sin(a)*9,1.8,0,TAU);ctx.fill()}
+    if(p.k==='msl'||p.k==='cm'){const a=p.a||0;ctx.strokeStyle='rgba(240,240,232,.95)';ctx.lineWidth=1.6;ctx.beginPath();ctx.moveTo(p.x-Math.cos(a)*9,p.y-Math.sin(a)*9);ctx.lineTo(p.x,p.y);ctx.stroke();ctx.fillStyle='#ffd27a';ctx.beginPath();ctx.arc(p.x-Math.cos(a)*9,p.y-Math.sin(a)*9,1.8,0,TAU);ctx.fill()}
     else if(p.k==='agun'){const a=Math.atan2(p.ty-p.sy,p.tx-p.sx);ctx.strokeStyle='rgba(255,226,150,.95)';ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(p.x-Math.cos(a)*18,p.y-Math.sin(a)*18);ctx.lineTo(p.x,p.y);ctx.stroke()}
     else if(p.k==='arock'){ctx.fillStyle='#ffb04a';ctx.beginPath();ctx.arc(p.x,p.y,2.4,0,TAU);ctx.fill()}
     else{const f=p.t/p.T,h=(1-f)*(p.k==='lgb'?50:40);ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.arc(p.x,p.y,2.2,0,TAU);ctx.fill();ctx.fillStyle='#2b2e27';ctx.beginPath();ctx.ellipse(p.x,p.y-h,3.6,1.8,Math.atan2(p.ty-p.sy,p.tx-p.sx),0,TAU);ctx.fill()}}
@@ -207,7 +208,7 @@ function render(){
     ctx.fillStyle='#e8a838';ctx.fillText(tr(`${m.shell==='he'?'TAH':'SİS'} ×${m.n}`),m.x,m.y-sg-fsz)}
   for(const cb of state.cbs){if(cb.det!==0||cb.t<=0)continue;ctx.globalAlpha=Math.min(1,cb.t/3);ctx.strokeStyle='#e2584b';ctx.lineWidth=2*lw;const r=16;
     ctx.beginPath();ctx.arc(cb.x,cb.y,r,0,TAU);ctx.moveTo(cb.x-r-6,cb.y);ctx.lineTo(cb.x+r+6,cb.y);ctx.moveTo(cb.x,cb.y-r-6);ctx.lineTo(cb.x,cb.y+r+6);ctx.stroke();
-    ctx.fillStyle='#e2584b';ctx.fillText(tr(cb.k==='arty'?'OBÜS?':'HAVAN?'),cb.x,cb.y+r+fsz+4);ctx.globalAlpha=1}
+    ctx.fillStyle='#e2584b';ctx.fillText(tr(cb.k==='arty'?'OBÜS?':cb.k==='hfa'?'FÜZE?':'HAVAN?'),cb.x,cb.y+r+fsz+4);ctx.globalAlpha=1}
   ctx.textBaseline='top';
   if(z>.5)for(const u of state.units){if(u.side!==0||!u.cov||u.moving)continue;const c=u.cov;ctx.strokeStyle='rgba(127,212,138,.9)';ctx.lineWidth=1.6*lw;ctx.beginPath();
     if(c.r!=null||c.t==='trench')ctx.arc(u.x,u.y,6.5,0,TAU);else{const s=segInfo(c,u.x,u.y),a=Math.atan2(s.py-u.y,s.px-u.x);ctx.arc(u.x,u.y,7,a-1.1,a+1.1)}ctx.stroke()}
@@ -226,6 +227,8 @@ function render(){
   for(const d of state.units){if(!d.op||d.side!==0||d.hp<=0||d.gone||!(d.sel||d.op.sel))continue;const o=d.op,far=Math.hypot(o.x-d.x,o.y-d.y)>o.d.ctrl*.85;
     ctx.strokeStyle=far?'rgba(226,88,75,.8)':'rgba(127,212,138,.55)';ctx.lineWidth=lw;ctx.setLineDash([3*lw,5*lw]);ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(d.x,d.y);ctx.stroke();ctx.setLineDash([])}
   {const seen=new Set();for(const o of S){if(!o.d.dronOp||seen.has(o.sq))continue;seen.add(o.sq);ctx.strokeStyle='rgba(127,212,138,.35)';ctx.lineWidth=1.2*lw;ctx.setLineDash([10*lw,8*lw]);ctx.beginPath();ctx.arc(o.x,o.y,o.d.ctrl,0,TAU);ctx.stroke();ctx.setLineDash([])}}
+  /* füze saldırısı nişanında destroyerin menzil halkası */
+  if(state.strikeArm){const m=STRIKE[state.strikeArm],u=sel().find(x=>x.d.strike);if(m&&u){ctx.strokeStyle='rgba(232,168,56,.55)';ctx.lineWidth=2*lw;ctx.setLineDash([14*lw,10*lw]);ctx.beginPath();ctx.arc(u.x,u.y,m.r,0,TAU);ctx.stroke();ctx.setLineDash([])}}
   for(const b of state.bridges){if(!b.dead&&b.hp>=b.max)continue;const cx=b.x,bw=70*lw*1.4,bh=4*lw*1.4,yy=b.y-30*lw*1.4;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(cx-bw/2,yy,bw,bh);
     ctx.fillStyle=b.dead?'#7fd48a':'#e8a838';ctx.fillRect(cx-bw/2,yy,bw*(b.dead?b.rep:b.hp/b.max),bh);if(b.dead){ctx.fillStyle='#e2584b';ctx.textBaseline='bottom';ctx.fillText(tr(b.rep>0?'ONARILIYOR':'YIKIK'),cx,yy-2*lw)}}
   if(state.phase==='deploy')drawDeployTop(z,lw);

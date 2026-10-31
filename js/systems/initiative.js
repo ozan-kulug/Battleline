@@ -7,7 +7,7 @@ import {flying} from './units.js';
 import {knownEnemies,los} from './vision.js';
 import {log} from '../ui/feedback.js';
 import {R,clamp,gauss,sideOf} from '../utils/helpers.js';
-import {exitBld} from '../world/buildings.js';
+import {bCap,exitBld} from '../world/buildings.js';
 import {buildingAt,isWater} from '../world/terrain.js';
 
 const leash=u=>(u.d.inf?80:u.d.supply?280:120)*(u.init==='free'?1.8:1);
@@ -63,7 +63,7 @@ function initiative(u,dt){
     const sl=coverSlots(c.x,c.y,ref,u.side,new Set(ms),null).filter(q=>Math.hypot(q.x-c.x,q.y-c.y)<90&&safeSpot(u,q.x,q.y));
     if(sl.length>=Math.ceil(n*.6)){const an=sl.reduce((a,q)=>Math.hypot(q.x-c.x,q.y-c.y)<Math.hypot(a.x-c.x,a.y-c.y)?q:a),pick=sl.sort((a,q)=>Math.hypot(a.x-an.x,a.y-an.y)-Math.hypot(q.x-an.x,q.y-an.y)).slice(0,n),left=[...ms];
       for(const q of pick){let bi=0,bd=1e9;left.forEach((m,i)=>{const d=Math.hypot(m.x-q.x,m.y-q.y);if(d<bd){bd=d;bi=i}});autoMove(left.splice(bi,1)[0],q.x,q.y)}note(u,'siper aldı');return}
-    for(const b of state.buildings){if(b.dead||b.cap-b.occ.length<n||(b.occ[0]&&b.occ[0].side!==u.side)||b.burn>0)continue;const bx=b.x+b.w/2,by=b.y+b.h/2;
+    for(const b of state.buildings){if(b.dead||bCap(b)-b.occ.length<n||(b.occ[0]&&b.occ[0].side!==u.side)||b.burn>0)continue;const bx=b.x+b.w/2,by=b.y+b.h/2;
       if(Math.hypot(bx-c.x,by-c.y)<90&&safeSpot(u,clamp(c.x,b.x-8,b.x+b.w+8),clamp(c.y,b.y-8,b.y+b.h+8))){for(const m of ms){m.dest={x:bx,y:by};m.mode='move';m.amv=true;m.enterB=b}note(u,'binaya girdi');return}}}
   if(sup>80&&sth&&sth.d<170&&inCov*2<n){const ox=-(sth.x-c.x)/sth.d*60,oy=-(sth.y-c.y)/sth.d*60;if(ms.every(m=>safeSpot(m,m.x+ox,m.y+oy))){for(const m of ms)autoMove(m,m.x+ox,m.y+oy);note(u,'baskı altında geri çekildi');return}}
   const anti=ms.some(m=>m.d.w[0]&&m.d.w[0].anti),rng=Math.max(...ms.map(m=>m.d.w[0]?m.d.w[0].r:0));

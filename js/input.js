@@ -4,7 +4,7 @@ import {clampCam,toW,zoomAt} from './camera.js';
 import {cvs,mm} from './canvas.js';
 import {H,SQUADS,W} from './config.js';
 import {cam,md} from './state.js';
-import {addStrike,droneModeToggle,altSel,assignMission,assignRun,autoSel,burnSel,dcToggle,deploySel,digSel,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,squadOf,stanceSel,stopSel,unloadSel} from './systems/orders.js';
+import {addStrike,setStrikeArm,strikeAt,droneModeToggle,altSel,assignMission,assignRun,autoSel,burnSel,dcToggle,deploySel,digSel,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,squadOf,stanceSel,stopSel,unloadSel} from './systems/orders.js';
 import {deploy} from './systems/units.js';
 import {cards} from './ui/deck.js';
 import {depDown,depMove,depUp} from './ui/deploy.js';
@@ -37,6 +37,7 @@ function endPointer(e){
   if(state.attackArm||state.fastArm){rightOrder(w.x,w.y,state.attackArm,d.shift);setArm(false);setFastArm(false);return}
   clickSelect(w.x,w.y,d.shift,d.alt)}
 function tapAt(sx,sy){const w=toW(sx,sy);
+  if(state.strikeArm){strikeAt(w.x,w.y);return}
   if(state.missionArm){assignMission(w.x,w.y);setMissionArm(false);return}
   if(state.runArm){assignRun(w.x,w.y,w.x,w.y);setRunArm(false);return}
   if(state.precArm){addStrike(w.x,w.y);setPrecArm(false);return}
@@ -61,8 +62,8 @@ cvs.addEventListener('pointerdown',e=>{cvs.setPointerCapture(e.pointerId);state.
   if(!state.running)return;
   if(state.dc){md[e.button]=true;return}
   const w=toW(e.offsetX,e.offsetY);
-  if(e.button===2){if(state.missionArm){setMissionArm(false);return}if(state.runArm){setRunArm(false);return}if(state.precArm){setPrecArm(false);return}rightOrder(w.x,w.y,e.ctrlKey||state.attackArm,e.shiftKey);setArm(false);setFastArm(false);return}
-  if(e.button===0){if(state.missionArm){assignMission(w.x,w.y);setMissionArm(false);return}
+  if(e.button===2){if(state.strikeArm){setStrikeArm(null);return}if(state.missionArm){setMissionArm(false);return}if(state.runArm){setRunArm(false);return}if(state.precArm){setPrecArm(false);return}rightOrder(w.x,w.y,e.ctrlKey||state.attackArm,e.shiftKey);setArm(false);setFastArm(false);return}
+  if(e.button===0){if(state.strikeArm){strikeAt(w.x,w.y);return}if(state.missionArm){assignMission(w.x,w.y);setMissionArm(false);return}
     if(state.runArm){state.drag={run:1,sx:e.offsetX,sy:e.offsetY,cx:e.offsetX,cy:e.offsetY};return}
     if(state.precArm){addStrike(w.x,w.y);if(!e.shiftKey)setPrecArm(false);return}
     state.drag={sx:e.offsetX,sy:e.offsetY,cx:e.offsetX,cy:e.offsetY,shift:e.shiftKey,alt:e.altKey,box:false}}});
@@ -91,7 +92,7 @@ addEventListener('keydown',e=>{const c=e.code;if(e.target.closest&&e.target.clos
   const map={KeyA:()=>setArm(!state.attackArm),KeyS:stopSel,KeyH:holdSel,KeyD:()=>setFastArm(!state.fastArm),KeyZ:()=>stanceSel('stand'),KeyX:()=>stanceSel('crouch'),KeyC:()=>stanceSel('prone'),KeyB:()=>stanceSel(null),
     KeyK:digSel,KeyE:exitSel,KeyG:deploySel,KeyF:()=>setMissionArm(!state.missionArm),KeyT:shellSel,KeyN:ACT.salvo,KeyO:autoSel,KeyR:smokeSel,KeyV:dcToggle,KeyJ:()=>setRunArm(!state.runArm),KeyP:()=>setPrecArm(!state.precArm),KeyY:()=>{altSel();radarSel()},KeyI:burnSel,KeyU:()=>{rtbSel();unloadSel()},KeyL:landSel,KeyM:exfilSel,
     KeyQ:()=>state.units.forEach(u=>u.sel=u.side===0&&u.x>0&&!u.d.plane),KeyW:setFormSel,Comma:setInitSel,Period:ACT.dlaunch,
-    Escape:()=>{if(state.dc){state.dc=null;updTip()}else if(state.missionArm||state.attackArm||state.runArm||state.precArm||state.fastArm){setArm(false);setMissionArm(false);setRunArm(false);setPrecArm(false);setFastArm(false)}else state.units.forEach(u=>u.sel=false)}};
+    Escape:()=>{if(state.dc){state.dc=null;updTip()}else if(state.strikeArm)setStrikeArm(null);else if(state.missionArm||state.attackArm||state.runArm||state.precArm||state.fastArm){setArm(false);setMissionArm(false);setRunArm(false);setPrecArm(false);setFastArm(false)}else state.units.forEach(u=>u.sel=false)}};
   if(map[c]){map[c]();updUI()}});
 addEventListener('keyup',e=>{state.keys[e.code]=false});
 addEventListener('blur',()=>{state.keys={};state.mouse.in=false;md.fill(false)});

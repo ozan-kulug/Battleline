@@ -36,6 +36,7 @@ export const state={
   abid:1,
   runArm:false,
   precArm:false,
+  strikeArm:null,
   deckTab:'kara',
   running:false,
   matchOn:false,

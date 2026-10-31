@@ -1,9 +1,10 @@
 /* systems/ai.js — Düşman yapay zekâsı: hafıza, nokta değerlendirmesi, görevler, saldırı aşamaları, destek birlikleri, satın alma, hava. */
 import {state} from '../state.js';
-import {AIDIF,COMBAT,ECON,H,PI,SQUADS,T,TAU,W,ZK,riverX} from '../config.js';
+import {AIDIF,COMBAT,DMG,ECON,H,PI,SQUADS,T,TAU,W,ZK,riverX} from '../config.js';
 import {assignRunFor,launch} from './air.js';
 import {brLoss,ends,nearEnd,orderRepair} from './bridges.js';
 import {zoneInt} from './zones.js';
+import {bCap} from '../world/buildings.js';
 import {orderGroup} from './orders.js';
 import {deploy,flying,giveMove,unloadHeli,upkMul} from './units.js';
 import {log} from '../ui/feedback.js';
@@ -34,7 +35,7 @@ function evalObjs(sd){const A=AIS[sd];for(const o of state.objs){o.eS[sd]=enemyN
   if(o.owner===1-sd&&!seen)o.eS[sd]=Math.max(o.eS[sd],200);o.oS[sd]=ourNear(sd,o.x,o.y,o.r+260);o.front[sd]=o.owner===sd&&state.objs.some(q=>q.owner!==sd&&dist2(q,o)<1300)}}
 function aaNear(sd,p){for(const m of AIS[sd].memA)if(m.aa&&dist2(m,p)<800)return true;return false}
 function sqGo(q,x,y,mode,key){if(q.go===key)return;q.go=key;q.goT=state.time;const lead=q.m[0];
-  if(lead.d.inf&&mode!=='fast'&&!lead.d.indirect){const b=state.buildings.filter(b=>!b.dead&&b.cap>=Math.min(q.m.length,4)&&b.occ.length===0&&!(b.burn>0)&&Math.hypot(b.x+b.w/2-x,b.y+b.h/2-y)<110).sort((a,c)=>Math.hypot(a.x+a.w/2-x,a.y+a.h/2-y)-Math.hypot(c.x+c.w/2-x,c.y+c.h/2-y))[0];
+  if(lead.d.inf&&mode!=='fast'&&!lead.d.indirect){const b=state.buildings.filter(b=>!b.dead&&bCap(b)>=Math.min(q.m.length,4)&&b.occ.length===0&&!(b.burn>0)&&Math.hypot(b.x+b.w/2-x,b.y+b.h/2-y)<110).sort((a,c)=>Math.hypot(a.x+a.w/2-x,a.y+a.h/2-y)-Math.hypot(c.x+c.w/2-x,c.y+c.h/2-y))[0];
     if(b&&R()<.6){orderGroup(q.m,b.x+b.w/2,b.y+b.h/2,mode);return}}
   orderGroup(q.m,x,y,mode)}
 function leaveTask(q){if(q.task){q.task.sqs=q.task.sqs.filter(x=>x!==q);q.task=null}q.gar=null;q.go=null}
@@ -50,7 +51,7 @@ function mergeSquads(sd,sqs){const weak=sqs.filter(q=>q.k==='inf'&&!q.task&&q.m.
 function aiPrep(sd,t){const A=AIS[sd],o=t.o;let any=false;const tg=A.memA.filter(m=>!m.air&&dist2(m,o)<o.r+220);
   const pts=tg.map(m=>({x:m.x,y:m.y,s:tg.reduce((a,n)=>a+(dist2(n,m)<90?n.v*(n.dug?1.5:1):0),0)})).sort((a,b)=>b.s-a.s);
   let k=0;for(const u of state.units){if(u.side!==sd||!u.d.indirect||u.st!=='deployed'||u.mission)continue;const p=pts[k%Math.max(1,pts.length)]||o,w=u.d.w[0],d=dist2(p,u);
-    if(d>w.r||d<w.min||u.ammo[0].he<2)continue;u.mission={x:p.x+gauss()*15,y:p.y+gauss()*15,shell:'he',n:u.key==='arty'?3:4,fired:0};any=true;k++}
+    if(d>w.r||d<w.min||u.ammo[0].he<2)continue;u.mission={x:p.x+gauss()*15,y:p.y+gauss()*15,shell:'he',n:u.key==='hfa'?1:u.key==='arty'?3:4,fired:0};any=true;k++}
   const L=dist2(t.stage,o)||1,sx=o.x+(t.stage.x-o.x)/L*(o.r+60),sy=o.y+(t.stage.y-o.y)/L*(o.r+60);let open=0;for(let f=0;f<=1.001;f+=.1){const c=cellAt(o.x+(t.stage.x-o.x)*f,o.y+(t.stage.y-o.y)*f);if(c!==T.FOREST&&c!==T.TOWN)open++}
   if(open>=8){const sm=state.units.find(u=>u.side===sd&&u.d.indirect&&u.st==='deployed'&&!u.mission&&u.ammo[0].smoke>=2&&Math.hypot(sx-u.x,sy-u.y)<u.d.w[0].r&&Math.hypot(sx-u.x,sy-u.y)>u.d.w[0].min);if(sm){sm.mission={x:sx,y:sy,shell:'smoke',n:2,fired:0};any=true}}
   const armor=tg.filter(m=>m.armor);if(tg.length&&!aaNear(sd,o))for(const e of state.airbase[sd]){if(e.st!=='ready'||(e.key!=='cas'&&e.key!=='mr'))continue;const u=launch(e);if(!u)continue;
@@ -134,14 +135,14 @@ function aiPlan(sd){const A=AIS[sd],en=1-sd;evalObjs(sd);
   aiSupport(sd,sqs,main)}
 function aiSupport(sd,sqs,main){const f=AIS[sd].focus;if(!f)return;const st=main&&main.stage?main.stage:{x:behind(sd,f.x,f.r+200),y:f.y};
   for(const q of sqs){if(!q.m.length)continue;const lead=q.m[0];
-    if(q.k==='arty'||q.k==='mortar'){for(const u of q.m)placeIndirect(sd,u,f);continue}
+    if(q.k==='arty'||q.k==='mortar'||q.k==='hfa'){for(const u of q.m)placeIndirect(sd,u,f);continue}
     if(q.k==='supply'){const brT=b=>{const e=ends(b)[sd];return enemyNear(sd,e.x,e.y,450)>40},cd=b=>{const a=b.aiNext=b.aiNext||[0,0];a[sd]=Math.max(a[sd]||0,state.time+90)};
-      if(lead.repB){const b=lead.repB;if(!b.dead)lead.repB=null;else if(brT(b)){if(lead.hp<lead.d.hp*.75)brLoss(b,sd);lead.repB=null;cd(b)}else{if(!lead.dest&&!nearEnd(lead,b))orderRepair(lead,b);continue}}
+      if(lead.repB){const b=lead.repB;if(!b.dead&&b.hp>=b.max)lead.repB=null;else if(brT(b)){if(lead.hp<lead.d.hp*.75)brLoss(b,sd);lead.repB=null;cd(b)}else{if(!lead.dest&&!nearEnd(lead,b))orderRepair(lead,b);continue}}
       /* hasarlı kendi noktası: güvenliyse bir kamyon gidip noktada durarak onarır */
       if(lead.repZ){const o=lead.repZ;if(o.owner!==sd||zoneInt(o)>=.99||enemyNear(sd,o.x,o.y,450)>40)lead.repZ=null;else{if(!lead.dest&&Math.hypot(lead.x-o.x,lead.y-o.y)>o.r*.6)sqGo(q,o.x,o.y,'move','z'+o.n);continue}}
       {const zo=state.objs.find(o=>o.owner===sd&&!o.br&&zoneInt(o)<.7&&enemyNear(sd,o.x,o.y,450)<=40&&!state.units.some(u=>u.side===sd&&u.repZ===o));if(zo){lead.repZ=zo;sqGo(q,zo.x,zo.y,'move','z'+zo.n);continue}}
       const need=state.units.find(u=>u.side===sd&&!u.abandoned&&!u.d.supply&&!u.sees.length&&dist2(u,lead)<1100&&((u.d.veh&&u.hp<u.d.hp*.6)||(u.d.indirect&&u.ammo[0].he<5)));
-      if(!need){const db=state.bridges.find(b=>b.dead&&state.time>=((b.aiNext||[])[sd]||0)&&!brT(b)&&!state.units.some(u=>u.side===sd&&u.repB===b));if(db){orderRepair(lead,db);cd(db);continue}}
+      if(!need){const db=state.bridges.find(b=>(b.dead||b.hp<b.max*DMG.brHeavy)&&state.time>=((b.aiNext||[])[sd]||0)&&!brT(b)&&!state.units.some(u=>u.side===sd&&u.repB===b));if(db){orderRepair(lead,db);cd(db);continue}}
       if(need)sqGo(q,need.x-fwd(sd)*40,need.y,'move','n'+need.id);else if(state.time-(q.goT||0)>25)sqGo(q,behind(sd,st.x,180),st.y+gauss()*60,'move','s'+Math.round(st.x/120)+'_'+Math.round(st.y/120));continue}
     if(q.k==='recon'){const L=dist2(st,f)||1;sqGo(q,f.x+(st.x-f.x)/L*(f.r+240),f.y+(st.y-f.y)/L*(f.r+240)+gauss()*60,'move','r'+f.n);continue}
     if(q.k==='manpads'||q.k==='shorad'){sqGo(q,behind(sd,st.x,110),st.y+gauss()*90,'move','aa'+f.n+(main?main.id:''));continue}

@@ -1,6 +1,6 @@
 /* systems/orders.js — Oyuncu ve yapay zekâ emirleri: seçim, dizilimler, siper yerleşimi, hareket/saldırı/ateş görevi, uçak ve helikopter komutları, mod anahtarları. */
 import {state} from '../state.js';
-import {ECON,FORMN,H,MAP,PI,SQUADS,TAU,W,bodyR,edgeX,riverX} from '../config.js';
+import {ECON,FORMN,H,MAP,PI,SQUADS,STRIKE,T,TAU,W,bodyR,edgeX,riverX} from '../config.js';
 import {cam,recentImp} from '../state.js';
 import {assignRunFor,strikeKey} from './air.js';
 import {bridgeAt,orderRepair} from './bridges.js';
@@ -10,8 +10,9 @@ import {addKP,flying,giveMove,setFM,unloadHeli} from './units.js';
 import {knownEnemies} from './vision.js';
 import {log,updTip} from '../ui/feedback.js';
 import {angDiff,gauss} from '../utils/helpers.js';
-import {exitBld} from '../world/buildings.js';
-import {buildingAt,chainAt,chainProj,isWater} from '../world/terrain.js';
+import {bCap,exitBld} from '../world/buildings.js';
+import {buildingAt,cellAt,chainAt,chainProj,isWater} from '../world/terrain.js';
+import {fireMissile} from './combat.js';
 
 function hitAbandoned(wx,wy){for(const u of state.units)if(u.abandoned&&(u.side===0||state.vis[0].has(u.id))&&Math.hypot(u.x-wx,u.y-wy)<22+5/cam.z)return u;return null}
 /* ---------- emirler ---------- */
@@ -76,7 +77,7 @@ function placeInCover(list,wx,wy,prim){const n=list.length,ref=cen(list);
 function orderGroup(list,wx,wy,mode){list=list.filter(u=>!u.d.air);if(!list.length)return;const inf=list.filter(u=>u.d.inf),veh=list.filter(u=>!u.d.inf);
   const b=buildingAt(wx,wy);
   /* binaya tıklanınca mangalar bütün olarak yerleşir: sığmayan manga en yakın boş binaya, o da yoksa önüne dizilir */
-  if(b&&inf.length){const free=state.buildings.filter(o=>!o.dead&&o.cap>0&&!(o.burn>0)&&!(o.occ[0]&&o.occ[0].side!==inf[0].side)&&Math.hypot(o.x+o.w/2-wx,o.y+o.h/2-wy)<170).sort((p,q)=>(p===b?-1:q===b?1:Math.hypot(p.x+p.w/2-wx,p.y+p.h/2-wy)-Math.hypot(q.x+q.w/2-wx,q.y+q.h/2-wy))),room=new Map(free.map(o=>[o,o.cap-o.occ.length]));
+  if(b&&inf.length){const free=state.buildings.filter(o=>!o.dead&&bCap(o)>0&&!(o.burn>0)&&!(o.occ[0]&&o.occ[0].side!==inf[0].side)&&Math.hypot(o.x+o.w/2-wx,o.y+o.h/2-wy)<170).sort((p,q)=>(p===b?-1:q===b?1:Math.hypot(p.x+p.w/2-wx,p.y+p.h/2-wy)-Math.hypot(q.x+q.w/2-wx,q.y+q.h/2-wy))),room=new Map(free.map(o=>[o,o.cap-o.occ.length]));
     const out=[];for(const g of groupSq(inf)){const o=free.find(o=>room.get(o)>=g.length);if(!o){out.push(...g);continue}room.set(o,room.get(o)-g.length);g.forEach(u=>{giveMove(u,o.x+o.w/2,o.y+o.h/2,mode);u.enterB=o})}
     if(out.length)squadForm(out,wx,wy+b.h/2+30,mode,'line',faceAt(out,wx,wy));formation(veh,wx,wy,mode,48);return}
   let prim=null,bd=34;for(const ch of state.chains){const pj=chainProj(ch,wx,wy);if(pj.d<bd){bd=pj.d;prim={ch,s:pj.s}}}
@@ -89,7 +90,7 @@ function orderGroup(list,wx,wy,mode){list=list.filter(u=>!u.d.air);if(!list.leng
   else if(inf.length)squadForm(inf,wx,wy,mode,type,face);
   else formationEx(list,wx,wy,mode,type,face)}
 function rightOrder(wx,wy,atk,shift){const all=sel();if(!all.length)return;
-  {const trk=all.filter(u=>u.d.supply),db=trk.length?bridgeAt(wx,wy,40):null;if(db&&db.dead){trk.forEach(u=>orderRepair(u,db));state.marks.push({ping:1,x:wx,y:wy,t:0,c:'#7fd48a'});return}}
+  {const trk=all.filter(u=>u.d.supply),db=trk.length?bridgeAt(wx,wy,40):null;if(db&&(db.dead||db.hp<db.max)){trk.forEach(u=>orderRepair(u,db));state.marks.push({ping:1,x:wx,y:wy,t:0,c:'#7fd48a'});return}}
   if(shift){const snap=new Map(all.map(u=>[u,{dest:u.dest,q:u.queue.slice(),mode:u.mode}]));rightOrder(wx,wy,atk,false);
     for(const [u,o] of snap){if(!o.dest||!u.dest||u.d.plane)continue;const nd=u.dest;u.dest=o.dest;u.queue=[...o.q,nd];u.mode=o.mode}return}
   const ab=hitAbandoned(wx,wy),infS=all.filter(u=>u.d.inf&&!u.d.indirect);
@@ -150,7 +151,24 @@ function shellSel(){const s=sel().filter(u=>u.d.indirect);const v=s.every(u=>u.s
 function autoSel(){const s=sel().filter(u=>u.d.indirect);const v=!s.every(u=>u.auto);for(const u of s)u.auto=v}
 function smokeSel(){for(const u of sel())if(u.d.smokeL)popSmoke(u)}
 function dcToggle(){if(state.dc){state.dc=null}else{const s=sel();if(s.length===1&&!s[0].d.air){state.dc=s[0];state.dc.dest=null;state.dc.focus=null;setArm(false);setMissionArm(false)}}updTip()}
+/* destroyer füze saldırısı (yalnız Kıyı Cephesi, oyuncunun seçili destroyeri): nişan modu state.strikeArm, hedef ve menzil doğrulaması;
+   KP yalnızca geçerli hedefe fırlatılınca bir kez düşer, geçersiz hedef/yetersiz KP/iptal para harcamaz */
+const strikeShip=()=>MAP.coast?sel().find(u=>u.side===0&&u.d.strike&&u.hp>0&&!u.abandoned):null;
+function setStrikeArm(k){state.strikeArm=k&&STRIKE[k]&&strikeShip()?k:null;if(state.strikeArm)state.attackArm=state.missionArm=state.runArm=state.precArm=state.fastArm=false;updTip()}
+function strikeTarget(m,x,y){const ok=e=>e.side===1&&e.hp>0&&!e.gone&&!e.abandoned&&state.vis[0].has(e.id);
+  if(m.tgt==='land')return cellAt(x,y)===T.WATER?{err:'Tomahawk yalnızca kara hedefine atılır'}:{x,y};
+  if(m.tgt==='shipAir'){const a=state.units.find(e=>ok(e)&&flying(e)&&Math.hypot(e.x-x,e.y-y)<45);if(a)return{t:a,air:1}}
+  const s=state.units.find(e=>ok(e)&&e.d.naval&&Math.hypot(e.x-x,e.y-y)<bodyR(e.d)+30);if(s)return{t:s};
+  return{err:m.tgt==='ship'?'Denizde görünen düşman gemisi yok':'Görünen düşman gemisi ya da hava hedefi yok'}}
+function strikeAt(x,y){const k=state.strikeArm,m=STRIKE[k],u=strikeShip();if(!m||!u){setStrikeArm(null);return}
+  const r=strikeTarget(m,x,y);if(r.err){log(r.err,'bad');return}
+  const tx=r.t?r.t.x:x,ty=r.t?r.t.y:y;if(Math.hypot(tx-u.x,ty-u.y)>m.r){log(`${m.n}: menzil dışında`,'bad');return}
+  if(state.money[0]<m.cost){log(`${m.n}: yetersiz KP (${m.cost} KP gerekli)`,'bad');return}
+  state.money[0]-=m.cost;
+  if(r.air)fireMissile(u,m.w,r.t,u.x,u.y);
+  else state.proj.push({k:'cm',mk:k,x:u.x,y:u.y,ax:tx,ay:ty,a:Math.atan2(ty-u.y,tx-u.x),tgt:r.t||null,land:m.tgt==='land',sp:m.sp,w:m.w,side:0,from:u.id});
+  u.reveal=3;log(`${m.n} ateşlendi (−${m.cost} KP)`,'good');setStrikeArm(null)}
 function setArm(v){state.attackArm=v&&sel().length>0;if(state.attackArm)state.missionArm=state.runArm=state.precArm=state.fastArm=false;updTip()}
 function setMissionArm(v){state.missionArm=v&&sel().some(u=>u.d.indirect);if(state.missionArm)state.attackArm=state.runArm=state.precArm=false;updTip()}
 
-export {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,cen,coverSlots,droneLaunchSel,droneModeToggle,groupSq,squadOf,dcToggle,deploySel,digSel,exfilOut,exfilSel,exitSel,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,shellSel,smokeSel,stanceSel,stopSel,unloadSel,wpnSel};
+export {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,cen,coverSlots,dcToggle,deploySel,digSel,droneLaunchSel,droneModeToggle,exfilOut,exfilSel,exitSel,groupSq,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,setStrikeArm,shellSel,smokeSel,squadOf,stanceSel,stopSel,strikeAt,unloadSel,wpnSel};

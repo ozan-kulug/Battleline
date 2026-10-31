@@ -7,7 +7,7 @@ import {addKP,cardCd,flying,mkUnit,rank,unloadHeli} from './units.js';
 import {observed} from './vision.js';
 import {log,updTip} from '../ui/feedback.js';
 import {R,angDiff,clamp,gauss,sideOf} from '../utils/helpers.js';
-import {exitBld,layoutB} from '../world/buildings.js';
+import {bCap,exitBld,layoutB} from '../world/buildings.js';
 import {braced,coverMult,effStance,splashCov} from '../world/cover.js';
 import {drawRubble,elevAt,navSnap,scorch} from '../world/terrain.js';
 
@@ -31,6 +31,8 @@ function bail(t){t.abandoned=true;t.dest=null;t.focus=null;t.queue=[];t.sel=fals
   for(let i=0;i<n;i++){const a=t.a+PI+(i-(n-1)/2)*.6,c=mkUnit(t.side,'crew',t.x+Math.cos(a)*24,t.y+Math.sin(a)*24,sq,25);c.veh=t;c.sup=70;c.supT=state.time;sq.m.push(c)}
   log(t.side===0?`${t.d.n}: mürettebat aracı terk etti`:`Düşman ${t.d.n.toLocaleLowerCase('tr')} mürettebatı aracı terk etti`,t.side===0?'bad':'good')}
 function hurtB(b,a,fc){if(!b||b.dead)return;const f0=b.hp/b.max;b.hp-=a;const f1=b.hp/b.max;if(b.hp<=0){destroyB(b);return}
+  /* kapasite canla düşer: fazla askerler (kullanılamaz binada hepsi) kendi taraflarına doğru çıkar */
+  {const c=bCap(b);if(b.occ.length>c){const out=b.occ.slice(c);for(const u of out)exitBld(u,b.x+b.w/2+(u.side?90:-90),b.y+b.h/2);if(out.some(u=>u.side===0))log(c?'Bina hasar aldı, bazı askerler dışarı çıktı':'Bina kullanılamaz hale geldi, askerler dışarı çıktı','bad')}}
   if(f0>.66&&f1<=.66)bldDamage(b,1);if(f0>.33&&f1<=.33)bldDamage(b,2);if(fc&&!(b.burn>0)&&R()<fc)igniteB(b)}
 function destroyB(b){b.dead=true;const occ=b.occ;b.occ=[];
   for(const u of occ){u.inB=null;u.x=b.x+R()*b.w;u.y=b.y+R()*b.h;u.hp-=10;u.sup=100;u.supT=state.time;if(u.hp<=0)kill(u)}
@@ -79,9 +81,9 @@ function fireIndirect(u,tx,ty,shell,mission){const w=u.d.w[0];u.ammo[0][shell]--
   const d=Math.hypot(tx-u.x,ty-u.y);let sig=estSig(u,d,observed(u.side,tx,ty),mission?mission.fired:-1);
   const ix=tx+gauss()*sig,iy=ty+gauss()*sig,TT=w.base+d/w.spd;const [mx,my]=muzzle(u);
   state.proj.push({k:w.k,shell,x:mx,y:my,sx:mx,sy:my,tx:ix,ty:iy,t:0,T:TT,h:Math.min(420,TT*95),w,side:u.side,from:u.id});
-  puff(mx,my,u.key==='arty'?10:4,'rgba(220,210,190,.5)',u.key==='arty'?30:14);
+  puff(mx,my,u.key==='hfa'?14:u.key==='arty'?10:4,'rgba(220,210,190,.5)',u.key==='hfa'?40:u.key==='arty'?30:14);
   state.cbs.push({det:1-u.side,x:u.x+gauss()*45,y:u.y+gauss()*45,t:10,k:u.key,done:0})}
-function estSig(u,d,obs,fired){const w=u.d.w[0];let s=(w.scat+d*(u.key==='arty'?.03:.04))*(obs?.55:1);return s*(fired>=0?Math.max(.4,1-.15*fired):.85)}
+function estSig(u,d,obs,fired){const w=u.d.w[0];let s=(w.scat+d*(w.dsc??(u.key==='arty'?.03:.04)))*(obs?.55:1);return s*(fired>=0?Math.max(.4,1-.15*fired):.85)}
 function damage(t,w,sx,sy,mult){if(t.hp<=0)return;let d;
   if(flying(t))d=w.dmg*(AIRMUL[w.k]??1);
   else if(t.d.inf)d=w.dmg*(w.soft??1);

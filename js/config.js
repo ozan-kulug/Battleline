@@ -20,6 +20,8 @@ const DEF={
  mortar:{n:'Havancı',tag:'HVN',hp:20,sp:28,vis:360,inf:1,indirect:1,setupT:2.5,packT:1.5,trav:3,w:[{n:'81 mm havan',r:950,min:120,dmg:45,ap:3,rl:3.5,k:'mortar',splash:45,soft:1,sup:45,ammo:{he:18,smoke:6},scat:26,spd:380,base:1.4}]},
  ifv:{n:'Zırhlı Muharebe Aracı',tag:'ZMA',hp:240,stab:.65,crew:2,cap:6,sp:72,vis:460,aF:4,aS:3,aR:2,turn:2.2,ts:2.6,veh:1,smokeL:2,w:[{n:'25 mm top',r:350,dmg:15,ap:3,rl:.5,acc:.45,k:'auto',pen:'ke',ammo:150,sup:12},{n:'Eş eksenli makineli',r:300,dmg:5,ap:0,rl:.2,acc:.3,k:'mg',sup:8}]},
  tank:{n:'Ana Muharebe Tankı',tag:'TNK',hp:400,stab:.85,aps:3,era:{F:2,S:2},crew:3,sp:56,vis:420,aF:10,aS:6,aR:4,turn:1.4,ts:1.7,veh:1,smokeL:2,w:[{n:'120 mm top',r:440,dmg:120,ap:13,rl:4,acc:.7,k:'gun',pen:'ke',ammo:36,soft:.7,splash:22,sup:40,anti:1},{n:'Makineli tüfek',r:300,dmg:5,ap:0,rl:.2,acc:.3,k:'mg',sup:8}]},
+ /* hassas füze aracı: topçu altyapısıyla (mevzilenme, ateş görevi, karşı batarya) çalışır; dsc: mesafeye bağlı dağılım (obüs .03), bld: binaya hasar çarpanı */
+ hfa:{n:'Hassas Füze Aracı',tag:'HFA',hp:170,sp:62,vis:300,aF:1,aS:1,aR:1,turn:1.4,veh:1,indirect:1,setupT:6,packT:4,trav:.8,w:[{n:'Güdümlü füze',r:3200,min:500,dmg:180,ap:8,rl:10,k:'arty',splash:70,soft:1.2,sup:80,ammo:{he:6,smoke:0},scat:12,dsc:.006,spd:900,base:1.5,bld:3}]},
  arty:{n:'155 mm Obüs',tag:'OBS',hp:150,sp:40,vis:280,aF:1,aS:1,aR:1,turn:1.2,veh:1,indirect:1,setupT:5,packT:3,trav:.6,w:[{n:'155 mm obüs',r:1700,min:350,dmg:110,ap:6,rl:7,k:'arty',splash:80,soft:1.2,sup:70,ammo:{he:24,smoke:8},scat:55,spd:450,base:2.2}]},
  supply:{n:'İkmal Kamyonu',tag:'İKM',hp:120,sp:68,vis:300,aF:1,aS:1,aR:1,turn:2,veh:1,supply:1,w:[]},
  crew:{n:'Mürettebat',tag:'MÜR',hp:16,sp:36,vis:380,inf:1,w:[{n:'Tabanca',r:150,dmg:5,ap:0,rl:1.2,acc:.35,k:'rifle',sup:2}]},
@@ -48,7 +50,7 @@ const DEF={
    {n:'Yakın savunma topu',r:380,dmg:10,ap:2,rl:.06,acc:.35,k:'flak',pen:'ke',ammo:1500,sup:8},
    {n:'Kısa menzilli füze',k:'irm',aaOnly:1,rLow:800,rHigh:800,dmg:110,pk:.66,rl:3,ammo:8,msp:700},
    {n:'Orta menzilli füze (24 hücre)',k:'sam',aaOnly:1,rLow:900,rHigh:2100,dmg:140,pk:.72,rl:3.5,ammo:24,msp:820,needRadar:1}]},
- destroyer:{n:'Destroyer',tag:'DST',hp:2300,sp:0,vis:1150,aF:5,aS:5,aR:4,turn:0,ts:1,veh:1,naval:1,ship:'destroyer',fixed:1,radar:1,ciws:2,ciwsR:460,ciwsPk:.6,w:[
+ destroyer:{n:'Destroyer',tag:'DST',hp:2300,sp:0,vis:1150,aF:5,aS:5,aR:4,turn:0,ts:1,veh:1,naval:1,ship:'destroyer',fixed:1,radar:1,strike:1,ciws:2,ciwsR:460,ciwsPk:.6,w:[
    {n:'127 mm baş topu',r:1400,dmg:95,ap:9,rl:3,acc:.5,k:'gun',pen:'ke',ammo:400,soft:1,splash:55,sup:55},
    {n:'Yakın savunma topu',r:460,dmg:11,ap:2,rl:.05,acc:.38,k:'flak',pen:'ke',ammo:1500,sup:8},
    {n:'Yakın savunma topu',r:460,dmg:11,ap:2,rl:.05,acc:.38,k:'flak',pen:'ke',ammo:1500,sup:8},
@@ -87,6 +89,7 @@ const SQUADS=[
  /* pre: yalnızca ordu kurma ekranında alınır, maç içi destede yoktur */
  {k:'frig',n:'Fırkateyn',cost:380,m:['frigate'],cat:'deniz',pre:1},
  {k:'dest',n:'Destroyer',cost:620,m:['destroyer'],cat:'deniz',pre:1},
+ {k:'hfa',n:'Hassas Füze Aracı',cost:260,m:['hfa'],cat:'kara'},
 ];
 /* uçak mühimmatı */
 const AW={
@@ -104,7 +107,7 @@ const PAYN={gun:'30 mm top (geçiş)',rockets:'Roket salvosu',lgb:'Lazer güdüm
 const AIRMUL={rifle:.15,mg:.45,snipe:.2,auto:.9,flak:1,gun:.6,rpg:.8,atgm:.9,rocket:.5};
 const RANKN=['Acemi','Tecrübeli','Kıdemli','Elit'];
 const FMN={free:'Serbest ateş',ret:'Sadece karşılık',hold:'Ateş kes'};
-const AVE={inf:[14,5],mech:[8,10],at:[8,6],recon:[6,5],mortar:[5,7],supply:[5,8],ifv:[8,10],tank:[8,14],arty:[4,16],manpads:[8,6],shorad:[5,12],sam:[3,14],heliA:[5,10],heliT:[5,10],cas:[4,0],mr:[3,0],sead:[3,0],ftr:[4,0],bmb:[2,0],rec:[3,0],tb2:[3,0],uav:[6,6],fpv:[6,6],dronop:[5,7],bot:[3,8],frig:[2,0],dest:[1,0]};
+const AVE={inf:[14,5],mech:[8,10],at:[8,6],recon:[6,5],mortar:[5,7],supply:[5,8],ifv:[8,10],tank:[8,14],arty:[4,16],manpads:[8,6],shorad:[5,12],sam:[3,14],heliA:[5,10],heliT:[5,10],cas:[4,0],mr:[3,0],sead:[3,0],ftr:[4,0],bmb:[2,0],rec:[3,0],tb2:[3,0],uav:[6,6],fpv:[6,6],dronop:[5,7],bot:[3,8],frig:[2,0],dest:[1,0],hfa:[3,18]};
 SQUADS.forEach(S=>{S.av=AVE[S.k][0];S.eta=AVE[S.k][1]});
 const GREN={n:'El bombası',dmg:40,ap:1,splash:34,soft:1,sup:50,k:'gren'};
 const COVN={trench:'Siper hattı',sandbag:'Kum torbası',wall:'Taş duvar',hedge:'Çit',fox:'Tüfekçi çukuru',rubble:'Enkaz',wreck:'Araç enkazı'};
@@ -121,6 +124,18 @@ const DEEP_M=14+Math.max(...Object.values(SHIPC).filter(c=>c.nav==='sea').map(c=
 /* stratejik nokta sağlamlığı (systems/zones.js) — dead: bu oranın altında yıkık · reach: bağlı binalar nokta yarıçapının kaç katında ·
    repT: tek kamyonla tam onarım süresi (sn) · trucks: hızlandıran en fazla kamyon · revive: yıkık bina bu oranda canla yeniden kurulur */
 const ZONE={dead:.25,reach:1.25,repT:60,trucks:3,revive:.5};
+/* destroyer'ın ücretli füze saldırıları (Codex araştırması DESTROYER_MISSILE_STRIKE_RESEARCH.md; değerler ilk denge önerisi, gerçek menzil/başlık değil).
+   tgt: land kara noktası | ship denizde görünen düşman gemisi (uçuşta izlenir) | shipAir düşman gemisi ya da görünen hava hedefi.
+   r: menzil (dünya birimi), sp: uçuş hızı; w: vuruş (kara vuruşu bomba gibi alan, bina ve köprü hasarı verir; bld: binaya hasar çarpanı). Destroyer'ın 96 hücrelik hava savunmasından ayrıdır */
+const STRIKE={
+ tlam:{n:'Tomahawk',cost:280,tgt:'land',r:5200,sp:380,w:{n:'Tomahawk',k:'bomb',dmg:260,ap:9,splash:100,sup:100,soft:1.3,top:1,bld:5},b:'Kara koordinatı · birlik, bina, köprü'},
+ mst:{n:'Maritime Strike Tomahawk',cost:340,tgt:'ship',r:5200,sp:380,w:{n:'Maritime Strike Tomahawk',k:'bomb',dmg:720,ap:22,splash:30,sup:60,top:1},b:'Denizdeki düşman gemisi · uçuşta izler'},
+ sm6:{n:'SM-6',cost:380,tgt:'shipAir',r:2800,sp:1100,w:{n:'SM-6',k:'sam',dmg:270,ap:12,splash:20,sup:40,pk:.92,msp:1100},b:'Hava hedefi ya da düşman gemisi · hızlı, gemiye hasarı düşük'},
+ hpn:{n:'RGM-84 Harpoon',cost:140,tgt:'ship',r:2000,sp:300,w:{n:'RGM-84 Harpoon',k:'bomb',dmg:520,ap:18,splash:24,sup:60,top:1},b:'Gemisavar · kısa/orta menzil'},
+};
+/* hasara göre işlev kaybı — brHeavy: köprü bu sağlamlığın altında ağır araçları (tank, topçu, füze aracı) geçirmez · brLight: bunun altında yalnız piyade geçer ·
+   brSlow: hasarlı köprüde araç hızı çarpanı · bldOut: bina bu canın altında kullanılamaz (içindekiler çıkar); kapasite ve koruma canla düşer */
+const DMG={brHeavy:.66,brLight:.33,brSlow:.6,bldOut:.33};
 const STATEN={travel:'Seyir',deploying:'Mevzileniyor',deployed:'Mevzide',packing:'Toparlanıyor'};
 /* ---------- harita ---------- */
 /* İki harita: 'river' (nehir haritayı ikiye böler; 3 köprü, 2 sığ geçit; merkeze göre simetrik) ve
@@ -202,7 +217,7 @@ const ARMYCAT=[
  {k:'recon',n:'Keşif',m:['recon','uav']},
  {k:'tank',n:'Tanklar',m:['tank']},
  {k:'arm',n:'Zırhlı Araçlar',m:['ifv','mech']},
- {k:'arty',n:'Topçu',m:['mortar','arty']},
+ {k:'arty',n:'Topçu',m:['mortar','arty','hfa']},
  {k:'aa',n:'Hava Savunma',m:['manpads','shorad','sam']},
  {k:'air',n:'Hava Kuvvetleri',m:['heliA','heliT','fpv','cas','mr','sead','ftr','bmb','rec','tb2']},
  {k:'sup',n:'Destek',m:['supply']},
@@ -212,6 +227,6 @@ const ROLE={inf:'Hat piyadesi · nokta tutar, el bombası atar',at:'Zırh avcıs
  tank:'Ağır zırh · cephenin ana vurucu gücü',ifv:'Piyade desteği · 25 mm top, sis perdesi',mech:'ZMA ve içinde tam piyade mangası',mortar:'Hafif dolaylı ateş · çabuk mevzilenir',arty:'Ağır dolaylı ateş · çok uzun menzil',
  manpads:'Omuzdan füze · alçak uçan hedefler',shorad:'Uçaksavar topu ve kızılötesi füze',sam:'Radarlı uzun menzil · ARM hedefi olur',heliA:'Tanksavar füzesi, roket ve top',heliT:'Nakliye helikopteri ve içinde piyade mangası',
  fpv:'Üç kamikaze dron · hedefe dalar',cas:'30 mm top veya roket koşusu',mr:'Lazer güdümlü bomba ve hava-hava füzesi',sead:'Radar avcısı · anti-radyasyon füzesi',ftr:'Hava üstünlüğü · düşman uçağı avlar',
- bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron',bot:'Nehir devriyesi · makineli tüfek, köprü altından geçer',frig:'Sabit savaş gemisi · 76 mm top, CIWS, 24 hücre füze',dest:'Sabit savaş gemisi · 127 mm top, 2× CIWS, 96 hücre füze'};
+ bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron',bot:'Nehir devriyesi · makineli tüfek, köprü altından geçer',frig:'Sabit savaş gemisi · 76 mm top, CIWS, 24 hücre füze',dest:'Sabit savaş gemisi · 127 mm top, 2× CIWS, 96 hücre füze',hfa:'Uzun menzilli hassas füze · 6 atış, binalara ağır hasar'};
 
-export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEEP_M,DEF,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SHIPC,SQUADS,STATEN,STN,T,TAU,W,ZK,ZONE,bodyR,coastX,edgeX,midX,riverOn,riverX,rivNear,seaOnly,setMap,shipC,shoreD};
+export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEEP_M,DEF,DMG,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SHIPC,SQUADS,STATEN,STN,STRIKE,T,TAU,W,ZK,ZONE,bodyR,coastX,edgeX,midX,riverOn,riverX,rivNear,seaOnly,setMap,shipC,shoreD};

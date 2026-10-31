@@ -1,7 +1,7 @@
 /* world/terrain.js — Harita üretimi ve arazi: ızgara, yükselti, nehir, yollar, binalar, siper hatları; arazinin tampon tuvale çizilmesi; bina ve siper sorguları. */
 import {state} from '../state.js';
 import {mbctx,tc,tctx} from '../canvas.js';
-import {CROSS,CROSS_R,CS,GH,GW,H,MAP,OBJL,PI,RIV,RL,T,TAU,W,ZK,coastX,edgeX,midX,rivNear,riverOn,riverX,seaOnly,shipC} from '../config.js';
+import {CROSS,CROSS_R,CS,DMG,GH,GW,H,MAP,OBJL,PI,RIV,RL,T,TAU,W,ZK,coastX,edgeX,midX,rivNear,riverOn,riverX,seaOnly,shipC} from '../config.js';
 import {R,clamp,gauss,rng,segInfo} from '../utils/helpers.js';
 
 const grid=new Uint8Array(GW*GH);
@@ -108,6 +108,7 @@ function genTerrain(){
     return{n:`Köprü ${i+1}`,...b,hp:1200,max:1200,dead:false,rep:0,cells}});
   else state.bridges=CROSS.filter(c=>c.t==='bridge').map(c=>{const cells=[];for(let cy=Math.max(0,(c.y-16)/CS|0);cy<=Math.min(GH-1,(c.y+16)/CS|0);cy++)for(let cx=0;cx<GW;cx++){const px=cx*CS+8,py=cy*CS+8;if(Math.abs(px-riverX(py))<=RIV.hw+2)cells.push(cy*GW+cx)}
     return{n:c.y<1000?'Kuzey köprüsü':c.y<2000?'Orta köprü':'Güney köprüsü',x:riverX(c.y),y:c.y,dx:1,dy:0,L:RIV.hw+24,hp:1200,max:1200,dead:false,rep:0,cells}});
+  brIdx.clear();for(const b of state.bridges)for(const i of b.cells)brIdx.set(i,b);
   // tahkimat
   const add=(t,a,b)=>{state.covers.push({t,x1:a[0],y1:a[1],x2:b[0],y2:b[1]});state.covers.push({t,x1:W-a[0],y1:H-a[1],x2:W-b[0],y2:H-b[1]})};
   const poly=(t,p)=>{for(let i=0;i<p.length-1;i++)add(t,p[i],p[i+1])};
@@ -254,6 +255,11 @@ const isWater=(x,y)=>cellAt(x,y)===T.WATER;
 /* gemiler için: nehir yatağı (köprü ve sığ geçit hücreleri dahil, köprünün altından geçilir) */
 /* m: kıyıdan pay. Hareket gerçek su kenarına kadar (2), yol bulma ortaya yakın (14) kullanır, viraj dönüşünde gemi kıyıya takılmasın */
 /* gemiye uygun su: nehir ya da deniz; m: kıyıdan pay */
+/* köprü hücre dizini (genTerrain kurar) ve hasarlı köprüden geçiş: ağır araç DMG.brHeavy, diğer araç DMG.brLight sağlamlık ister; piyade her zaman geçer */
+const brIdx=new Map();
+const bridgeOn=(x,y)=>{const cx=x/CS|0,cy=y/CS|0;return cx<0||cy<0||cx>=GW||cy>=GH?null:brIdx.get(cy*GW+cx)||null};
+const heavyVeh=d=>!!d.veh&&(d.aF>=6||!!d.indirect);
+function brPass(b,d){if(!b||b.dead||d.inf||d.air||d.naval)return true;return b.hp/b.max>=(heavyVeh(d)?DMG.brHeavy:DMG.brLight)}
 const riverAt=(x,y,m=6)=>{if(x<0||y<0||x>=W||y>=H)return false;if(x<coastX(y)-m)return true;if(MAP.rp){const n=rivNear(x,y);return!!n&&n.d<RIV.hw-m}return riverOn(y)&&Math.abs(x-riverX(y))<RIV.hw-m};
 const rivNearAt=(x,y)=>MAP.rp||riverOn(y)?rivNear(x,y):null;
 /* d gemisine uygun su: yalnız-deniz sınıfı açık denizde, gövde yarı eni kadar kıyıdan uzak; diğerleri riverAt */
@@ -264,4 +270,4 @@ function navSnap(x,y,d){if(shipAt(d,x,y))return{x,y};if(d&&seaOnly(d)){const p={
 /* suya düşen kara noktasını kıyıya çıkarır {x,y}: nehirde ref'in bulunduğu kıyıya, denizde sahile; pad: kıyıdan uzaklık */
 function landP(x,y,pad,rx=x,ry=y){const n=rivNearAt(x,y);if(n&&n.d<RIV.hw+pad){const s=Math.sign((rx-n.x)*n.nx+(ry-n.y)*n.ny)||1;x=n.x+n.nx*s*(RIV.hw+pad);y=n.y+n.ny*s*(RIV.hw+pad)}if(MAP.coast&&x<coastX(y)+pad)x=coastX(y)+pad;return{x,y}}
 
-export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawBld,drawBridge,drawBridgeRuin,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,landP,navSnap,refreshMini,riverAt,scorch,shipAt};
+export {OBJ0,bgrid,bridgeOn,brIdx,brPass,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawBld,drawBridge,drawBridgeRuin,drawCover,drawRubble,elev,elevAt,genTerrain,grid,heavyVeh,isWater,landP,navSnap,refreshMini,riverAt,scorch,shipAt};

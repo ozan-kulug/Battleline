@@ -1,5 +1,6 @@
 /* ui/feedback.js — Oyuncuya geri bildirim: olay akışı (log), mod ipucu, oyun sonu ekranı. */
 import {state} from '../state.js';
+import {STRIKE} from '../config.js';
 import {tr} from '../i18n.js';
 import {$} from '../utils/helpers.js';
 
@@ -7,6 +8,7 @@ function updTip(){const t=$('modeTip');let s='';
   if(state.dc)s=`DOĞRUDAN KONTROL — ${state.dc.d.n}: WASD sür, fareyle nişan al, sol tık ana silah${state.dc.d.w[1]?', sağ tık ikincil':''} · V veya Esc ile çık`;
   else if(state.missionArm)s='ATEŞ GÖREVİ — hedef noktaya tıkla · sağ tık iptal';
   else if(state.runArm)s='SALDIRI KOŞUSU — başlangıçtan bitişe sürükle (tıklarsan uçağın geliş yönünde koşu) · sağ tık iptal';
+  else if(state.strikeArm){const m=STRIKE[state.strikeArm];s=`FÜZE SALDIRISI (${m.n}, ${m.cost} KP) — hedefe tıkla · sağ tık iptal`}
   else if(state.precArm)s='HASSAS VURUŞ — hedefe tıkla, Shift ile birden fazla hedef · sağ tık bitir';
   else if(state.attackArm)s='SALDIRI HAREKETİ — hedef noktaya tıkla';
   else if(state.fastArm)s='HIZLI HAREKET — hedefe tıkla; birlikler ateş etmeden koşar';

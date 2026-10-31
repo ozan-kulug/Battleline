@@ -21,22 +21,31 @@ function updMissile(p,dt,i){p.life-=dt;const t=p.tgt;state.curSrc=p.from;
   p.a=Math.atan2(dy,dx);p.x+=dx/d*st;p.y+=dy/d*st}
 /* gemi yakın savunması (CIWS): her top, bu gemiye doğru gelen en yakın düşman roket, füze, bomba ya da mermisiyle uğraşır;
    vurursa mermi havada patlar, ıskalarsa (p.pd) diğer toplar yine deneyebilir. Her angajman 0,7 sn sürer */
-const PD_K=new Set(['rpg','atgm','rocket','arock','gun','arty','mortar','bomb','lgb','msl']);
+const PD_K=new Set(['rpg','atgm','rocket','arock','gun','arty','mortar','bomb','lgb','msl','cm']);
 function pointDefense(dt){for(const u of state.units){const n=u.d.ciws;if(!n||u.hp<=0||u.abandoned)continue;const cd=u.pdCd||(u.pdCd=[]),near=bodyR(u.d)+60;
   for(let m=0;m<n;m++){cd[m]=(cd[m]||0)-dt;if(cd[m]>0)continue;let bi=-1,bd=u.d.ciwsR;
-    for(let i=0;i<state.proj.length;i++){const p=state.proj[i];if(p.side===u.side||!PD_K.has(p.k)||(p.pd||0)>=n)continue;const tx=p.k==='msl'?p.ax:p.tx,ty=p.k==='msl'?p.ay:p.ty;
+    for(let i=0;i<state.proj.length;i++){const p=state.proj[i];if(p.side===u.side||!PD_K.has(p.k)||(p.pd||0)>=n)continue;const gd=p.k==='msl'||p.k==='cm',tx=gd?p.ax:p.tx,ty=gd?p.ay:p.ty;
       if(Math.hypot(tx-u.x,ty-u.y)>near)continue;const d=Math.hypot(p.x-u.x,p.y-u.y);if(d<bd){bd=d;bi=i}}
     if(bi<0)continue;const p=state.proj[bi];cd[m]=.7;u.flash=.05;state.parts.push({x:u.x,y:u.y,vx:(p.x-u.x)*2,vy:(p.y-u.y)*2,life:0,max:.3,r:1.2,g:1,col:'rgba(255,210,120,.9)'});
     if(R()<u.d.ciwsPk){state.proj.splice(bi,1);explode(p.x,p.y,.35)}else p.pd=(p.pd||0)+1}}}
+/* destroyer füzesi (cm): kara noktasına ya da izlediği düşman gemisine uçar. Kara vuruşu bomba vuruşu gibi alan, bina (nokta sağlamlığı) ve köprü hasarı verir;
+   gemi hedefi yok olursa son konuma düşer ve ıskalar */
+function updCruise(p,dt,i){const t=p.tgt;if(t&&!p.lost){if(t.hp>0&&!t.gone){p.ax=t.x;p.ay=t.y}else p.lost=1}
+  const dx=p.ax-p.x,dy=p.ay-p.y,d=Math.hypot(dx,dy),st=p.sp*dt;if(R()<.9)state.parts.push({x:p.x,y:p.y,vx:gauss()*3,vy:gauss()*3,life:0,max:1.4,r:2,g:8,col:'rgba(225,222,212,.45)'});
+  if(d<=st+6){state.proj.splice(i,1);state.curSrc=p.from;
+    if(p.land){impact({k:'bomb',w:p.w,tx:p.ax,ty:p.ay,side:p.side,from:p.from});return}
+    if(t&&!p.lost&&t.hp>0&&Math.hypot(t.x-p.ax,t.y-p.ay)<bodyR(t.d)+30){explode(p.ax,p.ay,1.1);damage(t,p.w,p.x,p.y,1)}else puff(p.ax,p.ay,6,'rgba(225,235,235,.6)',24);return}
+  p.a=Math.atan2(dy,dx);p.x+=dx/d*st;p.y+=dy/d*st}
 function updProj(dt){pointDefense(dt);for(let i=state.proj.length-1;i>=0;i--){const p=state.proj[i];
   if(p.k==='msl'){updMissile(p,dt,i);continue}
+  if(p.k==='cm'){updCruise(p,dt,i);continue}
   if(p.k==='atgm'&&p.hit&&p.src){const s=p.src,t=p.tgt;if(s.hp<=0||s.gone||s.sup>70||s.stunT>0||s.panicT>0||(t&&!los(s.x,s.y,t.x,t.y,s.inB?s.inB.i:-1,t.inB?t.inB.i:-1,s.d.heli&&s.alt==='high',s.d.heli&&s.alt==='high'))){p.hit=false;p.tx+=gauss()*34;p.ty+=gauss()*34}}
   if(p.hit&&p.tgt&&p.tgt.hp>0){p.tx=p.tgt.x;p.ty=p.tgt.y}
   p.t+=dt;const f=Math.min(1,p.t/p.T);p.x=p.sx+(p.tx-p.sx)*f;p.y=p.sy+(p.ty-p.sy)*f;
   if((p.k==='atgm'||p.k==='rpg'||p.k==='arock'||p.k==='rocket')&&R()<.7)state.parts.push({x:p.x,y:p.y,vx:gauss()*4,vy:gauss()*4,life:0,max:.9,r:2,g:7,col:'rgba(210,205,190,.45)'});
   if(f>=1){state.proj.splice(i,1);impact(p)}}}
 function bldSplash(x,y,w,side){for(const b of state.buildings){if(b.dead)continue;const cx=clamp(x,b.x,b.x+b.w),cy=clamp(y,b.y,b.y+b.h),d=Math.hypot(cx-x,cy-y);
-  if(d<w.splash){hurtB(b,w.dmg*1.3*(1-d/w.splash),w.k==='bomb'||w.k==='lgb'?.4:.22);for(const o of [...b.occ])if(o.side!==side&&R()<.5)damage(o,w,x,y,.25)}}}
+  if(d<w.splash){hurtB(b,w.dmg*1.3*(w.bld||1)*(1-d/w.splash),w.k==='bomb'||w.k==='lgb'?.4:.22);for(const o of [...b.occ])if(o.side!==side&&R()<.5)damage(o,w,x,y,.25)}}}
 function impact(p){const w=p.w,x=p.tx,y=p.ty;state.curSrc=p.from;if(p.shell!=='smoke')hitBridge(x,y,w,p.k);
   if(p.hit&&p.tgt&&p.tgt.hp>0&&p.tgt.aps>=1&&p.tgt.apsCd<=0&&!p.tgt.abandoned&&(p.k==='rpg'||p.k==='atgm'||p.k==='rocket'||p.k==='gun')&&R()<(w.pen==='heat'?.8:.3)){
     const t=p.tgt,a=Math.atan2(p.oy-t.y,p.ox-t.x);t.aps--;t.apsCd=4;explode(t.x+Math.cos(a)*18,t.y+Math.sin(a)*18,.3);return}

@@ -12,7 +12,7 @@ function effStance(u){if(!u.d.inf)return'stand';if(u.panicT>0||(u.mode==='fast'&
 /* siperden ateş: silah dayanaklı, isabet artar */
 const braced=u=>u.d.inf&&!u.moving&&u.cov&&u.cov.t!=='hedge';
 function coverMult(t,sx,sy){if(!t.d.inf)return 1;let m=1;const c=t.cov;
-  if(t.inB)m=.3;
+  if(t.inB){const f=Math.max(0,t.inB.hp/t.inB.max);m=.3+.4*(1-f)}
   else if(c){if(c.t==='fox')m=.33;else if(c.t==='rubble')m=.45;else if(c.t==='wreck')m=.5;
     else if(c.t==='trench'){const la=Math.atan2(c.y2-c.y1,c.x2-c.x1),aa=Math.atan2(sy-t.y,sx-t.x);m=Math.abs(Math.sin(aa-la))<.34?.85:.3}
     else if(sideOf(c,sx,sy)!==sideOf(c,t.x,t.y))m=c.t==='hedge'?.65:c.t==='wall'?.28:.3}
