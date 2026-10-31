@@ -1,7 +1,7 @@
 /* systems/effects.js — Görsel efektler: parçacıklar, patlama, krater, yangın (orman ve bina), siper yıkımı, iz, efekt çizimi. */
 import {state} from '../state.js';
 import {ctx,tctx} from '../canvas.js';
-import {CS,GH,GW,PI,T,TAU} from '../config.js';
+import {BLAST,CS,GH,GW,PI,T,TAU} from '../config.js';
 import {cam} from '../state.js';
 import {R,gauss,segInfo} from '../utils/helpers.js';
 import {buildChains,cellAt,grid,scorch} from '../world/terrain.js';
@@ -29,10 +29,16 @@ function explode(x,y,s,o={}){s=Math.max(.2,s);
   for(let i=0;i<3+6*s;i++){const a=R()*TAU,v=20+R()*50*s;P({k:'dust',x:x+Math.cos(a)*10*s,y:y+Math.sin(a)*10*s,vx:Math.cos(a)*v,vy:Math.sin(a)*v,r:9*s,g:38*s,max:1.5+R()*1.5,a:.55})}
   for(let i=0;i<2+5*s;i++)P({k:'smoke',x:x+gauss()*10*s,y:y+gauss()*10*s,z:5,vx:gauss()*8,vy:gauss()*8,vz:16+R()*24,r:11*s,g:(38+R()*30)*s,max:4+R()*4*s,a:.55});
   addShake(x,y,s)}
+/* içeriğe göre büyük patlama (BLAST profili): ana patlama, şok halkası, gecikmeli ikincil patlamalar, kara duman sütunu ve uzun yangın; sc boyut çarpanı */
+function blast(x,y,k,sc=1){const b=BLAST[k];if(!b)return;if(b.s){explode(x,y,b.s*sc,{dcol:'#1d1b18'});if(b.s*sc>=2.5)P({k:'ring',x,y,r:12*sc,g:200*sc,max:.7,a:.6})}
+  for(let i=0;i<b.sec;i++)state.timers.push({t:state.time+.25+R()*b.secT,f:()=>{const a=R()*TAU,d=R()*24*sc;explode(x+Math.cos(a)*d,y+Math.sin(a)*d,b.secS*sc*(.6+R()*.7),{dcol:'#26241f'});
+    if(b.spark)for(let j=0;j<7;j++){const q=R()*TAU,v=120+R()*260;P({k:'spark',x,y,z:6,vx:Math.cos(q)*v,vy:Math.sin(q)*v,vz:150+R()*250,r:1,g:1,max:.6+R()*.6})}}});
+  for(let i=0;i<b.smoke;i++)state.timers.push({t:state.time+R()*Math.min(20,b.fire?b.fire[1]*.3:4),f:()=>P({k:'smoke',x:x+gauss()*14*sc,y:y+gauss()*14*sc,z:12,vx:wind.x*.4+gauss()*5,vy:wind.y*.4+gauss()*5,vz:28+R()*30,r:14*sc,g:(70+R()*60)*sc,max:9+R()*9,a:.7})});
+  if(b.fire){const [r,t,int]=b.fire;addFire(x,y,r*sc,t*(.85+R()*.3),int,b.hurt)}}
 function crater(x,y,rad){scorch(x,y,rad*1.4);const g=tctx;g.strokeStyle='rgba(125,104,70,.45)';g.lineWidth=Math.max(2,rad*.25);g.beginPath();g.arc(x,y,rad*.7,0,TAU);g.stroke();
   g.fillStyle='rgba(18,14,9,.6)';g.beginPath();g.arc(x,y,rad*.5,0,TAU);g.fill();for(let i=0;i<rad;i++){const a=R()*TAU,d=rad*(.7+R()*.7);g.fillStyle=R()<.5?'rgba(90,72,46,.6)':'rgba(40,32,22,.6)';g.fillRect(x+Math.cos(a)*d,y+Math.sin(a)*d,1+R()*3,1+R()*3)}state.mmDirty=true}
 function ricochet(x,y,sx,sy){const a0=Math.atan2(y-sy,x-sx);for(let i=0;i<5;i++){const a=a0+PI+gauss()*1.1,v=120+R()*200;P({k:'spark',x,y,z:6,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vz:40+R()*120,r:1,g:1,max:.25+R()*.3})}P({k:'flash',x,y,r:3,g:12,max:.08})}
-function addFire(x,y,r,t,int){state.fires.push({x,y,r,t,int:int||1});if(cellAt(x,y)===T.FOREST)igniteAt(x,y,r+10,.5)}
+function addFire(x,y,r,t,int,hurt){state.fires.push({x,y,r,t,int:int||1,hurt:!!hurt});if(cellAt(x,y)===T.FOREST)igniteAt(x,y,r+10,.5)}
 /* orman yangını: hücreden hücreye rüzgâr yönünde yayılır, yanan alan kömürleşir */
 function igniteCell(cx,cy){if(fireCells.size>380||cx<0||cy<0||cx>=GW||cy>=GH)return;const i=cy*GW+cx;if(grid[i]!==T.FOREST||fireCells.has(i))return;fireCells.set(i,20+R()*12)}
 function igniteAt(x,y,rad,ch){const c0=x/CS|0,r0=y/CS|0,n=Math.ceil(rad/CS);for(let cy=r0-n;cy<=r0+n;cy++)for(let cx=c0-n;cx<=c0+n;cx++)if(Math.hypot(cx*CS+8-x,cy*CS+8-y)<=rad&&R()<ch)igniteCell(cx,cy)}
@@ -91,4 +97,4 @@ function drawFX(add){const c=ctx;
 function mkSmoke(x,y,r,life){return{x,y,r,age:0,life,b:Array.from({length:7},()=>[gauss()*r*.45,gauss()*r*.45,.45+R()*.35])}}
 function popSmoke(u){if(u.smokeL<1)return;u.smokeL--;for(let i=-1;i<=1;i++){const a=u.ta+i*.55;state.smokes.push(mkSmoke(u.x+Math.cos(a)*60,u.y+Math.sin(a)*60,46,25))}puff(u.x,u.y,6,'rgba(230,230,225,.5)',16)}
 
-export {P,SPR,addFire,bldDamage,breakCover,charB,chute,crater,damageCovers,drawFX,explode,fireCells,flareFx,igniteAt,igniteB,mkSmoke,popSmoke,puff,ricochet,trackMark,updCells,updParts,wind};
+export {P,SPR,addFire,blast,bldDamage,breakCover,charB,chute,crater,damageCovers,drawFX,explode,fireCells,flareFx,igniteAt,igniteB,mkSmoke,popSmoke,puff,ricochet,trackMark,updCells,updParts,wind};

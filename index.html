@@ -31,7 +31,7 @@
 <div id="bottom">
   <div id="mmw" class="panel"><canvas id="mm" width="220" height="138"></canvas></div>
   <div id="deckw" class="panel">
-    <div class="dh"><div id="tabs"><button type="button" data-tab="kara" class="on">KARA</button><button type="button" data-tab="hsv">HAVA SAVUNMA</button><button type="button" data-tab="hava">HAVA</button><button type="button" data-tab="deniz" hidden>DENİZ</button></div><button id="dmBtn" class="btn" type="button" hidden title="Kamikaze dron yönetimi (⇧.)"></button><small id="inc">+4/sn</small><b id="kp">300 KP</b></div>
+    <div class="dh"><div id="tabs"><button type="button" data-tab="kara" class="on">KARA</button><button type="button" data-tab="hsv">HAVA SAVUNMA</button><button type="button" data-tab="hava">HAVA</button><button type="button" data-tab="deniz" hidden>DENİZ</button></div><button id="dmBtn" class="btn" type="button" hidden title="Kamikaze dron yönetimi (⇧.)"></button><button id="lzBtn" class="btn" type="button" hidden title="Kara takviyelerinin kıyıda çıkacağı yeri seç">Çıkarma noktası</button><small id="inc">+4/sn</small><b id="kp">300 KP</b></div>
     <div id="deck"></div>
     <div id="eta"></div>
   </div>
@@ -81,6 +81,7 @@
     </ul>
     <div id="langRow" class="optRow"><span>LANGUAGE · DİL</span><button class="btn" type="button" data-lang="en">English</button><button class="btn" type="button" data-lang="tr">Türkçe</button></div>
     <div id="droneRow" class="optRow"><span>KAMİKAZE DRONLAR</span><button class="btn on" type="button" data-dm="0">Operatör yönetir</button><button class="btn" type="button" data-dm="1">Ben yönetirim</button></div>
+    <div id="modeRow" class="optRow"><span>MOD</span><button class="btn on" type="button" data-mode="normal">Normal</button><button class="btn" type="button" data-mode="sandbox">Sandbox</button></div>
     <div id="mapRow" class="optRow"><span>HARİTA</span><button class="btn on" type="button" data-map="river">Nehir Hattı</button><button class="btn" type="button" data-map="coast">Kıyı Cephesi</button></div>
     <div id="diffRow"><span>DÜŞMAN KOMUTANI</span><button class="btn" type="button" data-d="easy">Kolay</button><button class="btn on" type="button" data-d="normal">Normal</button><button class="btn" type="button" data-d="hard">Zor</button></div>
     <button class="go" id="goBtn" type="button">ORDU KUR</button>

@@ -25,9 +25,9 @@ function mkUnit(side,key,x,y,sq,val){const d=DEF[key];const u={id:state.uid++,si
 function spawnSquad(side,idx,cx,cy,dx,dy){const S=SQUADS[idx],sq={id:state.sqid++,side,k:S.k,n:S.n,m:[],orderT:0,obj:null,dug:0};state.squads.set(sq.id,sq);
   const val=S.cost/S.m.length;S.m.forEach((k,i)=>{const off=(i-(S.m.length-1)/2)*16;const u=mkUnit(side,k,cx+(side?1:-1)*(i%2)*12,cy+off,sq,val);
     if(dx!=null)u.dest={x:dx+(R()-.5)*16,y:dy+off};sq.m.push(u)});return sq}
-function deploy(side,idx){const S=SQUADS[idx];if(!S||S.pre||(side&&MAP.coast&&S.m.length&&DEF[S.m[0]].naval)||(!MAP.coast&&S.m.length&&seaOnly(DEF[S.m[0]]))||state.money[side]<S.cost||state.avail[side][idx]<1)return false;state.money[side]-=S.cost;state.avail[side][idx]--;
+function deploy(side,idx){const S=SQUADS[idx];if(!S||S.pre||(side&&MAP.coast&&S.m.length&&DEF[S.m[0]].naval)||(!MAP.coast&&S.m.length&&seaOnly(DEF[S.m[0]]))||(!(side===0&&state.sandbox)&&(state.money[side]<S.cost||state.avail[side][idx]<1)))return false;if(!(side===0&&state.sandbox)){state.money[side]-=S.cost;state.avail[side][idx]--}
   if(S.plane){state.airbase[side].push({id:state.abid++,key:S.plane,side,st:'prep',t:10,u:null});if(side===0)log(`${S.n} hava üssüne ulaştı, hazırlanıyor`,'good');return true}
-  state.pending[side].push({idx,t:S.eta});if(side===0)log(`${S.n} çağrıldı, ${S.eta} sn içinde cephede`,'');return true}
+  const eta=side===0&&state.sandbox?3:S.eta;state.pending[side].push({idx,t:eta});if(side===0)log(`${S.n} çağrıldı, ${eta} sn içinde cephede`,'');return true}
 /* manga + taşıdığı piyade (nakliye helikopteri ve mekanize piyade içinde bir piyade mangasıyla gelir) */
 function spawnLoaded(side,idx,cx,cy,dx,dy){const S=SQUADS[idx],sq=spawnSquad(side,idx,cx,cy,dx,dy);
   if(S.k==='heliT'||S.k==='mech'){const h=sq.m[0],cs=spawnSquad(side,0,h.x,h.y);cs.noCard=1;for(const c of cs.m){c.inHeli=h;h.cargo.push(c)}state.units=state.units.filter(u=>!u.inHeli)}return sq}
@@ -35,7 +35,7 @@ function arrive(side,idx){const S=SQUADS[idx];
   /* gemi nehrin kendi yarısındaki ucundan girer (oyuncu güneyden, rakip kuzeyden); kıyı haritasında oyuncunun gemisi açık denizden limana */
   if(S.m.length&&DEF[S.m[0]].naval&&MAP.port&&!side){const y=MAP.port.y+gauss()*60;spawnLoaded(side,idx,20,y,coastX(y)-110,y)}
   else if(S.m.length&&DEF[S.m[0]].naval){const y0=side?20:H-20,y1=side?240:H-240;spawnLoaded(side,idx,riverX(y0),y0,riverX(y1),y1)}
-  else{const lane=[700,1500,2300][R()*3|0]+gauss()*80;spawnLoaded(side,idx,side?W+30:edgeX(0,lane)-30,lane,side?W-200-R()*40:edgeX(0,lane)+200+R()*40,lane)}
+  else{const lane=!side&&MAP.coast&&state.lz?state.lz.y+gauss()*50:[700,1500,2300][R()*3|0]+gauss()*80;spawnLoaded(side,idx,side?W+30:edgeX(0,lane)-30,lane,side?W-200-R()*40:edgeX(0,lane)+200+R()*40,lane)}
   if(side===0)log(`${S.n} cepheye ulaştı`,'good');return true}
 /* üs: kara birliği kendi kenarında (kıyıda sahilde); oyuncunun gemisi kıyı haritasında liman çevresinde */
 const inBase=u=>u.d.fixed?false:u.d.naval?(MAP.port&&!u.side?Math.hypot(u.x-MAP.port.x,u.y-MAP.port.y)<320:u.side?u.y<260:u.y>H-260):u.side?u.x>W-230:u.x<edgeX(0,u.y)+230;

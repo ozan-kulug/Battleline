@@ -1,6 +1,6 @@
 /* systems/orders.js — Oyuncu ve yapay zekâ emirleri: seçim, dizilimler, siper yerleşimi, hareket/saldırı/ateş görevi, uçak ve helikopter komutları, mod anahtarları. */
 import {state} from '../state.js';
-import {ECON,FORMN,H,MAP,PI,SQUADS,STRIKE,T,TAU,W,bodyR,edgeX,riverX} from '../config.js';
+import {ECON,FORMN,H,MAP,PI,RIV,SQUADS,STRIKE,T,TAU,W,bodyR,coastX,edgeX,rivNear,riverX} from '../config.js';
 import {cam,recentImp} from '../state.js';
 import {assignRunFor,strikeKey} from './air.js';
 import {bridgeAt,orderRepair} from './bridges.js';
@@ -9,7 +9,7 @@ import {popSmoke} from './effects.js';
 import {addKP,flying,giveMove,setFM,unloadHeli} from './units.js';
 import {knownEnemies} from './vision.js';
 import {log,updTip} from '../ui/feedback.js';
-import {angDiff,gauss} from '../utils/helpers.js';
+import {angDiff,clamp,gauss} from '../utils/helpers.js';
 import {bCap,exitBld} from '../world/buildings.js';
 import {buildingAt,cellAt,chainAt,chainProj,isWater} from '../world/terrain.js';
 import {fireMissile} from './combat.js';
@@ -154,7 +154,7 @@ function dcToggle(){if(state.dc){state.dc=null}else{const s=sel();if(s.length===
 /* destroyer füze saldırısı (yalnız Kıyı Cephesi, oyuncunun seçili destroyeri): nişan modu state.strikeArm, hedef ve menzil doğrulaması;
    KP yalnızca geçerli hedefe fırlatılınca bir kez düşer, geçersiz hedef/yetersiz KP/iptal para harcamaz */
 const strikeShip=()=>MAP.coast?sel().find(u=>u.side===0&&u.d.strike&&u.hp>0&&!u.abandoned):null;
-function setStrikeArm(k){state.strikeArm=k&&STRIKE[k]&&strikeShip()?k:null;if(state.strikeArm)state.attackArm=state.missionArm=state.runArm=state.precArm=state.fastArm=false;updTip()}
+function setStrikeArm(k){state.strikeArm=k&&STRIKE[k]&&strikeShip()?k:null;if(state.strikeArm)state.attackArm=state.missionArm=state.runArm=state.precArm=state.fastArm=state.lzArm=false;updTip()}
 function strikeTarget(m,x,y){const ok=e=>e.side===1&&e.hp>0&&!e.gone&&!e.abandoned&&state.vis[0].has(e.id);
   if(m.tgt==='land')return cellAt(x,y)===T.WATER?{err:'Tomahawk yalnızca kara hedefine atılır'}:{x,y};
   if(m.tgt==='shipAir'){const a=state.units.find(e=>ok(e)&&flying(e)&&Math.hypot(e.x-x,e.y-y)<45);if(a)return{t:a,air:1}}
@@ -163,12 +163,17 @@ function strikeTarget(m,x,y){const ok=e=>e.side===1&&e.hp>0&&!e.gone&&!e.abandon
 function strikeAt(x,y){const k=state.strikeArm,m=STRIKE[k],u=strikeShip();if(!m||!u){setStrikeArm(null);return}
   const r=strikeTarget(m,x,y);if(r.err){log(r.err,'bad');return}
   const tx=r.t?r.t.x:x,ty=r.t?r.t.y:y;if(Math.hypot(tx-u.x,ty-u.y)>m.r){log(`${m.n}: menzil dışında`,'bad');return}
-  if(state.money[0]<m.cost){log(`${m.n}: yetersiz KP (${m.cost} KP gerekli)`,'bad');return}
-  state.money[0]-=m.cost;
+  if(!state.sandbox&&state.money[0]<m.cost){log(`${m.n}: yetersiz KP (${m.cost} KP gerekli)`,'bad');return}
+  if(!state.sandbox)state.money[0]-=m.cost;
   if(r.air)fireMissile(u,m.w,r.t,u.x,u.y);
   else state.proj.push({k:'cm',mk:k,x:u.x,y:u.y,ax:tx,ay:ty,a:Math.atan2(ty-u.y,tx-u.x),tgt:r.t||null,land:m.tgt==='land',sp:m.sp,w:m.w,side:0,from:u.id});
   u.reveal=3;log(`${m.n} ateşlendi (−${m.cost} KP)`,'good');setStrikeArm(null)}
+/* kıyı haritasında kara takviyelerinin çıkacağı nokta (state.lz): tıklanan satırın kıyısı; kıyıda kara olmalı, nehir ağzı ve bina olmamalı */
+function setLzArm(v){state.lzArm=!!v&&!!MAP.coast;if(state.lzArm){state.attackArm=state.missionArm=state.runArm=state.precArm=state.fastArm=false;state.strikeArm=null}updTip()}
+function lzAt(x,y){y=clamp(y,120,H-120);const lx=coastX(y)+60,n=rivNear(lx,y);
+  if(cellAt(lx,y)===T.WATER||(n&&n.d<RIV.hw+80)||buildingAt(lx,y)){log('Buraya çıkarma yapılamaz: kıyıda uygun kara yok','bad');return}
+  state.lz={x:lx,y};log('Çıkarma noktası belirlendi','good');setLzArm(false)}
 function setArm(v){state.attackArm=v&&sel().length>0;if(state.attackArm)state.missionArm=state.runArm=state.precArm=state.fastArm=false;updTip()}
 function setMissionArm(v){state.missionArm=v&&sel().some(u=>u.d.indirect);if(state.missionArm)state.attackArm=state.runArm=state.precArm=false;updTip()}
 
-export {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,cen,coverSlots,dcToggle,deploySel,digSel,droneLaunchSel,droneModeToggle,exfilOut,exfilSel,exitSel,groupSq,hitUnit,holdSel,landSel,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setMissionArm,setPrecArm,setRunArm,setStrikeArm,shellSel,smokeSel,squadOf,stanceSel,stopSel,strikeAt,unloadSel,wpnSel};
+export {addStrike,altSel,assignMission,assignRun,autoSel,burnSel,cen,coverSlots,dcToggle,deploySel,digSel,droneLaunchSel,droneModeToggle,exfilOut,exfilSel,exitSel,groupSq,hitUnit,holdSel,landSel,lzAt,orderGroup,radarSel,rightOrder,rtbSel,sel,setArm,setFastArm,setFormSel,setInitSel,setLzArm,setMissionArm,setPrecArm,setRunArm,setStrikeArm,shellSel,smokeSel,squadOf,stanceSel,stopSel,strikeAt,unloadSel,wpnSel};

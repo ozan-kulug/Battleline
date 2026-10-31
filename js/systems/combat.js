@@ -2,7 +2,7 @@
 import {state} from '../state.js';
 import {tctx} from '../canvas.js';
 import {AIRMUL,ECON,GREN,H,MAP,PI,RANKN,RIV,SQUADS,TAU,W,bodyR,coastX,rivNear,riverX,shipC} from '../config.js';
-import {P,addFire,bldDamage,charB,chute,crater,explode,igniteB,puff,ricochet,wind} from './effects.js';
+import {P,addFire,blast,bldDamage,charB,chute,crater,explode,igniteB,puff,ricochet,wind} from './effects.js';
 import {addKP,cardCd,flying,mkUnit,rank,unloadHeli} from './units.js';
 import {observed} from './vision.js';
 import {log,updTip} from '../ui/feedback.js';
@@ -38,7 +38,10 @@ function destroyB(b){b.dead=true;const occ=b.occ;b.occ=[];
   for(const u of occ){u.inB=null;u.x=b.x+R()*b.w;u.y=b.y+R()*b.h;u.hp-=10;u.sup=100;u.supT=state.time;if(u.hp<=0)kill(u)}
   state.covers.push({t:'rubble',x:b.x+b.w/2,y:b.y+b.h/2,r:Math.max(b.w,b.h)*.55});drawRubble(b);
   const cx=b.x+b.w/2,cy=b.y+b.h/2,sz=Math.max(b.w,b.h);b.burn=0;
-  if(b.sh==='tank'){explode(cx,cy,3.2);crater(cx,cy,30);addFire(cx,cy,30,70,1.8);for(const u of state.units){const d=Math.hypot(u.x-cx,u.y-cy);if(d<95&&!flying(u))damage(u,{dmg:90,ap:5,k:'arty',soft:1.2},cx,cy,1-d/95)}for(const n of state.buildings)if(n!==b&&!n.dead&&Math.hypot(n.x+n.w/2-cx,n.y+n.h/2-cy)<110)igniteB(n)}
+  /* yakıt tankı: büyük patlama, uzun ve çevresine zarar veren yangın; hangar (uçak yakıtı) ve depo ambarı (mühimmat) daha küçük profiller */
+  if(b.sh==='tank'){blast(cx,cy,'fuel');crater(cx,cy,40);for(const u of state.units){const d=Math.hypot(u.x-cx,u.y-cy);if(d<140&&!flying(u))damage(u,{dmg:110,ap:5,k:'arty',soft:1.2},cx,cy,1-d/140)}for(const n of state.buildings)if(n!==b&&!n.dead&&Math.hypot(n.x+n.w/2-cx,n.y+n.h/2-cy)<170)igniteB(n)}
+  else if(b.sh==='hangar'){blast(cx,cy,'fuel',.55);splashDmg(cx,cy,{dmg:60,ap:3,splash:80,k:'arty',soft:1.2,sup:60},-1,false,null)}
+  else if(b.sh==='ware'){blast(cx,cy,'ammo',.8);splashDmg(cx,cy,{dmg:50,ap:3,splash:70,k:'arty',soft:1.2,sup:60},-1,false,null)}
   else explode(cx,cy,.7,{dcol:'#5f594d'});
   for(let i=0;i<10+sz/3;i++){const a=R()*TAU,v=10+R()*40;P({k:'dust',x:b.x+R()*b.w,y:b.y+R()*b.h,vx:Math.cos(a)*v,vy:Math.sin(a)*v,r:12,g:40+sz*.6,max:3+R()*3,a:.6})}
   for(let i=0;i<8;i++){const a=R()*TAU,v=30+R()*90;P({k:'debris',x:cx,y:cy,z:4,vx:Math.cos(a)*v,vy:Math.sin(a)*v,vz:60+R()*140,r:1.5+R()*3,rot:R()*TAU,vr:gauss()*10,max:3,col:R()<.5?'#6e675b':'#4a443a'})}
@@ -114,7 +117,12 @@ function kill(t){if(t.dead)return;t.dead=1;t.hp=0;
     explode(t.x,t.y,cat?2:1.3,{dcol:'#26241f'});scorch(t.x,t.y,cat?44:34);
     if(cat&&(t.key==='tank'||t.key==='ifv'||t.key==='shorad')){mk.noTur=true;P({k:'turret',x:t.x,y:t.y,z:6,vx:gauss()*70,vy:gauss()*70,vz:260+R()*130,rot:t.ta,vr:gauss()*6,r:0,g:0,max:8})}
     for(let i=0;i<(cat?7:2);i++)state.timers.push({t:state.time+.3+R()*(cat?3.5:2),f:()=>{explode(t.x+gauss()*8,t.y+gauss()*8,.32);if(R()<.5)P({k:'spark',x:t.x,y:t.y,z:8,vx:gauss()*160,vy:gauss()*160,vz:200+R()*200,max:.7})}});
-    if(t.d.naval){puff(t.x,t.y,8,'rgba(225,235,235,.6)',26)}else{if(t.d.veh||t.d.heli){state.marks.push(mk);addFire(t.x,t.y,12,(cat?45:25)+R()*20,cat?1.3:.9)}state.covers.push({t:'wreck',x:t.x,y:t.y,r:15})}
+    /* içeriğe göre: gemi büyük yangın ve duman, ikmal kamyonu yakıt + mühimmat, topçu/füze/hava savunma aracı mühimmat, tam imha olan zırhlı uzun yanar */
+    if(t.d.naval){puff(t.x,t.y,8,'rgba(225,235,235,.6)',26);blast(t.x,t.y,'ship',t.d.fixed?shipC(t.d).L/220:.4)}
+    else{if(t.d.veh||t.d.heli){state.marks.push(mk);addFire(t.x,t.y,12,(cat?45:25)+R()*20,cat?1.3:.9)}state.covers.push({t:'wreck',x:t.x,y:t.y,r:15});
+      if(t.d.supply){blast(t.x,t.y,'ammo');blast(t.x,t.y,'fuel',.45);splashDmg(t.x,t.y,{dmg:55,ap:3,splash:75,k:'arty',soft:1.2,sup:60},-1,false,t)}
+      else if(t.d.indirect&&t.d.veh||t.key==='sam'||t.key==='shorad'){blast(t.x,t.y,'ammo',.8);splashDmg(t.x,t.y,{dmg:40,ap:3,splash:60,k:'arty',soft:1.2,sup:50},-1,false,t)}
+      else if(cat&&t.d.veh)blast(t.x,t.y,'wreck')}
     log(t.side===0?`${t.d.n} kaybedildi`:`Düşman ${t.d.n.toLocaleLowerCase('tr')} imha edildi`,t.side===0?'bad':'good')}
   if(t.sq&&t.d.inf&&!t.sq.m.some(u=>u!==t&&u.hp>0))log(t.side===0?`${t.sq.n} yok edildi`:`Düşman ${t.sq.n.toLocaleLowerCase('tr')} yok edildi`,t.side===0?'bad':'good');
   if(state.dc===t){state.dc=null;updTip()}}

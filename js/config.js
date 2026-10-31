@@ -128,7 +128,7 @@ const ZONE={dead:.25,reach:1.25,repT:60,trucks:3,revive:.5};
    tgt: land kara noktası | ship denizde görünen düşman gemisi (uçuşta izlenir) | shipAir düşman gemisi ya da görünen hava hedefi.
    r: menzil (dünya birimi), sp: uçuş hızı; w: vuruş (kara vuruşu bomba gibi alan, bina ve köprü hasarı verir; bld: binaya hasar çarpanı). Destroyer'ın 96 hücrelik hava savunmasından ayrıdır */
 const STRIKE={
- tlam:{n:'Tomahawk',cost:280,tgt:'land',r:5200,sp:380,w:{n:'Tomahawk',k:'bomb',dmg:260,ap:9,splash:100,sup:100,soft:1.3,top:1,bld:5},b:'Kara koordinatı · birlik, bina, köprü'},
+ tlam:{n:'Tomahawk',cost:280,tgt:'land',r:5200,sp:380,w:{n:'Tomahawk',k:'bomb',dmg:520,ap:9,splash:100,sup:100,soft:1.3,top:1,bld:5},b:'Kara koordinatı · birlik, bina, köprü'},
  mst:{n:'Maritime Strike Tomahawk',cost:340,tgt:'ship',r:5200,sp:380,w:{n:'Maritime Strike Tomahawk',k:'bomb',dmg:720,ap:22,splash:30,sup:60,top:1},b:'Denizdeki düşman gemisi · uçuşta izler'},
  sm6:{n:'SM-6',cost:380,tgt:'shipAir',r:2800,sp:1100,w:{n:'SM-6',k:'sam',dmg:270,ap:12,splash:20,sup:40,pk:.92,msp:1100},b:'Hava hedefi ya da düşman gemisi · hızlı, gemiye hasarı düşük'},
  hpn:{n:'RGM-84 Harpoon',cost:140,tgt:'ship',r:2000,sp:300,w:{n:'RGM-84 Harpoon',k:'bomb',dmg:520,ap:18,splash:24,sup:60,top:1},b:'Gemisavar · kısa/orta menzil'},
@@ -136,6 +136,14 @@ const STRIKE={
 /* hasara göre işlev kaybı — brHeavy: köprü bu sağlamlığın altında ağır araçları (tank, topçu, füze aracı) geçirmez · brLight: bunun altında yalnız piyade geçer ·
    brSlow: hasarlı köprüde araç hızı çarpanı · bldOut: bina bu canın altında kullanılamaz (içindekiler çıkar); kapasite ve koruma canla düşer */
 const DMG={brHeavy:.66,brLight:.33,brSlow:.6,bldOut:.33};
+/* içeriğe göre büyük patlama profilleri (effects.js blast) — s: ana patlama boyu · sec/secT/secS: ikincil patlama sayısı, süreye yayılımı (sn), boyu ·
+   fire: [yarıçap, süre sn, şiddet] uzun yangın · hurt: yangın çevresindekilere saniyede hasar verir · smoke: kara duman sütunu parçacığı · spark: mühimmat kıvılcımı */
+const BLAST={
+ fuel:{s:4.2,sec:6,secT:7,secS:1.4,fire:[60,170,2.2],hurt:1,smoke:24},
+ ammo:{s:2.2,sec:12,secT:6,secS:.55,fire:[26,70,1.3],hurt:1,smoke:9,spark:1},
+ ship:{s:3,sec:8,secT:8,secS:.9,fire:[40,150,1.8],hurt:0,smoke:18},
+ wreck:{s:0,sec:0,fire:[14,90,1.3],hurt:0,smoke:7},
+};
 const STATEN={travel:'Seyir',deploying:'Mevzileniyor',deployed:'Mevzide',packing:'Toparlanıyor'};
 /* ---------- harita ---------- */
 /* İki harita: 'river' (nehir haritayı ikiye böler; 3 köprü, 2 sığ geçit; merkeze göre simetrik) ve
@@ -211,7 +219,8 @@ const FORMN={auto:'Otomatik',line:'Hat',wedge:'Kama',column:'Kol',spread:'Dağı
 /* ---------- savaş öncesi ordu ----------
    Ordu puanı (OP) yalnızca başlangıç kuvvetini belirler; savaş içindeki KP ekonomisinden ve takviye destesinden ayrıdır.
    İki taraf da aynı bütçeyle başlar. cap: bir birlik türünden en fazla kaç adet (kart sayısıyla da sınırlı). */
-const ARMY={budgets:[600,1000,1500],bn:{600:'Öncü',1000:'Tabur',1500:'Tugay'},def:1000,cap:6,name:'1. Tabur'};
+/* sandCap: sandbox modunda ordu kurmada birim başına üst sınır */
+const ARMY={sandCap:20,budgets:[600,1000,1500],bn:{600:'Öncü',1000:'Tabur',1500:'Tugay'},def:1000,cap:6,name:'1. Tabur'};
 const ARMYCAT=[
  {k:'inf',n:'Piyade',m:['inf','at','dronop']},
  {k:'recon',n:'Keşif',m:['recon','uav']},
@@ -229,4 +238,4 @@ const ROLE={inf:'Hat piyadesi · nokta tutar, el bombası atar',at:'Zırh avcıs
  fpv:'Üç kamikaze dron · hedefe dalar',cas:'30 mm top veya roket koşusu',mr:'Lazer güdümlü bomba ve hava-hava füzesi',sead:'Radar avcısı · anti-radyasyon füzesi',ftr:'Hava üstünlüğü · düşman uçağı avlar',
  bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron',bot:'Nehir devriyesi · makineli tüfek, köprü altından geçer',frig:'Sabit savaş gemisi · 76 mm top, CIWS, 24 hücre füze',dest:'Sabit savaş gemisi · 127 mm top, 2× CIWS, 96 hücre füze',hfa:'Uzun menzilli hassas füze · 6 atış, binalara ağır hasar'};
 
-export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEEP_M,DEF,DMG,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SHIPC,SQUADS,STATEN,STN,STRIKE,T,TAU,W,ZK,ZONE,bodyR,coastX,edgeX,midX,riverOn,riverX,rivNear,seaOnly,setMap,shipC,shoreD};
+export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,BLAST,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEEP_M,DEF,DMG,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SHIPC,SQUADS,STATEN,STN,STRIKE,T,TAU,W,ZK,ZONE,bodyR,coastX,edgeX,midX,riverOn,riverX,rivNear,seaOnly,setMap,shipC,shoreD};

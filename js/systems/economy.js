@@ -26,6 +26,8 @@ function resupply(u,k){if(u.abandoned)return;if(u.eng&&R()<.12*k)u.eng=false;if(
   if(u.d.dronOp&&u.drones<u.d.drones)u.drones=Math.min(u.d.drones,u.drones+.04*k);
   if((u.d.veh||u.d.heli)&&u.hp<u.d.hp)u.hp=Math.min(u.d.hp,u.hp+3*k);if(u.d.flares&&u.flares<u.d.flares)u.flares=Math.min(u.d.flares,u.flares+.25*k);if(u.d.smokeL&&u.smokeL<u.d.smokeL)u.smokeL=Math.min(u.d.smokeL,u.smokeL+.05*k)}
 function perSecond(){const h=[0,0];for(const o of state.objs)if(o.owner>=0)h[o.owner]++;
+  /* yakıt ve mühimmat yangınları (hurt) sürdükçe çevresindekilere zarar verir */
+  for(const f of state.fires){if(!f.hurt)continue;for(const u of state.units){if(flying(u)||u.inB||Math.hypot(u.x-f.x,u.y-f.y)>f.r)continue;state.curSrc=null;if(u.d.inf){stress(u,20);damage(u,{dmg:5,ap:0,k:'fire',soft:1},u.x,u.y,1)}else if(!u.d.naval)u.hp-=3*f.int}}
   for(const u of state.units){if(flying(u))continue;const ci=(u.y/CS|0)*GW+(u.x/CS|0);if(fireCells.has(ci)){state.curSrc=null;if(u.d.inf){stress(u,25);damage(u,{dmg:6,ap:0,k:'fire',soft:1},u.x,u.y,1)}else u.hp-=2}}
   for(const u of state.units)if(!u.d.air&&!u.abandoned&&!u.d.plane&&u.sup>=92&&!(u.panicT>0)&&R()<(u.cov||u.inB?.12:.3))panic(u);
   const pts=[0,0],inc=[ECON.base,ECON.base],brk={};for(const o of state.objs)if(o.owner>=0){const z=ZK[o.k],zi=z.inc*(o.k==='factory'?1:ECON.objMul)*zoneEff(o);pts[o.owner]+=z.pts;inc[o.owner]+=zi;if(o.owner===0)brk[z.n]=(brk[z.n]||0)+zi}

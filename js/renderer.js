@@ -3,7 +3,7 @@ import {state} from './state.js';
 import {tr} from './i18n.js';
 import {toW} from './camera.js';
 import {ctx,fctx,fogC,mctx,mmBase,tc} from './canvas.js';
-import {COL,DEF,H,PI,STRIKE,TAU,W,ZK,bodyR,shipC} from './config.js';
+import {COL,DEF,H,MAP,PI,STRIKE,TAU,W,ZK,bodyR,shipC} from './config.js';
 import {cam} from './state.js';
 import {estSig,muzzle} from './systems/combat.js';
 import {dep,deployZone} from './systems/deployment.js';
@@ -227,6 +227,8 @@ function render(){
   for(const d of state.units){if(!d.op||d.side!==0||d.hp<=0||d.gone||!(d.sel||d.op.sel))continue;const o=d.op,far=Math.hypot(o.x-d.x,o.y-d.y)>o.d.ctrl*.85;
     ctx.strokeStyle=far?'rgba(226,88,75,.8)':'rgba(127,212,138,.55)';ctx.lineWidth=lw;ctx.setLineDash([3*lw,5*lw]);ctx.beginPath();ctx.moveTo(o.x,o.y);ctx.lineTo(d.x,d.y);ctx.stroke();ctx.setLineDash([])}
   {const seen=new Set();for(const o of S){if(!o.d.dronOp||seen.has(o.sq))continue;seen.add(o.sq);ctx.strokeStyle='rgba(127,212,138,.35)';ctx.lineWidth=1.2*lw;ctx.setLineDash([10*lw,8*lw]);ctx.beginPath();ctx.arc(o.x,o.y,o.d.ctrl,0,TAU);ctx.stroke();ctx.setLineDash([])}}
+  /* kıyıda seçilen çıkarma noktası: dalga üstünde ok ve halka */
+  if(MAP.coast&&state.lz){const z=state.lz;ctx.strokeStyle='rgba(98,166,230,.9)';ctx.lineWidth=2.5*lw;ctx.beginPath();ctx.arc(z.x,z.y,26,0,TAU);ctx.stroke();ctx.beginPath();ctx.moveTo(z.x-90,z.y);ctx.lineTo(z.x-30,z.y);ctx.moveTo(z.x-44,z.y-10);ctx.lineTo(z.x-30,z.y);ctx.lineTo(z.x-44,z.y+10);ctx.stroke()}
   /* füze saldırısı nişanında destroyerin menzil halkası */
   if(state.strikeArm){const m=STRIKE[state.strikeArm],u=sel().find(x=>x.d.strike);if(m&&u){ctx.strokeStyle='rgba(232,168,56,.55)';ctx.lineWidth=2*lw;ctx.setLineDash([14*lw,10*lw]);ctx.beginPath();ctx.arc(u.x,u.y,m.r,0,TAU);ctx.stroke();ctx.setLineDash([])}}
   for(const b of state.bridges){if(!b.dead&&b.hp>=b.max)continue;const cx=b.x,bw=70*lw*1.4,bh=4*lw*1.4,yy=b.y-30*lw*1.4;ctx.fillStyle='rgba(0,0,0,.6)';ctx.fillRect(cx-bw/2,yy,bw,bh);

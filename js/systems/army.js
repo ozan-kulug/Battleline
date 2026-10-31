@@ -10,7 +10,7 @@ const DEFAULT_ARMY=['inf','inf','recon','inf','ifv'];
 const AI_TEMPLATE=['inf','inf','recon','inf','ifv','tank','at','mortar','supply','dronop','inf','manpads','mech','arty','tank','inf','at','shorad','ifv','inf','tank','heliA','mortar','inf','at','hfa'];
 const sqIdx=k=>SQUADS.findIndex(S=>S.k===k);
 const sqOf=k=>SQUADS[sqIdx(k)];
-const armyCap=k=>{const S=sqOf(k);return S?Math.min(ARMY.cap,S.av):0};
+const armyCap=k=>{const S=sqOf(k);return S?state.sandbox?ARMY.sandCap:Math.min(ARMY.cap,S.av):0};
 const armyCost=list=>list.reduce((a,k)=>a+(sqOf(k)?.cost||0),0);
 const countOf=(list,k)=>list.reduce((a,x)=>a+(x===k),0);
 /* eklemeyi engelleyen neden (yoksa null) */

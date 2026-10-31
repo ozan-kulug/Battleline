@@ -1,4 +1,5 @@
 /* ui/army-builder.js — Savaş öncesi ordu kurma ekranı: taraflar, kategoriler, birlik ayrıntısı, ordu puanı ve seçili ordu paneli. */
+import {state} from '../state.js';
 import {ARMY,ARMYCAT,AW,DEF,PAYN,ROLE,SQUADS} from '../config.js';
 import {tr} from '../i18n.js';
 import {DEFAULT_ARMY,addBlock,armyCap,autoArmy,checkArmy,countOf,sqOf} from '../systems/army.js';
@@ -9,6 +10,8 @@ import {$} from '../utils/helpers.js';
 
 /* son kurulan ordu bu tarayıcıda hatırlanır (yalnızca kolaylık; okunamazsa önerilen orduyla açılır) */
 const STORE='cephe-hatti.ordu';
+/* sandbox modunda ordu bütçesi sınırsız */
+const bud=()=>state.sandbox?Infinity:ab.budget;
 const ab={list:null,budget:ARMY.def,cat:ARMYCAT[0].k,pick:ARMYCAT[0].m[0],name:ARMY.name,msg:null,msgT:0};
 const catOf=k=>ARMYCAT.find(c=>c.m.includes(k));
 let built=false;
@@ -43,7 +46,7 @@ function build(){if(built)return;built=true;
     el.innerHTML=tr(`<span class="ab-cnt"></span><span class="ab-cost">${S.cost}</span><div class="ab-art"><canvas width="148" height="80"></canvas></div><b class="ab-nm">${S.n}</b><span class="ab-role">${ROLE[k]}</span>`+
       `<div class="ab-ctl"><button type="button" class="btn" data-rem="${k}" aria-label="Bir ${S.n} çıkar">−</button><button type="button" class="btn" data-add="${k}" aria-label="Bir ${S.n} ekle">+</button></div>`);
     const cx=el.querySelector('canvas').getContext('2d');cx.setTransform(2,0,0,2,0,0);drawSquadArt(cx,S);g.appendChild(el)}}
-function renderInfo(){const k=ab.pick,S=sqOf(k),cat=catOf(k),{c,cargo}=members(S),n=countOf(ab.list,k),blk=addBlock(ab.list,k,ab.budget),w=weapons(S);
+function renderInfo(){const k=ab.pick,S=sqOf(k),cat=catOf(k),{c,cargo}=members(S),n=countOf(ab.list,k),blk=addBlock(ab.list,k,bud()),w=weapons(S);
   const comp=Object.entries(c).map(([u,q])=>`${q}× ${DEF[u].n}`).join(' · ')+(cargo?` · içinde ${cargo.n}`:'');
   const el=$('armyInfo');
   el.innerHTML=tr(`<div class="ab-ih"><div><small>${cat.n.toLocaleUpperCase('tr')}</small><h2>${S.n}</h2></div><b>${S.cost}<small> OP</small></b></div>`+
@@ -56,28 +59,28 @@ function renderList(){const rows=[];
   for(const cat of ARMYCAT){const ks=cat.m.filter(k=>countOf(ab.list,k));if(!ks.length)continue;rows.push(`<div class="ab-lh">${cat.n}</div>`);
     for(const k of ks){const S=sqOf(k),q=countOf(ab.list,k);
       rows.push(`<div class="ab-row${k===ab.pick?' sel':''}" data-k="${k}"><span class="nm">${S.n}</span><span class="q">×${q}</span><span class="c">${S.cost*q}</span>`+
-        `<button type="button" class="btn" data-rem="${k}" aria-label="Bir ${S.n} çıkar">−</button><button type="button" class="btn" data-add="${k}" aria-label="Bir ${S.n} ekle"${addBlock(ab.list,k,ab.budget)?' disabled':''}>+</button></div>`)}}
+        `<button type="button" class="btn" data-rem="${k}" aria-label="Bir ${S.n} çıkar">−</button><button type="button" class="btn" data-add="${k}" aria-label="Bir ${S.n} ekle"${addBlock(ab.list,k,bud())?' disabled':''}>+</button></div>`)}}
   $('armyRows').innerHTML=tr(rows.length?rows.join(''):'<p class="ab-empty">Henüz birlik seçilmedi.<br>Kategorilerden birlik ekle veya otomatik doldur.</p>')}
-function update(){const chk=checkArmy(ab.list,ab.budget),left=ab.budget-chk.cost,cat=ARMYCAT.find(c=>c.k===ab.cat);
-  $('armyPts').textContent=tr(`${chk.cost} / ${ab.budget}`);$('armyBar').style.width=Math.min(100,chk.cost/ab.budget*100)+'%';$('armyTot').classList.toggle('over',chk.cost>ab.budget);
+function update(){const chk=checkArmy(ab.list,bud()),left=bud()-chk.cost,cat=ARMYCAT.find(c=>c.k===ab.cat);
+  $('armyPts').textContent=tr(`${chk.cost} / ${state.sandbox?'∞':ab.budget}`);$('armyBar').style.width=Math.min(100,chk.cost/bud()*100)+'%';$('armyBudget').hidden=state.sandbox;$('armyTot').classList.toggle('over',chk.cost>ab.budget);
   $('armyUsed').textContent=tr(`${chk.cost} OP`);$('armyLeft').textContent=tr(`${left} OP`);$('armyLeft').classList.toggle('warn',left<0);$('armyN').textContent=tr(`${ab.list.length} birlik`);
   for(const b of $('armyBudget').children)b.classList.toggle('on',+b.dataset.b===ab.budget);
   for(const b of $('armyCats').children){const c=ARMYCAT.find(x=>x.k===b.dataset.tab),q=ab.list.filter(k=>c.m.includes(k)).length;b.classList.toggle('on',c===cat);b.querySelector('small').textContent=tr(q?`×${q}`:'')}
   $('armyCatT').textContent=tr(cat.n);$('armyCatS').textContent=tr(`${cat.m.length} birlik türü · çift tıkla veya + ile ekle`);
-  for(const el of $('armyCards').children){const k=el.dataset.k,q=countOf(ab.list,k),blk=addBlock(ab.list,k,ab.budget),ad=el.querySelector('[data-add]');
+  for(const el of $('armyCards').children){const k=el.dataset.k,q=countOf(ab.list,k),blk=addBlock(ab.list,k,bud()),ad=el.querySelector('[data-add]');
     el.hidden=el.dataset.cat!==ab.cat;el.classList.toggle('in',q>0);el.classList.toggle('sel',k===ab.pick);el.classList.toggle('na',!!blk&&!q);
     el.querySelector('.ab-cnt').textContent=tr(q?`×${q}`:'');el.querySelector('[data-rem]').disabled=!q;ad.disabled=!!blk;ad.title=tr(blk||'Orduya ekle')}
   renderInfo();renderList();
   const m=$('armyMsg'),flash=ab.msg&&performance.now()-ab.msgT<3500;m.textContent=tr(flash?ab.msg:chk.ok?`Hazır · ${left} OP kullanılmadı`:chk.err[0]);m.className=flash||!chk.ok?'warn':'ok';
   $('armyGo').disabled=!chk.ok;save()}
 /* ---------- eylemler ---------- */
-function add(k){const blk=addBlock(ab.list,k,ab.budget);ab.pick=k;if(blk){ab.msg=blk;ab.msgT=performance.now();setTimeout(update,3600)}else{ab.list.push(k);ab.msg=null}update()}
+function add(k){const blk=addBlock(ab.list,k,bud());ab.pick=k;if(blk){ab.msg=blk;ab.msgT=performance.now();setTimeout(update,3600)}else{ab.list.push(k);ab.msg=null}update()}
 function rem(k){const i=ab.list.lastIndexOf(k);if(i>=0)ab.list.splice(i,1);ab.pick=k;ab.msg=null;update()}
 function pick(k){ab.pick=k;ab.cat=catOf(k).k;update()}
 function pickCat(c){ab.cat=c;const cat=ARMYCAT.find(x=>x.k===c);if(!cat.m.includes(ab.pick))ab.pick=cat.m[0];update()}
 function back(){$('army').hidden=true;$('ov').hidden=false}
 /* doğrulanan oyuncu ordusu ve aynı bütçeyle kurulan YZ ordusu mevcut başlatma akışına verilir; savaş konuşlanma onayıyla başlar */
-function go(){const chk=checkArmy(ab.list,ab.budget);if(!chk.ok){update();return}
+function go(){const chk=checkArmy(ab.list,bud());if(!chk.ok){update();return}
   const mine=ab.list.slice(),foe=autoArmy(ab.budget);$('army').hidden=true;startMatch({armies:[mine,foe],deploy:true});
   enterDeploy({name:ab.name,cost:chk.cost,back:openArmy})}
 function openArmy(){if(!ab.list)load();build();$('armyName').value=ab.name;$('ov').hidden=true;$('army').hidden=false;update()}
