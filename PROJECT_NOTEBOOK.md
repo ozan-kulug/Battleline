@@ -343,6 +343,65 @@ Projede otomatik test altyapısı yok. Statik kontroller elle çalıştırılan 
   - **8. İki Dilli Arayüz (TR / EN — GEÇTİ):**
     - Tüm birim adları, rol etiketleri, silah adları, hata mesajları ve ipuçları TR ve EN olarak eksiksiz eşleşti (`allMatched: true`).
 
+- **Kamikaze Dronların Gördükleri Yakın Hedeflere Kendiliğinden Dalması (`js/systems/air.js`, 2026-10-31 — Antigravity, Gerçek Chrome Headless `chrome.exe` — 12/12 TÜMÜ GEÇTİ):**
+  - **Kök Neden:** `0e33ce5` ve `c0428e5` commit'leriyle eklenen `!(manualFor(u.side) && u.mode !== 'attack')` ve `(!u.dest || u.mode === 'attack')` filtreleri, Oyuncu modundayken dronların otomatik hedef seçimini tamamen engelliyor, uçuş sırasında (`u.dest` doluyken) rotadaki hedefleri yok saydırıyor ve operatöre dönerken (`u.home`) hedef aramasını kapatıyordu.
+  - **Düzeltme (`js/systems/air.js:28-29`):** Mod ve uçuş kısıtlamaları kaldırıldı; `!u.kTgt && !u.hold` kuralıyla hem boşta beklemede hem uçuş rotasında görünür ve menzil içindeki (460 m) düşmanlara otomatik dalış sağlandı. Ayrıca ölü/yok edilmiş hedeflerin seçilmemesi için `e.hp <= 0 || e.gone` koruması eklendi.
+  - **Doğrulanan Senaryolar:**
+    1. Oyuncu modunda boşta bekleyen FPV dron 100 m yakındaki görünür tanka kendiliğinden kilitlendi (`true`).
+    2. Oyuncu modunda haritaya sağ tıkla bir noktaya uçarken rotasının 100 m yakınındaki görünür tanka kendiliğinden kilitlendi (`true`).
+    3. Oyuncu modunda saldırı hareketi (`A`) ile uçarken hedefe kilitlendi (`true`).
+    4. Operatör modunda boşta bekleyen FPV dron hedefe kilitlendi (`true`).
+    5. Operatör modunda bir noktaya uçarken hedefe kilitlendi (`true`).
+    6. Operatörün hedefsiz kaldırdığı dron uçuş sırasında yakınındaki görünür düşmana kendiliğinden kilitlendi (`true`).
+    7. Operatörün doğrudan hedefe fırlattığı dron hedefe kilitlendi (`true`).
+    8. Hedefe ulaşan dron çarparak infilak etti, tanka tam hasar verdi ve haritadan yok oldu (`true`).
+    9. Menzil dışındaki (1500 m > 460 m) uzak hedeflere dalmadı (`true`).
+    10. Ölü/yok edilmiş birimleri hedef olarak seçmedi (`true`).
+    11. Ateşkes emri (`u.hold = true` / `H`) verilen dron yakındaki hedefe dalmadı (`true`).
+    12. Kilitlendiği hedef vurulunca yakınındaki bir sonraki canlı hedefe otomatik geçiş yaptı (`true`).
+
+- **Büyük Gemiler 3 Kat Boyut ve Ayrıntılı Çizim Doğrulaması (`js/config.js`, `js/systems/army.js`, `js/systems/deployment.js`, `js/renderer.js`, `js/game.js`, `js/i18n.js`, 2026-10-31 — Antigravity, Gerçek Chrome Headless `chrome.exe` — 5/5 TÜMÜ GEÇTİ):**
+  - **1. Boyut ve Çizim Ayrıntıları (GEÇTİ):**
+    - `SHIPC` boyutları: Fırkateyn `222×48` (`bodyR: 67`), Destroyer `294×60` (`bodyR: 88`) olarak 3 kat büyütüldü.
+    - `drawBigShip` render fonksiyonu: en önde hedefe dönen baş topu (taret ve namlu), kırmızımsı panel üstünde VLS dikey füze hücreleri (fırkateyn: 3×8 = 24 hücre, destroyer: 4×8 = 32 ön + 8×8 = 64 arka = 96 hücre), köprü üstü, pencereler, radar panelleri, baca, siyah CIWS kuleleri (fırkateynde 1 kıçta, destroyerde 2 kıçta + 1 ön süs kulesi), kıçta hangar ve H helikopter pisti hatasız render edildi (`renderClean: true`).
+  - **2. Başlangıç Dizilişi ve Liman Önü (GEÇTİ):**
+    - Kıyı Cephesi'nde 2 Fırkateyn + 1 Destroyer + 1 Piyade ordusuyla başlatıldığında 3 büyük gemi açık denizde iskelelerin dışında boy aralıklı dizildi (`spawnCount: 3`).
+    - Gemilerin başlangıç yönü kıyıya paralel ve kuzeye dönük olarak (`u.a = -PI/2`, `headings: [-1.57, -1.57, -1.57]`) başlatıldı (`allHeadingsNorth: true`).
+    - Gemiler birbirinin üstüne binmedi (`minShipDistance: 288 px > bodyR1 + bodyR2`).
+    - Hiçbir gemi iskele veya rıhtım binalarının üzerine düşmedi (`noShipOnBuilding: true`).
+    - Başlangıç konuşlanma geçerliliği: 3 gemi de açık denizde geçerli (`placementErrors: [null, null, null]`).
+  - **3. Konuşlanmada Döndürme ve Karaya Yakınlık Kısıtları (GEÇTİ):**
+    - Gemiyi kıyıya dik döndürme (`a = 0` veya `a = PI`): baş veya kıç karaya taştığı için `'Gövde karaya taşıyor'` hatasıyla engellendi (`errPerpendicular: 'Gövde karaya taşıyor'`).
+    - Gemiyi sahil karasına doğru sürükleme: `'Bu gemi yalnızca açık denize konabilir'` hatasıyla engellendi.
+  - **4. Seçim Halkası, Can Çubuğu, Top Ağzı ve CIWS Konumları (GEÇTİ):**
+    - `bodyR` yarıçapı fırkateynde 67, destroyerde 88; seçim halkası (`bodyR + 4`: 71 ve 92), can çubuğu genişliği (`bodyR + 6`: 73 ve 94) yeni gövdeye tam oturdu.
+    - Top ağzı ve CIWS atış koordinatları gövde boyuna göre ölçeklendi.
+  - **5. İki Dilli Metinler (TR / EN — GEÇTİ):**
+    - `'Gövde karaya taşıyor'` → `'Hull extends onto land'`, `'Bu gemi yalnızca açık denize konabilir'` → `'This ship can only be placed in open sea'`, birim adları ve silah ipuçları eksiksiz çevrildi.
+
+- **Yıkılabilir Stratejik Noktalar ve Kamyonla Onarım Doğrulaması (`js/config.js`, `js/systems/zones.js`, `js/systems/economy.js`, `js/systems/vision.js`, `js/systems/ai.js`, `js/ui/hud.js`, `js/world/terrain.js`, `js/i18n.js`, 2026-10-31 — Antigravity, Gerçek Chrome Headless `chrome.exe` — 8/8 TÜMÜ GEÇTİ):**
+  - **1. İki Haritada Nokta ve Bina Kurulumu (GEÇTİ):**
+    - Nehir Hattı'nda 11 nokta (A..K), Kıyı Cephesi'nde 10 nokta (A..J) `setupZones` ile binalara (`o.bl`) ve köprülere (`o.br`) bağlandı; başlangıçta tüm noktalar sağlam (`zoneInt === 1.0`, `zoneEff === 1.0`).
+  - **2. Binalar Hasar Alınca Gelir Düşüşü (GEÇTİ):**
+    - Fabrika noktasındaki binalardan biri %50 hasar aldığında noktanın sağlamlığı `zoneInt: 1.00 → 0.87`'ye ve çarpanı `zoneEff: 1.00 → 0.87`'ye düştü; dakika başı gelir orantılı olarak azaldı.
+  - **3. Tüm Binalar Yıkılınca Bildirim, Gelir 0, Zaferin Sürmesi (GEÇTİ):**
+    - Fabrikadaki tüm binalar yıkıldığında (`b.hp = 0, b.dead = true`): `zoneInt === 0`, `zoneEff === 0` (`< ZONE.dead = 0.25`).
+    - Olay akışına `'D noktası yıkıldı, gelir ve avantaj durdu'` bildirimi düştü (`logTriggered: true`).
+    - HUD göstergesi kırmızı/soluk hale geldi; nokta ele geçirilmeye devam edilebildi (`canStillCapture: true`) ve zafer sayımında kaldı.
+  - **4. Radar Tepesi Kubbesi Yıkılınca Görüşün Kalkması (GEÇTİ):**
+    - Radar Tepesi'ndeki kubbe binası yıkıldığında `zoneEff: 1.0 → 0` oldu; `vision.js` içinde 950 m radar görüşü ve düşman uçak görünürlüğü devre dışı kaldı (`radarDisabled: true`).
+  - **5. Depo ve Havaalanı İkmalinin Yıkıkken Durması (GEÇTİ):**
+    - İkmal Deposu binaları yıkıldığında `depotEff === 0` oldu ve 300 m çevre ikmali durdu.
+    - Havaalanı binaları yıkıldığında `airfieldEff === 0` oldu ve uçak hazırlık hızı taban seviyeye indi.
+  - **6. İkmal Kamyonuyla Onarım ve Binaların Yeniden Kurulması (GEÇTİ):**
+    - Yıkık fabrikaya 1 ikmal kamyonu getirildiğinde 35 sn içinde binaların canı `%50` (`ZONE.revive = 0.5`) seviyesine ulaştı; `rebuild(b)` tetiklenerek yerdeki enkaz siperi (`rubble`) haritadan silindi ve bina ayakta yeniden kuruldu (`revivedAfter35s: true`).
+    - Noktaya 2 kamyon daha eklendiğinde (toplam 3 kamyon, `ZONE.trucks = 3`), onarım 3 kat hızlandı ve 4/4 binanın tamamı %100 cana ulaştı (`allRebuilt: true`, `effRestored: true`).
+    - Olay akışına `'D noktası onarıldı'` bildirimi düştü.
+  - **7. Köprü Noktasının Köprü Canına Bağlılığı (GEÇTİ):**
+    - Köprü noktasında (Nokta E) `zoneInt` köprünün canına bağlandı; köprü %40 cana indiğinde nokta sağlamlığı `0.40`, köprü tamamen yıkıldığında (`dead = true`) `zoneInt === 0` ve `zoneEff === 0` oldu.
+  - **8. TR / EN Arayüz ve Bildirim Metinleri (GEÇTİ):**
+    - İngilizce modda (`?lang=en`): `'Sağlamlık'` → `'Integrity'`, `'YIKIK: gelir ve avantaj yok, ikmal kamyonuyla onarılır'` → `'DESTROYED: no income or bonus, repaired by supply trucks'`, `'C noktası yıkıldı, gelir ve avantaj durdu'` → `'Point C destroyed, income and bonus stopped'`, `'C noktası onarıldı'` → `'Point C repaired'` eksiksiz çevrildi.
+
 **Doğrulanmamış:**
 - Eş yükselti çizgilerinin son görünümü (belirginleştirildikten sonra insan gözüyle incelenmedi).
 
@@ -431,3 +490,8 @@ Projede otomatik test altyapısı yok. Statik kontroller elle çalıştırılan 
 | 2026-10-30 | Claude | Fırkateyn ve destroyer eklendi (kullanıcı isteği; tasarım ayrıntıları Claude önerisi, ROADMAP satırında). `config.js`: `DEF.frigate`/`DEF.destroyer` (`fixed`, `radar`, `ciws`/`ciwsR`/`ciwsPk`, silahlar), `SHIPC` `frigate`/`destroyer` (önceki `large` profili kaldırıldı), SQUADS sonuna `frig`/`dest` (`pre:1`), AVE (2/1 adet), ROLE. `projectiles.js` `pointDefense`: CIWS gelen roket/füze/bomba/mermiyi vurur. `units.js`: `pre` kart maç içinde çağrılamaz, sabit gemi emir almaz, üs ikmali yok; `combat.js`: paniklemez, kart dönmez, namlu ucu gövdeye göre; `movement.js`: itilmez; `orders.js`: çekilemez; `deck.js`: `pre` kartlar destede yok (kısayollar değişmedi); `army.js`: yalnızca Kıyı Cephesi; `renderer.js` büyük gemi çizimi; i18n. Kontroller: sözdizimi 40 modül, döngü yok, 737 import eksiksiz; Node'da sahte DOM ile: 2 fırkateyn + 1 destroyer geçerli, 3. fırkateyn ve 2. destroyer engelleniyor, Nehir Hattı'nda engel mesajı; maç içi `deploy` false (bot true); hareket emri yok sayılıyor, üs ikmali yok; CIWS 400 rokette vurma oranı fırkateyn %51, destroyer %81; Nehir Hattı HEAD ile birebir aynı, bot davranışı değişmedi. Tarayıcı testi yapılmadı (Antigravity; ROADMAP'teki 8 senaryo ve altyapı satırındaki 7 senaryo birlikte). |
 | 2026-10-30 | Antigravity | Büyük gemiler altyapısı (7 senaryo) ve Fırkateyn / Destroyer (8 senaryo) (`ROADMAP.md` → `Done`) gerçek Chrome headless üzerinde test edildi ve %100 geçti: Kıyı Cephesi 1500 OP orduda 2 Fırkateyn + 1 Destroyer + 1 Piyade seçimi, kotalar (3. fırkateyn / 2. destroyer engeli), Nehir Hattı kısıtı, açık denizde liman önü konuşlanması, karaya/nehre koyma engeli, `KeyE` döndürme, sabitlik (`fixed: 1`, `giveMove` yok sayma), destede görünmeme (`pre: 1`), çekilme/panik/üs ikmali korumaları, 76/127 mm baş toplarıyla kara hedeflerini vurma, 24/96 VLS füzeleri ve radar kontrolü, CIWS nokta hava savunması (100 mermide fırkateyn %54, destroyer %91 imha), gövdeye göre ölçekli çizim/seçim/çarpışma (`bodyR`) ve eksiksiz TR/EN dil desteği (§5). |
 | 2026-10-30 | Claude | Büyük gemiler 3 kat büyütüldü ve çizim ayrıntılandırıldı (kullanıcının işaretlediği düzen: önde top, arkasında füze hücreleri, siyah CIWS, kıçta helikopter pisti). `config.js` `SHIPC` 222×48 / 294×60, `bodyR` gemi için boyun %30'u; `renderer.js` yeni `drawBigShip` (VLS hücre sayısı füze sayısına eşit, radar panelleri, baca, hangar, H pisti); `army.js` kıyıya paralel ve iskelelerin dışında boy aralıklı diziliş; `game.js` sabit gemi başlangıç yönü kuzey; `deployment.js` gövde uçları denizde kontrolü (döndürmede yeni açıyla, `deploy.js` aday açısı); `combat.js` top ağzı; i18n. Kontroller: sözdizimi 40 modül, döngü yok, 739 import eksiksiz; Node'da sahte DOM ile kıyıda 2 fırkateyn + destroyer + 2 bot + kara ordusuyla maç kuruldu, tüm gemi konumları geçerli, dik döndürülen destroyer 'Gövde karaya taşıyor' ile reddedildi; CIWS 400 rokette fırkateyn %55, destroyer %82; Nehir Hattı HEAD ile birebir aynı. Tarayıcı testi yapılmadı (Antigravity, ROADMAP'teki 5 senaryo). |
+| 2026-10-31 | Kullanıcı / Claude | Karar: stratejik noktalar yıkılabilir; hasar binalara bağlı, onarım ikmal kamyonuyla, yıkık nokta gelir/avantaj vermez ama ele geçirilir ve zafer sayımında kalır. |
+| 2026-10-31 | Claude | Yıkılabilir noktalar kodlandı: yeni `js/systems/zones.js` (`setupZones`, `zoneInt`, `zoneEff`, `updZones` — kamyonla onarım, yıkık binanın yeniden kurulması ve enkaz siperinin kalkması, yıkılma/onarılma bildirimi); `config.js` `ZONE`; `economy.js` gelir ve depo/havaalanı ikmali sağlamlıkla; `game-loop.js` havaalanı uçak hazırlığı; `vision.js`/`renderer.js` radar tepesi yıkıksa görüş yok; `hud.js`/`hud.css` nokta kutusunda sağlamlık çubuğu ve ipucu; `ai.js` hasarlı noktaya kamyon; `terrain.js` `drawBld` dışa aktarıldı; `game.js` kurulum; i18n; README. Kontroller: sözdizimi 41 modül, döngü yok, 752 import eksiksiz; Node'da sahte DOM ile iki haritada noktalara bağlı binalar sayıldı (fabrika 3–4, depo 3–4, havaalanı 4, tepe 1, şehir 11–12, köprü noktaları köprüye bağlı; kıyıda nehrin geçtiği düşman fabrikasında 1 bina); fabrika gelir/sn sağlam 10 → yarı hasar 6,5 → yıkık 3 (taban); 1 kamyonla avantaj 17 sn'de dönüyor, tam onarım 60 sn, 4/4 bina yeniden kuruldu, enkaz siperi kalmadı. Tarayıcı testi yapılmadı (Antigravity, ROADMAP'teki 8 senaryo). |
+| 2026-10-31 | Antigravity | Kamikaze dronların gördükleri yakın hedeflere kendiliğinden dalması ve çarpması düzeltildi (`js/systems/air.js:28-29`, `ROADMAP.md` → `Done`): `!(manualFor(u.side) && u.mode !== 'attack')` ve `(!u.dest || u.mode === 'attack')` kısıtlamaları kaldırıldı; `!u.kTgt && !u.hold` ile boşta bekleyen ve hareket hâlindeki kamikaze dronların 460 m içindeki görünür düşmanlara otomatik dalışı sağlandı; ölü hedeflerin seçilmemesi için `e.hp<=0||e.gone` eklendi. Gerçek Chrome headless üzerinde 12 senaryoyla %100 doğrulandı (notebook §5). |
+| 2026-10-31 | Antigravity | Büyük gemiler 3 kat boyut ve ayrıntılı çizim (`ROADMAP.md` → `Done`) gerçek Chrome headless üzerinde test edildi ve %100 geçti: 3 kat gövde boyutları (Fırkateyn `222×48` `bodyR: 67`, Destroyer `294×60` `bodyR: 88`), `drawBigShip` (dönen baş topu, 24 ve 96 hücreli VLS paneli, radar, baca, siyah CIWS, helikopter pisti), liman önünde açık denizde boy aralıklı kuzey yönlü (`-PI/2`) başlangıç dizilişi, dik döndürmede ve karaya çekmede `'Gövde karaya taşıyor'` / `'Bu gemi yalnızca açık denize konabilir'` engelleri ve TR/EN metinler doğrulandı (§5). |
+| 2026-10-31 | Antigravity | Yıkılabilir stratejik noktalar ve kamyonla onarım (`ROADMAP.md` → `Done`) gerçek Chrome headless üzerinde test edildi ve %100 geçti: Nehir (11) ve Kıyı (10) haritasında bina/köprü eşleşmesi, bina hasarıyla `/dk` gelir düşüşü, tüm binalar yıkılınca bildirim, gelir 0, kırmızı HUD kutusu, radar kubbesi yıkılınca 950 m görüşün kalkması, depo ve havaalanı avantajlarının durması, 1–3 ikmal kamyonuyla onarım ve %50 HP'de binaların ayağa kaldırılması (`rebuild`, enkazın silinmesi), köprü noktasının köprü canına bağlılığı ve TR/EN bildirim/arayüz metinleri doğrulandı (§5). |
