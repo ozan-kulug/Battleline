@@ -4,6 +4,7 @@ import {CS,GH,GW,T} from '../config.js';
 import {buildHash,nearUnits} from './spatial.js';
 import {flying} from './units.js';
 import {log} from '../ui/feedback.js';
+import {zoneEff} from './zones.js';
 import {clamp} from '../utils/helpers.js';
 import {coverAt,effStance,vehCover} from '../world/cover.js';
 import {bgrid,buildingAt,cellAt,elev,elevAt,grid} from '../world/terrain.js';
@@ -39,7 +40,7 @@ function computeVis(){for(const u of state.units){u.sees=[];if(u.d.inf)u.cov=cov
       const d=Math.hypot(e.x-f.x,e.y-f.y);if(d>ve)continue;
       if(f.d.gvis){if(d<ve*conc(e)*(f.alt==='low'?.85:1)&&skyLos(f.x,f.y,e.x,e.y)){v.add(e.id);if(f.d.uav)f.sees.push(e)}continue}
       if(d<55||(d<ve*conc(e)&&los(f.x,f.y,e.x,e.y,ia,e.inB?e.inB.i:-1,(f.d.heli&&f.alt==='high')||elevAt(f.x,f.y)>elevAt(e.x,e.y)+.5,f.d.heli&&f.alt==='high'))){f.sees.push(e);v.add(e.id)}}}
-    for(const o of state.objs){if(o.k!=='hill'||o.owner!==s)continue;for(const e of state.units){if(e.side===s||e.abandoned)continue;if(flying(e)){v.add(e.id);continue}const d=Math.hypot(e.x-o.x,e.y-o.y);if(d<950*conc(e)&&los(o.x,o.y,e.x,e.y,obsB(o),e.inB?e.inB.i:-1,true))v.add(e.id)}}
+    for(const o of state.objs){if(o.k!=='hill'||o.owner!==s||!zoneEff(o))continue;for(const e of state.units){if(e.side===s||e.abandoned)continue;if(flying(e)){v.add(e.id);continue}const d=Math.hypot(e.x-o.x,e.y-o.y);if(d<950*conc(e)&&los(o.x,o.y,e.x,e.y,obsB(o),e.inB?e.inB.i:-1,true))v.add(e.id)}}
     state.vis[s]=v}
   for(const u of state.units)if(u.side===1&&state.vis[0].has(u.id))ghosts.set(u.id,{u,x:u.x,y:u.y,t:state.time});for(const [id,g] of ghosts)if(g.u.hp<=0||g.u.gone||state.time-g.t>30)ghosts.delete(id)}
 /* hava hedefi tespiti: uçaklar yer birliklerini kendileri göremez; radar açıkken çok uzaktan görülür; alçak helikopteri ağaç ve bina saklar */
@@ -51,7 +52,7 @@ function airSpot(f,e){const d=Math.hypot(e.x-f.x,e.y-f.y);
   if(e.d.plane)return d<(e.alt==='high'?1100:700);
   if(e.alt==='high')return d<750;
   return d<Math.max(220,visEff(f)*.95)&&(d<80||los(f.x,f.y,e.x,e.y,f.inB?f.inB.i:-1,-1,f.d.heli&&f.alt==='high'))}
-function observed(side,x,y){for(const o of state.objs)if(o.k==='hill'&&o.owner===side&&Math.hypot(o.x-x,o.y-y)<950&&los(o.x,o.y,x,y,obsB(o),-1,true))return true;for(const f of state.units){if(f.side!==side||f.d.indirect&&!f.d.inf)continue;const d=Math.hypot(f.x-x,f.y-y);if(d<visEff(f)*.95&&los(f.x,f.y,x,y,f.inB?f.inB.i:-1,-1))return true}return false}
+function observed(side,x,y){for(const o of state.objs)if(o.k==='hill'&&o.owner===side&&zoneEff(o)&&Math.hypot(o.x-x,o.y-y)<950&&los(o.x,o.y,x,y,obsB(o),-1,true))return true;for(const f of state.units){if(f.side!==side||f.d.indirect&&!f.d.inf)continue;const d=Math.hypot(f.x-x,f.y-y);if(d<visEff(f)*.95&&los(f.x,f.y,x,y,f.inB?f.inB.i:-1,-1))return true}return false}
 const ghosts=new Map();
 const keCache=[{t:-1,a:null},{t:-1,a:null}];
 function knownEnemies(side){const kc=keCache[side];if(kc.t===state.time)return kc.a;const a=[];kc.t=state.time;kc.a=a;for(const e of state.units)if(e.side!==side&&!flying(e)&&!e.abandoned&&state.vis[side].has(e.id))a.push({x:e.x,y:e.y,e});

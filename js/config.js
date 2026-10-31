@@ -118,6 +118,9 @@ const seaOnly=d=>!!d.naval&&shipC(d).nav==='sea';
 const bodyR=d=>d.inf?5:d.naval?Math.max(20,shipC(d).L*.3):20;
 /* yalnız-deniz gemileri için yol bulma kıyı payı: en geniş gövdeye göre */
 const DEEP_M=14+Math.max(...Object.values(SHIPC).filter(c=>c.nav==='sea').map(c=>c.B))/2;
+/* stratejik nokta sağlamlığı (systems/zones.js) — dead: bu oranın altında yıkık · reach: bağlı binalar nokta yarıçapının kaç katında ·
+   repT: tek kamyonla tam onarım süresi (sn) · trucks: hızlandıran en fazla kamyon · revive: yıkık bina bu oranda canla yeniden kurulur */
+const ZONE={dead:.25,reach:1.25,repT:60,trucks:3,revive:.5};
 const STATEN={travel:'Seyir',deploying:'Mevzileniyor',deployed:'Mevzide',packing:'Toparlanıyor'};
 /* ---------- harita ---------- */
 /* İki harita: 'river' (nehir haritayı ikiye böler; 3 köprü, 2 sığ geçit; merkeze göre simetrik) ve
@@ -211,4 +214,4 @@ const ROLE={inf:'Hat piyadesi · nokta tutar, el bombası atar',at:'Zırh avcıs
  fpv:'Üç kamikaze dron · hedefe dalar',cas:'30 mm top veya roket koşusu',mr:'Lazer güdümlü bomba ve hava-hava füzesi',sead:'Radar avcısı · anti-radyasyon füzesi',ftr:'Hava üstünlüğü · düşman uçağı avlar',
  bmb:'Halı bombardımanı · geniş alan',rec:'Yer gözetlemesi · hedefleri açığa çıkarır',tb2:'Silahlı İHA · akıllı mühimmat',supply:'İkmal ve onarım · 130 m çevre',dronop:'Kamikaze dron yönetir · 1400 m kontrol menzili, 6 dron',bot:'Nehir devriyesi · makineli tüfek, köprü altından geçer',frig:'Sabit savaş gemisi · 76 mm top, CIWS, 24 hücre füze',dest:'Sabit savaş gemisi · 127 mm top, 2× CIWS, 96 hücre füze'};
 
-export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEEP_M,DEF,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SHIPC,SQUADS,STATEN,STN,T,TAU,W,ZK,bodyR,coastX,edgeX,midX,rivNear,riverOn,riverX,seaOnly,setMap,shipC,shoreD};
+export {AIDIF,AIRMUL,ARMY,ARMYCAT,AW,COL,COMBAT,COVN,CROSS,CROSS_R,CS,DEEP_M,DEF,ECON,FINE,FMN,FORMN,GH,GREN,GW,H,INITN,MAP,MAPS,OBJL,PAYN,PI,RANKN,RIV,RL,ROLE,SHIPC,SQUADS,STATEN,STN,T,TAU,W,ZK,ZONE,bodyR,coastX,edgeX,midX,riverOn,riverX,rivNear,seaOnly,setMap,shipC,shoreD};

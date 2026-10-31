@@ -23,3 +23,9 @@
 .abr small{grid-column:1;color:var(--mute);font-size:10.5px;font-variant-numeric:tabular-nums}
 .abr .btn{grid-row:1/3;grid-column:2}
 .abr.air{cursor:pointer}.abr.air b{color:var(--blue)}.abr.air:hover b{text-decoration:underline}
+
+/* nokta sağlamlığı: altta çubuk; hasarlı turuncu, yıkık kırmızı ve soluk */
+.ob .zi{position:absolute;left:3px;bottom:2px;height:3px;width:100%;max-width:calc(100% - 6px);background:#7fd48a;opacity:0;transition:width .3s}
+.ob.hurt .zi{opacity:1;background:#e8a838}
+.ob.dead .zi{opacity:1;background:#e2584b}
+.ob.dead span{opacity:.45;text-decoration:line-through}

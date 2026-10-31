@@ -12,6 +12,7 @@ import {leash} from './systems/initiative.js';
 import {sel} from './systems/orders.js';
 import {flying,rank} from './systems/units.js';
 import {ghosts,observed,visEff} from './systems/vision.js';
+import {zoneEff} from './systems/zones.js';
 import {clamp,gauss,segInfo} from './utils/helpers.js';
 import {effStance} from './world/cover.js';
 import {refreshMini} from './world/terrain.js';
@@ -168,7 +169,7 @@ function render(){
   // sis perdesi (savaş sisi)
   const fw=fogC.width,fh=fogC.height,fs=fw/state.VW*z;
   fctx.globalCompositeOperation='source-over';fctx.clearRect(0,0,fw,fh);fctx.fillStyle='rgba(8,11,8,.6)';fctx.fillRect(0,0,fw,fh);fctx.globalCompositeOperation='destination-out';
-  for(const o of state.objs){if(o.k!=='hill'||o.owner!==0)continue;const sx=(o.x-cam.x)*fs,sy=(o.y-cam.y)*fs,r=950*fs;const g=fctx.createRadialGradient(sx,sy,r*.7,sx,sy,r);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');fctx.fillStyle=g;fctx.beginPath();fctx.arc(sx,sy,r,0,TAU);fctx.fill()}
+  for(const o of state.objs){if(o.k!=='hill'||o.owner!==0||!zoneEff(o))continue;const sx=(o.x-cam.x)*fs,sy=(o.y-cam.y)*fs,r=950*fs;const g=fctx.createRadialGradient(sx,sy,r*.7,sx,sy,r);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');fctx.fillStyle=g;fctx.beginPath();fctx.arc(sx,sy,r,0,TAU);fctx.fill()}
   for(const u of state.units){if(u.side!==0||!u.d.vis)continue;const sx=(u.x-cam.x)*fs,sy=(u.y-cam.y)*fs,r=visEff(u)*fs;if(sx<-r||sy<-r||sx>fw+r||sy>fh+r)continue;
     const g=fctx.createRadialGradient(sx,sy,r*.7,sx,sy,r);g.addColorStop(0,'rgba(0,0,0,1)');g.addColorStop(1,'rgba(0,0,0,0)');fctx.fillStyle=g;fctx.beginPath();fctx.arc(sx,sy,r,0,TAU);fctx.fill()}
   ctx.setTransform(state.DPR,0,0,state.DPR,0,0);ctx.drawImage(fogC,0,0,state.VW,state.VH);WT();

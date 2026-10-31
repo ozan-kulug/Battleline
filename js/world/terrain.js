@@ -264,4 +264,4 @@ function navSnap(x,y,d){if(shipAt(d,x,y))return{x,y};if(d&&seaOnly(d)){const p={
 /* suya düşen kara noktasını kıyıya çıkarır {x,y}: nehirde ref'in bulunduğu kıyıya, denizde sahile; pad: kıyıdan uzaklık */
 function landP(x,y,pad,rx=x,ry=y){const n=rivNearAt(x,y);if(n&&n.d<RIV.hw+pad){const s=Math.sign((rx-n.x)*n.nx+(ry-n.y)*n.ny)||1;x=n.x+n.nx*s*(RIV.hw+pad);y=n.y+n.ny*s*(RIV.hw+pad)}if(MAP.coast&&x<coastX(y)+pad)x=coastX(y)+pad;return{x,y}}
 
-export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawBridge,drawBridgeRuin,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,landP,navSnap,refreshMini,riverAt,scorch,shipAt};
+export {OBJ0,bgrid,buildChains,buildingAt,cellAt,chainAt,chainProj,coversNear,drawBld,drawBridge,drawBridgeRuin,drawCover,drawRubble,elev,elevAt,genTerrain,grid,isWater,landP,navSnap,refreshMini,riverAt,scorch,shipAt};

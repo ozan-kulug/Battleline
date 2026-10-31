@@ -3,6 +3,7 @@ import {state} from '../state.js';
 import {AIDIF,COMBAT,ECON,H,PI,SQUADS,T,TAU,W,ZK,riverX} from '../config.js';
 import {assignRunFor,launch} from './air.js';
 import {brLoss,ends,nearEnd,orderRepair} from './bridges.js';
+import {zoneInt} from './zones.js';
 import {orderGroup} from './orders.js';
 import {deploy,flying,giveMove,unloadHeli,upkMul} from './units.js';
 import {log} from '../ui/feedback.js';
@@ -136,6 +137,9 @@ function aiSupport(sd,sqs,main){const f=AIS[sd].focus;if(!f)return;const st=main
     if(q.k==='arty'||q.k==='mortar'){for(const u of q.m)placeIndirect(sd,u,f);continue}
     if(q.k==='supply'){const brT=b=>{const e=ends(b)[sd];return enemyNear(sd,e.x,e.y,450)>40},cd=b=>{const a=b.aiNext=b.aiNext||[0,0];a[sd]=Math.max(a[sd]||0,state.time+90)};
       if(lead.repB){const b=lead.repB;if(!b.dead)lead.repB=null;else if(brT(b)){if(lead.hp<lead.d.hp*.75)brLoss(b,sd);lead.repB=null;cd(b)}else{if(!lead.dest&&!nearEnd(lead,b))orderRepair(lead,b);continue}}
+      /* hasarlı kendi noktası: güvenliyse bir kamyon gidip noktada durarak onarır */
+      if(lead.repZ){const o=lead.repZ;if(o.owner!==sd||zoneInt(o)>=.99||enemyNear(sd,o.x,o.y,450)>40)lead.repZ=null;else{if(!lead.dest&&Math.hypot(lead.x-o.x,lead.y-o.y)>o.r*.6)sqGo(q,o.x,o.y,'move','z'+o.n);continue}}
+      {const zo=state.objs.find(o=>o.owner===sd&&!o.br&&zoneInt(o)<.7&&enemyNear(sd,o.x,o.y,450)<=40&&!state.units.some(u=>u.side===sd&&u.repZ===o));if(zo){lead.repZ=zo;sqGo(q,zo.x,zo.y,'move','z'+zo.n);continue}}
       const need=state.units.find(u=>u.side===sd&&!u.abandoned&&!u.d.supply&&!u.sees.length&&dist2(u,lead)<1100&&((u.d.veh&&u.hp<u.d.hp*.6)||(u.d.indirect&&u.ammo[0].he<5)));
       if(!need){const db=state.bridges.find(b=>b.dead&&state.time>=((b.aiNext||[])[sd]||0)&&!brT(b)&&!state.units.some(u=>u.side===sd&&u.repB===b));if(db){orderRepair(lead,db);cd(db);continue}}
       if(need)sqGo(q,need.x-fwd(sd)*40,need.y,'move','n'+need.id);else if(state.time-(q.goT||0)>25)sqGo(q,behind(sd,st.x,180),st.y+gauss()*60,'move','s'+Math.round(st.x/120)+'_'+Math.round(st.y/120));continue}
