@@ -11,7 +11,8 @@ import {drawBridge,drawBridgeRuin,grid} from '../world/terrain.js';
 /* tek kamyonla onarım süresi (sn); en fazla 3 kamyon birlikte hızlandırır */
 const REPAIR_T=45;
 /* silah türüne göre köprüye hasar çarpanı (dmg ile çarpılır); küçük silahlar köprüye zarar vermez */
-const BR_HIT={arty:1.5,mortar:1.5,bomb:1.5,lgb:2,arock:1,rocket:.6,gun:.4,rpg:.4,atgm:.3};
+/* lgb 1: güdümlü bomba ana hasarı 700, köprünün ~%58'i */
+const BR_HIT={arty:1.5,mortar:1.5,bomb:1.5,lgb:1,arock:1,rocket:.6,gun:.4,rpg:.4,atgm:.3};
 /* köprünün yerel ekseni: u güverte boyunca (dx,dy; güverte yarım boyu L), v enine. Nehir haritasında güverte yataydır */
 const loc=(b,x,y)=>{const ox=x-b.x,oy=y-b.y;return{u:ox*b.dx+oy*b.dy,v:-ox*b.dy+oy*b.dx}};
 /* (x,y) noktasına pad mesafesindeki köprü */

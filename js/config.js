@@ -92,16 +92,22 @@ const SQUADS=[
  {k:'hfa',n:'Hassas Füze Aracı',cost:260,m:['hfa'],cat:'kara'},
 ];
 /* uçak mühimmatı */
+/* uçak mühimmatı: ana değerler doğrudan isabet (güdümlülerde), bina, siper, köprü ve krater içindir; blast: araçları da etkileyen yakın patlama,
+   frag: yalnız piyadeye parça tesiri. Yaklaşık değerler: 227 kg bomba (GBU-12/Mk-82) ~28 m öldürücü, ~45 m yaralar; 70 mm roket ~8 m; 30 mm HEI ~3 m.
+   crit: güdümlü doğrudan isabet araçta alt sistem hasarı ve mürettebat terki yapabilir */
 const AW={
- gun:{n:'30 mm top',dmg:22,ap:7,splash:14,sup:30,k:'agun',soft:1,top:1},
- rockets:{n:'Roket salvosu',dmg:40,ap:4,splash:30,sup:45,k:'arock',soft:1,top:1},
- lgb:{n:'Lazer güdümlü bomba',dmg:240,ap:20,splash:50,sup:80,k:'lgb',soft:1.2,top:1,range:900},
- carpet:{n:'Halı bombardımanı',dmg:150,ap:10,splash:60,sup:90,k:'bomb',soft:1.2,top:1},
+ gun:{n:'30 mm top',dmg:22,ap:7,splash:6,sup:30,k:'agun',soft:1,top:1,blast:{dmg:22,ap:7,splash:5,sup:30,k:'agun',top:1},frag:{dmg:25,ap:0,splash:6,sup:30,k:'frag',soft:1}},
+ rockets:{n:'Roket salvosu',dmg:70,ap:8,splash:20,sup:50,k:'arock',soft:1,top:1,blast:{dmg:70,ap:8,splash:6,sup:50,k:'arock',top:1},frag:{dmg:30,ap:0,splash:20,sup:50,k:'frag',soft:1}},
+ lgb:{n:'Lazer güdümlü bomba',dmg:700,ap:30,splash:35,sup:100,k:'lgb',soft:1.2,top:1,crit:1,range:900,blast:{dmg:420,ap:6,splash:16,sup:100,k:'bomb',top:1,soft:1.2},frag:{dmg:40,ap:1,splash:45,sup:100,k:'frag',soft:1}},
+ carpet:{n:'Halı bombardımanı',dmg:240,ap:6,splash:35,sup:100,k:'bomb',soft:1.2,top:1,blast:{dmg:420,ap:6,splash:16,sup:100,k:'bomb',top:1,soft:1.2},frag:{dmg:40,ap:1,splash:45,sup:100,k:'frag',soft:1}},
  aam:{n:'Radar güdümlü hava-hava füzesi',k:'aam',dmg:130,pk:.72,range:1250,msp:950},
  ir:{n:'Kızılötesi hava-hava füzesi',k:'irm',dmg:110,pk:.78,range:520,msp:800},
  arm:{n:'Anti-radyasyon füzesi',k:'arm',dmg:180,ap:20,pk:.9,range:1500,msp:700},
- mam:{n:'Akıllı mikro mühimmat',dmg:140,ap:16,splash:18,sup:50,k:'lgb',soft:1,top:1,range:700},
- fpv:{n:'Kamikaze harp başlığı',dmg:170,ap:18,splash:16,sup:60,k:'fpv',soft:1,top:1},
+ mam:{n:'Akıllı mikro mühimmat',dmg:260,ap:24,splash:15,sup:60,k:'lgb',soft:1,top:1,crit:1,pen:'heat',range:700,frag:{dmg:30,ap:0,splash:15,sup:60,k:'frag',soft:1}},
+ /* kamikaze dron (RPG-7 türü başlık): kümülatif (HEAT) başlık doğrudan hedefi üstten deler, araçta alt sistem hasarı ve mürettebat terki olabilir;
+    parça tesiri ayrı: ~7 m içinde öldürücü, ~12 m'ye kadar yaralar, araçlara etkisiz */
+ fpv:{n:'Kamikaze harp başlığı',dmg:150,ap:22,splash:0,sup:70,k:'fpv',soft:1,top:1,pen:'heat'},
+ fpvFrag:{n:'Parça tesiri',dmg:40,ap:0,splash:12,sup:70,k:'frag',soft:1},
 };
 const PAYN={gun:'30 mm top (geçiş)',rockets:'Roket salvosu',lgb:'Lazer güdümlü bomba',aam:'Hava-hava füzesi (radar)',ir:'Hava-hava füzesi (IR)',arm:'Anti-radyasyon füzesi',carpet:'Halı bombardımanı',mam:'Akıllı mikro mühimmat'};
 const AIRMUL={rifle:.15,mg:.45,snipe:.2,auto:.9,flak:1,gun:.6,rpg:.8,atgm:.9,rocket:.5};

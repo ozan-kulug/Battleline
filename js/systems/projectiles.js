@@ -54,8 +54,10 @@ function impact(p){const w=p.w,x=p.tx,y=p.ty;state.curSrc=p.from;if(p.shell!=='s
     explode(x,y,p.k==='arty'?1.25:.75);crater(x,y,p.k==='arty'?18:10);damageCovers(x,y,w.splash*.6,w.dmg*1.5);if(cellAt(x,y)===T.FOREST)igniteAt(x,y,p.k==='arty'?26:14,p.k==='arty'?.35:.2);splashDmg(x,y,w,p.side,false,null);suppress(x,y,w.splash*1.8,w.sup,p.side);
     bldSplash(x,y,w,p.side);return}
   if(p.k==='agun'||p.k==='arock'||p.k==='bomb'||p.k==='lgb'){explode(x,y,p.k==='agun'?.22:p.k==='arock'?.5:1.4);if(p.k!=='agun'){crater(x,y,p.k==='arock'?9:24);damageCovers(x,y,w.splash*.6,w.dmg*1.2);if(cellAt(x,y)===T.FOREST)igniteAt(x,y,p.k==='arock'?14:40,p.k==='arock'?.15:.55)}else if(R()<.4)puff(x,y,1,'rgba(150,130,95,.6)',8);
-    if(p.k==='lgb'&&p.tgt&&p.tgt.hp>0&&Math.hypot(p.tgt.x-x,p.tgt.y-y)<24)damage(p.tgt,w,x,y,1);
-    splashDmg(x,y,w,p.side,false,p.k==='lgb'?p.tgt:null);suppress(x,y,w.splash*1.8,w.sup,p.side);if(p.k!=='agun')bldSplash(x,y,w,p.side);return}
+    /* güdümlü doğrudan isabet; sonra yakın patlama (araç) ve parça tesiri (piyade) ayrı; bu bileşenleri olmayan silahlar (ör. Tomahawk) tek alan hasarı verir */
+    const dt=p.k==='lgb'&&p.tgt&&p.tgt.hp>0&&Math.hypot(p.tgt.x-x,p.tgt.y-y)<24?p.tgt:null;if(dt)damage(dt,w,x,y,1);
+    if(w.blast||w.frag){if(w.blast)splashDmg(x,y,w.blast,p.side,false,dt);if(w.frag)splashDmg(x,y,w.frag,p.side,false,dt)}else splashDmg(x,y,w,p.side,false,p.k==='lgb'?p.tgt:null);
+    suppress(x,y,(w.frag?w.frag.splash:w.splash)*1.8,w.sup,p.side);if(p.k!=='agun')bldSplash(x,y,w,p.side);return}
   if(p.k==='gren'){explode(x,y,.35);damageCovers(x,y,20,40);const b=p.tgtB;if(b&&!b.dead){const occ=b.occ.filter(o=>o.side!==p.side);for(let k=0;k<3&&occ.length;k++){const o=occ.splice(R()*occ.length|0,1)[0];damage(o,w,x,y,.55)}hurtB(b,30)}
     splashDmg(x,y,w,p.side,true,null);suppress(x,y,60,w.sup,p.side);return}
   const big=p.k==='gun'||p.k==='rpg'||p.k==='atgm'||p.k==='rocket';

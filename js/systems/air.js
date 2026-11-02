@@ -30,7 +30,7 @@ function updDrone(u,dt){u.alt='high';if(u.bat==null)u.bat=u.d.bat;
   if(!u.kTgt&&!u.hold&&!u.home&&(!u.dest||u.mode==='attack')&&!(u.op&&manualFor(u.side)&&u.mode!=='attack')){let best=null,bs=1e9;for(const e of state.units){if(e.side===u.side||e.hp<=0||e.gone||flying(e)||e.abandoned||!state.vis[u.side].has(e.id))continue;const d=Math.hypot(e.x-u.x,e.y-u.y);if(d>460)continue;const sc=d*(e.d.inf?3:e.key==='tank'?.6:1);if(sc<bs){bs=sc;best=e}}if(best)u.kTgt=best}
   if(u.op&&opDroneTick(u))return true;
   if(u.kTgt){const t=u.kTgt,d=Math.hypot(t.x-u.x,t.y-u.y);u.home=false;u.dest={x:t.x,y:t.y};u.mode='move';u.queue=[];
-    if(d<14){state.curSrc=u.id;explode(t.x,t.y,.55);if(t.inB)hurtB(t.inB,120,.2);damage(t,AW.fpv,t.x,t.y-40,1);splashDmg(t.x,t.y,AW.fpv,u.side,false,t);suppress(t.x,t.y,40,60,u.side);u.gone=true;u.sel=false;return true}}
+    if(d<14){state.curSrc=u.id;explode(t.x,t.y,.55);if(t.inB)hurtB(t.inB,80,.2);damage(t,AW.fpv,t.x,t.y-40,1);splashDmg(t.x,t.y,AW.fpvFrag,u.side,false,t);suppress(t.x,t.y,50,70,u.side);u.gone=true;u.sel=false;return true}}
   return false}
 function launch(e){if(e.st!=='ready')return null;const side=e.side,y=clamp(H/2+gauss()*800,150,H-150),S=SQUADS.find(q=>q.plane===e.key);
   const u=mkUnit(side,e.key,side?W+260:-260,y,null,S.cost);u.ab=e;u.a=u.ta=side?PI:0;u.loiter={x:side?W-650:650,y};e.st='air';e.u=u;

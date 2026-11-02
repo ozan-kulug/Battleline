@@ -96,8 +96,8 @@ function damage(t,w,sx,sy,mult){if(t.hp<=0)return;let d;
     const pen=ap>=a;d=pen?w.dmg:w.dmg*Math.pow(Math.max(0,ap)/Math.max(a,.01),2);
     if(!pen&&!top&&w.ap>=2&&R()<.8)ricochet(t.x+gauss()*5,t.y+gauss()*5,sx,sy);else if(pen&&w.ap>=8&&!top)P({k:'fire',x:t.x,y:t.y,vz:30,r:5,g:16,max:.45});
     if(w.ap>=8&&!top)t.lastHeavy=state.time;
-    if(!t.abandoned){if(pen&&w.ap>=8&&!top&&t.hp-d*mult>0)crit(t);stress(t,pen?35:Math.min(12,w.sup||5))}
-    if(pen&&!top&&t.d.crew&&!t.abandoned&&t.hp-d*mult>0&&t.hp-d*mult<t.d.hp*.3&&R()<.35){t.hp-=d*mult;bail(t);return}}
+    if(!t.abandoned){if(pen&&w.ap>=8&&(!top||w.k==='fpv'||w.crit)&&t.hp-d*mult>0)crit(t);stress(t,pen?35:Math.min(12,w.sup||5))}
+    if(pen&&(!top||w.k==='fpv'||w.crit)&&t.d.crew&&!t.abandoned&&t.hp-d*mult>0&&t.hp-d*mult<t.d.hp*.3&&R()<.35){t.hp-=d*mult;bail(t);return}}
   t.hp-=d*mult;if(t.hp<=0)kill(t)}
 function suppress(x,y,rad,amt,side){if(!amt)return;for(const e of state.units){if(e.side===side||flying(e))continue;const d=Math.hypot(e.x-x,e.y-y);if(d<rad){e.shotAtT=state.time;stress(e,amt*(1-d/rad)*(e.inB?.5:e.cov?.6:1)*(e.d.inf?1:.6))}}}
 function splashDmg(x,y,w,side,gren,skip){for(const e of state.units){if(e.side===side||e===skip||e.inB||e.hp<=0||flying(e))continue;const d=Math.hypot(e.x-x,e.y-y);if(d>=w.splash)continue;
